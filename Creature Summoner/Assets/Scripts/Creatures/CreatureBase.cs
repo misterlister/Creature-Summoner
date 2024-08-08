@@ -14,14 +14,28 @@ public class CreatureBase : ScriptableObject
     [SerializeField] CreatureType type2;
 
     // Base Stats
-    [SerializeField] int HP;
-    [SerializeField] int Energy;
-    [SerializeField] int Strength;
-    [SerializeField] int Magic;
-    [SerializeField] int Skill;
-    [SerializeField] int Speed;
-    [SerializeField] int Defense;
-    [SerializeField] int Resistance;
+    [SerializeField] int hp;
+    [SerializeField] int energy;
+    [SerializeField] int strength;
+    [SerializeField] int magic;
+    [SerializeField] int skill;
+    [SerializeField] int speed;
+    [SerializeField] int defense;
+    [SerializeField] int resistance;
+
+    public string CreatureName { get { return creatureName; } }
+    public string Description { get { return description; } }
+    public Sprite FrontSprite { get { return frontSprite; } }
+    public CreatureType Type1 { get { return type1; } }
+    public CreatureType Type2 { get { return type2; } }
+    public int HP { get { return hp; } }
+    public int Energy { get { return energy; } }
+    public int Strength { get { return strength; } }
+    public int Magic { get { return magic; } }
+    public int Skill { get { return skill; } }
+    public int Speed { get { return speed; } }
+    public int Defense { get { return defense; } }
+    public int Resistance { get { return resistance; } }
 }
 
 public enum CreatureType
