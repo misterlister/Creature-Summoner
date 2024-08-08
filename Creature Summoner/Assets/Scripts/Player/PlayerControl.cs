@@ -5,7 +5,8 @@ using System.Collections.Generic;
 public class PlayerControl : MonoBehaviour
 {
     public float moveSpeed;
-
+    public LayerMask solidObjectsLayer;
+    public LayerMask battleLayer;
     private bool isMoving;
 
     private Vector2 input;
@@ -32,10 +33,13 @@ public class PlayerControl : MonoBehaviour
                 var targetPos = transform.position;
                 targetPos.x += input.x;
                 targetPos.y += input.y;
-
-                StartCoroutine(Move(targetPos));
+                if (IsWalkable(targetPos))
+                {
+                    StartCoroutine(Move(targetPos));
+                }
             }
         }
+        animator.SetBool("isMoving", isMoving);
     }
 
     IEnumerator Move(Vector3 targetPos)
@@ -49,5 +53,27 @@ public class PlayerControl : MonoBehaviour
         }
         transform.position = targetPos;
         isMoving = false;
+
+        CheckForEncounters();
     }
+    private bool IsWalkable(Vector3 targetPos)
+    {
+        if (Physics2D.OverlapCircle(targetPos, 0.3f, solidObjectsLayer) != null)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    private void CheckForEncounters()
+    {
+        if (Physics2D.OverlapCircle(transform.position, 0.2f, battleLayer) != null)
+        {
+            if (Random.Range(1,101) <= 10)
+            {
+                Debug.Log("Battle Encounter!");
+            }
+        }
+    }
+
 }
