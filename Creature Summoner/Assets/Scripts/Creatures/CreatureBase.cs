@@ -41,30 +41,4 @@ public class CreatureBase : ScriptableObject
     public List<LearnableTalent> LearnableTalents { get { return learnableTalents; } }
 }
 
-[System.Serializable]
-public class LearnableTalent
-{
-    [SerializeField] Talent talentBase;
-    [SerializeField] int level;
 
-    public Talent TalentBase => talentBase;
-    public int Level => level;
-
-}
-
-public enum CreatureType
-{
-    None,
-    Air,
-    Arcane,
-    Beast,
-    Cold,
-    Earth,
-    Electric,
-    Fire,
-    Metal,
-    Necrotic,
-    Plant,
-    Radiant,
-    Water
-}

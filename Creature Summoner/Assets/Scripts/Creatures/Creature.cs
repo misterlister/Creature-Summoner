@@ -12,6 +12,8 @@ public class Creature
     CreatureBase species;
     int level;
 
+    public int currentHP { get; set; }
+
     public List<CoreAction> KnownCoreActions { get; set; }
 
     public List<EmpoweredAction> KnownEmpoweredActions { get; set; }
@@ -24,6 +26,7 @@ public class Creature
     {
         species = creatureBase;
         level = creatureLevel;
+        currentHP = creatureBase.hp;
 
         KnownCoreActions = new List<CoreAction>();
         KnownEmpoweredActions = new List<EmpoweredAction>();
