@@ -23,6 +23,8 @@ public class CreatureBase : ScriptableObject
     [SerializeField] int defense;
     [SerializeField] int resistance;
 
+    [SerializeField] List<LearnableTalent> learnableTalents;
+
     public string CreatureName { get { return creatureName; } }
     public string Description { get { return description; } }
     public Sprite FrontSprite { get { return frontSprite; } }
@@ -36,6 +38,18 @@ public class CreatureBase : ScriptableObject
     public int Speed { get { return speed; } }
     public int Defense { get { return defense; } }
     public int Resistance { get { return resistance; } }
+    public List<LearnableTalent> LearnableTalents { get { return learnableTalents; } }
+}
+
+[System.Serializable]
+public class LearnableTalent
+{
+    [SerializeField] Talent talentBase;
+    [SerializeField] int level;
+
+    public Talent TalentBase => talentBase;
+    public int Level => level;
+
 }
 
 public enum CreatureType
