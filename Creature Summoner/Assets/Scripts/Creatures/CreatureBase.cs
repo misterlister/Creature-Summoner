@@ -12,6 +12,7 @@ public class CreatureBase : ScriptableObject
     [SerializeField] Sprite frontSprite;
     [SerializeField] CreatureType type1;
     [SerializeField] CreatureType type2;
+    [SerializeField] CreatureSize size;
 
     // Base Stats
     [SerializeField] int hp;
@@ -30,6 +31,7 @@ public class CreatureBase : ScriptableObject
     public Sprite FrontSprite { get { return frontSprite; } }
     public CreatureType Type1 { get { return type1; } }
     public CreatureType Type2 { get { return type2; } }
+    public CreatureSize Size { get { return size; } }
     public int HP { get { return hp; } }
     public int Energy { get { return energy; } }
     public int Strength { get { return strength; } }
