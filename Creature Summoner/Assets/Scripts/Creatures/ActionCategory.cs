@@ -4,5 +4,6 @@ public enum ActionCategory
 {
     None,
     Physical,
-    Magical
+    Magical,
+    Defensive
 }
