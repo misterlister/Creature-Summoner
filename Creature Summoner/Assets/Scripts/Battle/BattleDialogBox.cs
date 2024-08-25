@@ -10,11 +10,11 @@ public class BattleDialogBox : MonoBehaviour
     [SerializeField] Color highlightColour;
 
     [SerializeField] TextMeshProUGUI battleLogText;
-    [SerializeField] GameObject actionTypeSelect;
+    [SerializeField] GameObject actionCategorySelect;
     [SerializeField] GameObject actionSelect;
     [SerializeField] GameObject actionDetails;
 
-    [SerializeField] List<TextMeshProUGUI> actionTypeText;
+    [SerializeField] List<TextMeshProUGUI> actionCategoryText;
     [SerializeField] List<TextMeshProUGUI> actionText;
 
     [SerializeField] TextMeshProUGUI actionType;
@@ -47,9 +47,9 @@ public class BattleDialogBox : MonoBehaviour
         battleLogText.enabled = enabled;
     }
 
-    public void EnableActionTypeSelect(bool enabled)
+    public void EnableActionCategorySelect(bool enabled)
     {
-        actionTypeSelect.SetActive(enabled);
+        actionCategorySelect.SetActive(enabled);
     }
 
     public void EnableActionSelect(bool enabled)
@@ -73,17 +73,17 @@ public class BattleDialogBox : MonoBehaviour
         }
     }
 
-    public void UpdateActionTypeSelection(int selectedAction)
+    public void UpdateActionCategorySelection(int selectedAction)
     {
-        for (int i = 0; i < actionTypeText.Count; i++)
+        for (int i = 0; i < actionCategoryText.Count; i++)
         {
             if (i == selectedAction)
             {
-                actionTypeText[i].color = highlightColour;
+                actionCategoryText[i].color = highlightColour;
             }
             else
             {
-                actionTypeText[i].color = Color.black;
+                actionCategoryText[i].color = Color.black;
             }
         }
     }
