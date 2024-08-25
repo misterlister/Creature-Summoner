@@ -5,8 +5,11 @@ using UnityEngine;
 public enum BattleState
 {
     Start,
-    PlayerActionTypeSelect,
-    PlayerActionSelect,
+    PlayerActionCategorySelect,
+    PlayerCoreActionSelect,
+    PlayerEmpoweredActionSelect,
+    PlayerMasteryActionSelect,
+    PlayerMoveSelect,
     EnemyAction,
     Busy
 }
@@ -16,6 +19,9 @@ public class BattleSystem : MonoBehaviour
     [SerializeField] BattleCreature playerFrontMid;
     [SerializeField] BattleCreature enemyFrontMid;
     [SerializeField] BattleDialogBox dialogBox;
+    [SerializeField] GameObject actionCategories;
+
+    KeyCode acceptKey = KeyCode.Z;
 
     BattleState state;
     int currentAction;
@@ -32,25 +38,33 @@ public class BattleSystem : MonoBehaviour
         yield return dialogBox.TypeDialog($"You have been attacked by a {enemyFrontMid.CreatureInstance.Species.CreatureName}!");
         yield return new WaitForSeconds(1f);
 
-        PlayerAction();
+        PlayerActionCategorySelect();
     }
 
-    void PlayerAction()
+    void PlayerActionCategorySelect()
     {
-        state = BattleState.PlayerActionTypeSelect;
+        state = BattleState.PlayerActionCategorySelect;
         StartCoroutine(dialogBox.TypeDialog("Choose which kind of action to take"));
-        dialogBox.EnableActionTypeSelect(true);
+        dialogBox.EnableActionCategorySelect(true);
+    }
+
+    void PlayerActionSelect(BattleState battleState)
+    {
+        state = battleState;
+        dialogBox.EnableActionCategorySelect(false);
+        dialogBox.EnableDialogText(false);
+        dialogBox.EnableActionSelect(true);
     }
 
     private void Update()
     {
-        if (state == BattleState.PlayerActionTypeSelect)
+        if (state == BattleState.PlayerActionCategorySelect)
         {
-            HandleActionTypeSelection();
+            HandleActionCategorySelection();
         }
     }
 
-    void HandleActionTypeSelection()
+    void HandleActionCategorySelection()
     {
         if (Input.GetKeyDown(KeyCode.DownArrow))
         {
@@ -80,7 +94,27 @@ public class BattleSystem : MonoBehaviour
                 currentAction++;
             }
         }
-        dialogBox.UpdateActionTypeSelection(currentAction);
+        dialogBox.UpdateActionCategorySelection(currentAction);
+
+        if (Input.GetKeyDown(acceptKey))
+        {
+            if (currentAction == 0)
+            {
+                PlayerActionSelect(BattleState.PlayerCoreActionSelect);
+            }
+            else if (currentAction == 1)
+            {
+                PlayerActionSelect(BattleState.PlayerEmpoweredActionSelect);
+            }
+            else if (currentAction == 2)
+            {
+                PlayerActionSelect(BattleState.PlayerMasteryActionSelect);
+            }
+            else if (currentAction == 3)
+            {
+                //PlayerActionSelect(BattleState.PlayerMoveSelect);
+            }
+        }
     }
 
 }
