@@ -27,6 +27,8 @@ public class BattleDialogBox : MonoBehaviour
     [SerializeField] TextMeshProUGUI actionPrep;
     [SerializeField] TextMeshProUGUI actionDescription;
 
+    public List<TextMeshProUGUI> ActionText => actionText;
+
     public void SetDialog(string dialog)
     {
         battleLogText.text = dialog;
@@ -84,6 +86,49 @@ public class BattleDialogBox : MonoBehaviour
             else
             {
                 actionCategoryText[i].color = Color.black;
+            }
+        }
+    }
+
+    public void SetCoreActionNames(Creature creature)
+    {
+        if (creature.PhysicalCore == null)
+        {
+            actionText[0].text = "-";
+        }
+        else
+        {
+            actionText[0].text = creature.PhysicalCore.Action.TalentName;
+        }
+        if (creature.MagicalCore == null)
+        {
+            actionText[1].text = "-";
+        }
+        else
+        {
+            actionText[1].text = creature.MagicalCore.Action.TalentName;
+        }
+        if (creature.DefensiveCore == null)
+        {
+            actionText[2].text = "-";
+        }
+        else
+        {
+            actionText[2].text = creature.DefensiveCore.Action.TalentName;
+        }
+    }
+
+    public void SetEmpoweredActionNames(Creature creature)
+    {
+        for (int i = 0; i < actionText.Count; i++)
+        {
+            if (i < creature.EquippedEmpoweredActions.Count)
+            {
+                actionText[i].text = creature.EquippedEmpoweredActions[i].Action.TalentName;
+            } 
+            else
+            {
+                actionText[i].text = "-";
             }
         }
     }
