@@ -10,6 +10,7 @@ public abstract class ActionBase : Talent
     [SerializeField] int accuracy = 90;
     [SerializeField] bool ranged;
     [SerializeField] bool offensive = true;
+    [SerializeField] bool preparation = false;
     [SerializeField] int numTargets = 1;
     [SerializeField] List<string> tags;
 
@@ -19,6 +20,7 @@ public abstract class ActionBase : Talent
     public int Accuracy => accuracy;
     public bool Ranged => ranged;
     public bool Offensive => offensive;
+    public bool Preparation => preparation;
     public int NumTargets => numTargets;
     public List<string> Tags => tags;
 }
