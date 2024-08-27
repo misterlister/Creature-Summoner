@@ -24,6 +24,8 @@ public class BattleSystem : MonoBehaviour
 
     public Dictionary<BattleState, int> StateChoices { get; set; }
 
+    public List<BattleCreature> FieldCreatures { get; set; }
+
     public BattleCreature activeCreature;
 
     KeyCode acceptKey = KeyCode.Z;
@@ -43,6 +45,13 @@ public class BattleSystem : MonoBehaviour
         dialogBox.EnableActionCategorySelect(true);
         dialogBox.EnableActionSelect(false);
 
+        FieldCreatures = new List<BattleCreature>();
+
+        playerFrontMid.Setup();
+        FieldCreatures.Add(playerFrontMid);
+        enemyFrontMid.Setup();
+        FieldCreatures.Add(enemyFrontMid);
+
         StateChoices = new Dictionary<BattleState, int>
         {
             { BattleState.Start, 0 },
@@ -51,13 +60,10 @@ public class BattleSystem : MonoBehaviour
             { BattleState.PlayerEmpoweredActionSelect, dialogBox.ActionText.Count },
             { BattleState.PlayerMasteryActionSelect, 2 },
             { BattleState.PlayerMoveSelect, 2 },
-            { BattleState.PlayerExamine, 2 },
+            { BattleState.PlayerExamine, FieldCreatures.Count },
             { BattleState.EnemyAction, 0 },
             { BattleState.Busy, 0 }
         };
-
-        playerFrontMid.Setup();
-        enemyFrontMid.Setup();
 
         activeCreature = playerFrontMid;
 
@@ -128,45 +134,109 @@ public class BattleSystem : MonoBehaviour
     {
         if (state == BattleState.PlayerActionCategorySelect)
         {
-            if (Input.GetKeyDown(acceptKey))
-            {
-                AcceptActionCategorySelection();
-            } 
-            else
-            {
-                dialogBox.UpdateActionCategorySelection(selectionPosition);
-            }
+            HandlePlayerActionCategorySelect();
         }
         else if (state == BattleState.PlayerCoreActionSelect)
         {
-            if (Input.GetKeyDown(acceptKey))
-            {
-                AcceptCoreActionSelection();
-            }
-            else if (Input.GetKeyDown(backKey))
-            {
-                selectionPosition = 0;
-                PlayerActionCategorySelect();
-            }
-            else
-            {
-                UpdateCoreActionSelection();
-            }
+            HandlePlayerCoreActionSelect();
         }
         else if (state == BattleState.PlayerEmpoweredActionSelect)
         {
-            if (Input.GetKeyDown(acceptKey))
+            HandlePlayerEmpoweredActionSelect();
+        }
+        else if (state == BattleState.PlayerMasteryActionSelect)
+        {
+            HandlePlayerMasteryActionSelect();
+        }
+        else if (state == BattleState.PlayerExamine)
+        {
+            HandlePlayerExamine();
+        }
+    }
+
+    void HandlePlayerActionCategorySelect()
+    {
+        if (Input.GetKeyDown(acceptKey))
+        {
+            AcceptActionCategorySelection();
+        }
+        else
+        {
+            dialogBox.UpdateActionCategorySelection(selectionPosition);
+        }
+    }
+
+    void HandlePlayerCoreActionSelect()
+    {
+        if (Input.GetKeyDown(acceptKey))
+        {
+            AcceptCoreActionSelection();
+        }
+        else if (Input.GetKeyDown(backKey))
+        {
+            selectionPosition = 0;
+            PlayerActionCategorySelect();
+        }
+        else
+        {
+            UpdateCoreActionSelection();
+        }
+    }
+
+    void HandlePlayerEmpoweredActionSelect()
+    {
+        if (Input.GetKeyDown(acceptKey))
+        {
+            AcceptEmpoweredActionSelection();
+        }
+        else if (Input.GetKeyDown(backKey))
+        {
+            selectionPosition = 1;
+            PlayerActionCategorySelect();
+        }
+        else
+        {
+            UpdateEmpoweredActionSelection();
+        }
+    }
+
+    void HandlePlayerMasteryActionSelect()
+    {
+        if (Input.GetKeyDown(acceptKey))
+        {
+            AcceptMasteryActionSelection();
+        }
+        else if (Input.GetKeyDown(backKey))
+        {
+            selectionPosition = 2;
+            PlayerActionCategorySelect();
+        }
+        else
+        {
+            //UpdateMasteryActionSelection();
+        }
+    }
+
+    void HandlePlayerExamine()
+    {
+        if (Input.GetKeyDown(backKey))
+        {
+            FieldCreatures[selectionPosition].Hud.EnableCreatureInfoPanel(false);
+            selectionPosition = 4;
+            PlayerActionCategorySelect();
+        }
+        else
+        {
+            for (int i = 0; i < FieldCreatures.Count; i++)
             {
-                AcceptEmpoweredActionSelection();
-            }
-            else if (Input.GetKeyDown(backKey))
-            {
-                selectionPosition = 1;
-                PlayerActionCategorySelect();
-            }
-            else
-            {
-                UpdateEmpoweredActionSelection();
+                if (i == selectionPosition)
+                {
+                    FieldCreatures[i].Hud.EnableCreatureInfoPanel(true);
+                }
+                else
+                {
+                    FieldCreatures[i].Hud.EnableCreatureInfoPanel(false);
+                }
             }
         }
     }
@@ -189,6 +259,10 @@ public class BattleSystem : MonoBehaviour
         {
             //PlayerActionSelect(BattleState.PlayerMoveSelect);
         }
+        else if (selectionPosition == 4)
+        {
+            PlayerActionSelect(BattleState.PlayerExamine);
+        }
     }
 
     void AcceptCoreActionSelection()
@@ -200,7 +274,7 @@ public class BattleSystem : MonoBehaviour
         }
         else if (selectionPosition < dialogBox.ActionText.Count && dialogBox.ActionText[selectionPosition].text != "-")
         {
-            Debug.Log($"{activeCreature.CreatureInstance.Nickname} used {dialogBox.ActionText[selectionPosition].text}");
+            Debug.Log($"{activeCreature.CreatureInstance.Nickname} used {dialogBox.ActionText[selectionPosition].text}");//TEMP
         }
     }
 
@@ -213,7 +287,20 @@ public class BattleSystem : MonoBehaviour
         }
         else if (selectionPosition < dialogBox.ActionText.Count && dialogBox.ActionText[selectionPosition].text != "-")
         {
-            Debug.Log($"{activeCreature.CreatureInstance.Nickname} used {dialogBox.ActionText[selectionPosition].text}");
+            Debug.Log($"{activeCreature.CreatureInstance.Nickname} used {dialogBox.ActionText[selectionPosition].text}");//TEMP
+        }
+    }
+
+    void AcceptMasteryActionSelection()
+    {
+        if (selectionPosition == 3)
+        {
+            selectionPosition = 2;
+            PlayerActionCategorySelect();
+        }
+        else if (selectionPosition < dialogBox.ActionText.Count && dialogBox.ActionText[selectionPosition].text != "-")
+        {
+            Debug.Log($"{activeCreature.CreatureInstance.Nickname} used {dialogBox.ActionText[selectionPosition].text}");//TEMP
         }
     }
 
