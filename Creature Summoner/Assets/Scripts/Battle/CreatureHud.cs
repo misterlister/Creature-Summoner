@@ -20,16 +20,15 @@ public class CreatureHud : MonoBehaviour
     [SerializeField] HPBar hpBar;
     [SerializeField] EnergyBar energyBar;
     [SerializeField] GameObject creatureInfoPanel;
+    [SerializeField] bool isEnemy;
 
     public void SetData(Creature creature)
     {
         nameText.text = creature.Nickname;
         levelText.text = "Level: " + creature.Level;
-        float hp = ((float)creature.HP / creature.MaxHP);
-        float energy = ((float)creature.Energy / creature.MaxEnergy);
 
-        UpdateHP(hp);
-        UpdateEnergy(energy);
+        UpdateHP(creature.HP, creature.MaxHP);
+        UpdateEnergy(creature.Energy, creature.MaxEnergy);
 
         if (creature.Species.Type1 == creature.Species.Type2)
         {
@@ -39,25 +38,53 @@ public class CreatureHud : MonoBehaviour
         {
             typeText.text = $"{creature.Species.Type1}/{creature.Species.Type2}";
         }
-        hpText.text = $"HP: {creature.HP}/{creature.MaxHP}";
-        energyText.text = $"Energy: {creature.Energy}/{creature.MaxEnergy}";
-        strengthText.text = $"Strength: {creature.Strength}";
-        magicText.text = $"Magic: {creature.Magic}";
-        skillText.text = $"Skill: {creature.Skill}";
-        speedText.text = $"Speed: {creature.Speed}";
-        defenseText.text = $"Defense: {creature.Defense}";
-        resistanceText.text = $"Resistance: {creature.Resistance}";
+        if (!isEnemy)
+        {
+            strengthText.text = $"Strength: {creature.Strength}";
+            magicText.text = $"Magic: {creature.Magic}";
+            skillText.text = $"Skill: {creature.Skill}";
+            speedText.text = $"Speed: {creature.Speed}";
+            defenseText.text = $"Defense: {creature.Defense}";
+            resistanceText.text = $"Resistance: {creature.Resistance}";
+        }
+        else
+        {
+            strengthText.text = $"Strength: ???";
+            magicText.text = $"Magic: ???";
+            skillText.text = $"Skill: ???";
+            speedText.text = $"Speed: ???";
+            defenseText.text = $"Defense: ???";
+            resistanceText.text = $"Resistance: ???";
+        }
         EnableCreatureInfoPanel(false);
     }
 
-    public void UpdateHP(float hp)
+    public void UpdateHP(int currentHP, int maxHP)
     {
+        float hp = ((float)currentHP / maxHP);
         hpBar.SetHP(hp);
+        if (!isEnemy)
+        {
+            hpText.text = $"HP: {currentHP}/{maxHP}";
+        }
+        else
+        {
+            hpText.text = "HP: ???";
+        }
     }
 
-    public void UpdateEnergy(float energy)
+    public void UpdateEnergy(int currentEnergy, int maxEnergy)
     {
+        float energy = ((float)currentEnergy / maxEnergy);
         energyBar.SetEnergy(energy);
+        if (!isEnemy)
+        {
+            energyText.text = $"Energy: {currentEnergy}/{maxEnergy}";
+        }
+        else
+        {
+            hpText.text = "Energy: ???";
+        }
     }
 
     public void EnableCreatureInfoPanel(bool enabled)
