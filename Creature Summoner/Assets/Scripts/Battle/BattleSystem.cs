@@ -10,6 +10,7 @@ public enum BattleState
     PlayerEmpoweredActionSelect,
     PlayerMasteryActionSelect,
     PlayerMoveSelect,
+    PlayerExamine,
     EnemyAction,
     Busy
 }
@@ -20,6 +21,8 @@ public class BattleSystem : MonoBehaviour
     [SerializeField] BattleCreature enemyFrontMid;
     [SerializeField] BattleDialogBox dialogBox;
     [SerializeField] GameObject actionCategories;
+
+    public Dictionary<BattleState, int> StateChoices { get; set; }
 
     public BattleCreature activeCreature;
 
@@ -36,6 +39,23 @@ public class BattleSystem : MonoBehaviour
 
     public IEnumerator SetupBattle()
     {
+        dialogBox.EnableDialogText(true);
+        dialogBox.EnableActionCategorySelect(true);
+        dialogBox.EnableActionSelect(false);
+
+        StateChoices = new Dictionary<BattleState, int>
+        {
+            { BattleState.Start, 0 },
+            { BattleState.PlayerActionCategorySelect, dialogBox.ActionCategoryText.Count },
+            { BattleState.PlayerCoreActionSelect, dialogBox.ActionText.Count },
+            { BattleState.PlayerEmpoweredActionSelect, dialogBox.ActionText.Count },
+            { BattleState.PlayerMasteryActionSelect, 2 },
+            { BattleState.PlayerMoveSelect, 2 },
+            { BattleState.PlayerExamine, 2 },
+            { BattleState.EnemyAction, 0 },
+            { BattleState.Busy, 0 }
+        };
+
         playerFrontMid.Setup();
         enemyFrontMid.Setup();
 
@@ -54,7 +74,6 @@ public class BattleSystem : MonoBehaviour
         dialogBox.EnableActionCategorySelect(true);
         dialogBox.EnableDialogText(true);
         dialogBox.EnableActionSelect(false);
-        selectionPosition = 0;
     }
 
     void PlayerActionSelect(BattleState battleState)
@@ -76,63 +95,78 @@ public class BattleSystem : MonoBehaviour
 
     private void Update()
     {
-        if (state == BattleState.PlayerActionCategorySelect 
-            || state == BattleState.PlayerCoreActionSelect
-            || state == BattleState.PlayerEmpoweredActionSelect)
+        if (state != BattleState.Start 
+            && state != BattleState.EnemyAction
+            && state != BattleState.Busy)
         {
-            HandleMenuSelection();
+            HandleMenuSelection(StateChoices[state]);
+            HandleStateBasedInput();
         }
     }
 
-    void HandleMenuSelection()
+    void HandleMenuSelection(int optionCount)
     {
         if (Input.GetKeyDown(KeyCode.DownArrow))
         {
-            if (selectionPosition == 0 || selectionPosition == 1)
-            {
-                selectionPosition += 2;
-            }
+            selectionPosition = (selectionPosition + 2) % optionCount;
         }
         else if (Input.GetKeyDown(KeyCode.UpArrow))
         {
-            if (selectionPosition == 2 || selectionPosition == 3)
-            {
-                selectionPosition -= 2;
-            }
+            selectionPosition = (selectionPosition - 2 + optionCount) % optionCount;
         }
         else if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
-            if (selectionPosition == 1 || selectionPosition == 3)
-            {
-                selectionPosition--;
-            }
+            selectionPosition = (selectionPosition - 1 + optionCount) % optionCount;
         }
         else if (Input.GetKeyDown(KeyCode.RightArrow))
         {
-            if (selectionPosition == 0 || selectionPosition == 2)
-            {
-                selectionPosition++;
-            }
+            selectionPosition = (selectionPosition + 1) % optionCount;
         }
-        
+    }
+
+    void HandleStateBasedInput()
+    {
         if (state == BattleState.PlayerActionCategorySelect)
         {
-            dialogBox.UpdateActionCategorySelection(selectionPosition);
             if (Input.GetKeyDown(acceptKey))
             {
                 AcceptActionCategorySelection();
+            } 
+            else
+            {
+                dialogBox.UpdateActionCategorySelection(selectionPosition);
             }
         }
         else if (state == BattleState.PlayerCoreActionSelect)
         {
-            dialogBox.UpdateActionSelection(selectionPosition);
             if (Input.GetKeyDown(acceptKey))
             {
                 AcceptCoreActionSelection();
             }
-            if (Input.GetKeyDown(backKey))
+            else if (Input.GetKeyDown(backKey))
             {
+                selectionPosition = 0;
                 PlayerActionCategorySelect();
+            }
+            else
+            {
+                UpdateCoreActionSelection();
+            }
+        }
+        else if (state == BattleState.PlayerEmpoweredActionSelect)
+        {
+            if (Input.GetKeyDown(acceptKey))
+            {
+                AcceptEmpoweredActionSelection();
+            }
+            else if (Input.GetKeyDown(backKey))
+            {
+                selectionPosition = 1;
+                PlayerActionCategorySelect();
+            }
+            else
+            {
+                UpdateEmpoweredActionSelection();
             }
         }
     }
@@ -161,11 +195,53 @@ public class BattleSystem : MonoBehaviour
     {
         if (selectionPosition == 3)
         {
+            selectionPosition = 0;
             PlayerActionCategorySelect();
         }
         else if (selectionPosition < dialogBox.ActionText.Count && dialogBox.ActionText[selectionPosition].text != "-")
         {
             Debug.Log($"{activeCreature.CreatureInstance.Nickname} used {dialogBox.ActionText[selectionPosition].text}");
         }
+    }
+
+    void AcceptEmpoweredActionSelection()
+    {
+        if (selectionPosition == 3)
+        {
+            selectionPosition = 1;
+            PlayerActionCategorySelect();
+        }
+        else if (selectionPosition < dialogBox.ActionText.Count && dialogBox.ActionText[selectionPosition].text != "-")
+        {
+            Debug.Log($"{activeCreature.CreatureInstance.Nickname} used {dialogBox.ActionText[selectionPosition].text}");
+        }
+    }
+
+    void UpdateCoreActionSelection()
+    {
+        ActionBase selectedAction = null;
+        if (selectionPosition == 0)
+        {
+            selectedAction = activeCreature.CreatureInstance.PhysicalCore?.Action;
+        }
+        else if (selectionPosition == 1)
+        {
+            selectedAction = activeCreature.CreatureInstance.MagicalCore?.Action;
+        }
+        else if (selectionPosition == 2)
+        {
+            selectedAction = activeCreature.CreatureInstance.DefensiveCore?.Action;
+        }
+        dialogBox.UpdateActionSelection(selectionPosition, selectedAction);
+    }
+
+    void UpdateEmpoweredActionSelection()
+    {
+        ActionBase selectedAction = null;
+        if (selectionPosition < activeCreature.CreatureInstance.EquippedEmpoweredActions.Count)
+        {
+            selectedAction = activeCreature.CreatureInstance.EquippedEmpoweredActions[selectionPosition]?.Action;
+        }
+        dialogBox.UpdateActionSelection(selectionPosition, selectedAction);
     }
 }
