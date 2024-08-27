@@ -11,6 +11,7 @@ public class BattleCreature : MonoBehaviour
     [SerializeField] CreatureHud hud;
 
     public Creature CreatureInstance { get; set; }
+    public CreatureHud Hud => hud;
 
     public void Setup()
     {
