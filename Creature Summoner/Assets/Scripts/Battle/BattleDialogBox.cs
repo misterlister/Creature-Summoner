@@ -27,7 +27,11 @@ public class BattleDialogBox : MonoBehaviour
     [SerializeField] TextMeshProUGUI actionPrep;
     [SerializeField] TextMeshProUGUI actionDescription;
 
+    string backText = "Return to the previous menu";
+    string nullText = "No available move";
+
     public List<TextMeshProUGUI> ActionText => actionText;
+    public List<TextMeshProUGUI> ActionCategoryText => actionCategoryText;
 
     public void SetDialog(string dialog)
     {
@@ -46,6 +50,7 @@ public class BattleDialogBox : MonoBehaviour
 
     public void EnableDialogText(bool enabled)
     {
+        battleLogText.gameObject.SetActive(enabled);
         battleLogText.enabled = enabled;
     }
 
@@ -60,7 +65,7 @@ public class BattleDialogBox : MonoBehaviour
         actionDetails.SetActive(enabled);
     }
 
-    public void UpdateActionSelection(int selectedAction)
+    public void UpdateActionSelection(int selectedAction, ActionBase action)
     {
         for (int i = 0; i < actionText.Count; i++)
         {
@@ -72,6 +77,43 @@ public class BattleDialogBox : MonoBehaviour
             {
                 actionText[i].color = Color.black;
             }
+        }
+        if (selectedAction == actionText.Count - 1)
+        {
+            battleLogText.text = backText;
+            actionDetails.SetActive(false);
+            EnableDialogText(true);
+        }
+        else if (action == null)
+        {
+            battleLogText.text = nullText;
+            actionDetails.SetActive(false);
+            EnableDialogText(true);
+        }
+        else
+        {
+            EnableDialogText(false);
+            actionDetails.SetActive(true);
+            actionType.text = $"{action.Type}";
+            actionSource.text = $"{action.Category}";
+            actionRange.text = action.Ranged ? "Ranged" : "Melee";
+            actionPower.text = $"Power: {action.Power}";
+            actionAccuracy.text = $"Accuracy: {action.Accuracy}%";
+            if (action is CoreActionBase coreAction)
+            {
+                actionEnergy.text = $"Energy Gain: {coreAction.EnergyGain}";
+            }
+            else if (action is EmpoweredActionBase empoweredAction)
+            {
+                actionEnergy.text = $"Energy Cost: {empoweredAction.EnergyCost}";
+            }
+            else
+            {
+                actionEnergy.text = "";
+            }
+            actionTargets.text = $"Targets: {action.NumTargets}";
+            actionPrep.text = action.Preparation ? "Prepared Action" : "";
+            actionDescription.text = $"{action.Description}";
         }
     }
 
@@ -120,7 +162,7 @@ public class BattleDialogBox : MonoBehaviour
 
     public void SetEmpoweredActionNames(Creature creature)
     {
-        for (int i = 0; i < actionText.Count; i++)
+        for (int i = 0; i < actionText.Count - 1; i++)
         {
             if (i < creature.EquippedEmpoweredActions.Count)
             {
