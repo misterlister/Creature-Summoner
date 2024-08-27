@@ -27,8 +27,8 @@ public class BattleDialogBox : MonoBehaviour
     [SerializeField] TextMeshProUGUI actionPrep;
     [SerializeField] TextMeshProUGUI actionDescription;
 
-    string backText = "Return to the previous menu";
-    string nullText = "No available move";
+    const string backText = "Return to the previous menu";
+    const string nullText = "No available move";
 
     public List<TextMeshProUGUI> ActionText => actionText;
     public List<TextMeshProUGUI> ActionCategoryText => actionCategoryText;
