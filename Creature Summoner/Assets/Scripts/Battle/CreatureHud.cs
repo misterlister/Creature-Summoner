@@ -29,6 +29,10 @@ public class CreatureHud : MonoBehaviour
 
         UpdateHP(creature.HP, creature.MaxHP);
         UpdateEnergy(creature.Energy, creature.MaxEnergy);
+        if (isEnemy)
+        {
+            energyBar.gameObject.SetActive(false);
+        }
 
         if (creature.Species.Type1 == creature.Species.Type2)
         {
