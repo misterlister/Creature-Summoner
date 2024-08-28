@@ -6,7 +6,9 @@ using UnityEngine;
 
 public class Creature
 {
+    const int CORE_SLOTS = 3;
     const int EMPOWERED_SLOTS = 3;
+    const int MASTERY_SLOTS = 1;
 
     public CreatureBase Species { get; set; }
     public int Level { get; set; }
@@ -16,11 +18,11 @@ public class Creature
 
     public List<CoreAction> KnownCoreActions { get; set; }
     public List<EmpoweredAction> KnownEmpoweredActions { get; set; }
+    public List<MasteryAction> KnownMasteryActions { get; set; }
 
-    public CoreAction PhysicalCore { get; set; }
-    public CoreAction MagicalCore { get; set; }
-    public CoreAction DefensiveCore { get; set; }
-    public List<EmpoweredAction> EquippedEmpoweredActions { get; set; }
+    public CoreAction[] EquippedCoreActions { get; set; }
+    public EmpoweredAction[] EquippedEmpoweredActions { get; set; }
+    public MasteryAction[] EquippedMasteryActions { get; set; }
 
     public Creature(CreatureBase creatureBase, int creatureLevel, string nickname = "")
     {
@@ -39,10 +41,10 @@ public class Creature
 
         KnownCoreActions = new List<CoreAction>();
         KnownEmpoweredActions = new List<EmpoweredAction>();
-        PhysicalCore = null;
-        MagicalCore = null;
-        DefensiveCore = null;
-        EquippedEmpoweredActions = new List<EmpoweredAction>();
+        KnownMasteryActions = new List<MasteryAction>();
+        EquippedCoreActions = new CoreAction[CORE_SLOTS];
+        EquippedEmpoweredActions = new EmpoweredAction[EMPOWERED_SLOTS];
+        EquippedMasteryActions = new MasteryAction[MASTERY_SLOTS];
 
         initTalents();
         equipTalents();
@@ -88,9 +90,9 @@ public class Creature
                 {
                     KnownEmpoweredActions.Add(new EmpoweredAction(empoweredActionBase));
                 }
-                else
+                else if (talent.TalentBase is MasteryActionBase masteryActionBase)
                 {
-                    Debug.Log("Learnable Talent doesn't match known types");
+                    KnownMasteryActions.Add(new MasteryAction(masteryActionBase));
                 }
             }
         }
@@ -102,19 +104,19 @@ public class Creature
         {
             int i = KnownCoreActions.Count - 1;
 
-            while (i >= 0 && (PhysicalCore == null || MagicalCore == null || DefensiveCore == null))
+            while (i >= 0 && (EquippedCoreActions[0] == null || EquippedCoreActions[1] == null || EquippedCoreActions[2] == null))
             {
-                if (KnownCoreActions[i].Action.Category == ActionCategory.Physical && PhysicalCore == null)
+                if (KnownCoreActions[i].Action.Category == ActionCategory.Physical && EquippedCoreActions[0] == null)
                 {
-                    PhysicalCore = KnownCoreActions[i];
+                    EquippedCoreActions[0] = KnownCoreActions[i]; // Equip last learned Physical Core Action
                 } 
-                else if (KnownCoreActions[i].Action.Category == ActionCategory.Magical && MagicalCore == null)
+                else if (KnownCoreActions[i].Action.Category == ActionCategory.Magical && EquippedCoreActions[1] == null)
                 {
-                    MagicalCore = KnownCoreActions[i];
+                    EquippedCoreActions[1] = KnownCoreActions[i]; // Equip last learned Magical Core Action
                 } 
-                else if (KnownCoreActions[i].Action.Category == ActionCategory.Defensive && DefensiveCore == null)
+                else if (KnownCoreActions[i].Action.Category == ActionCategory.Defensive && EquippedCoreActions[2] == null)
                 {
-                    DefensiveCore = KnownCoreActions[i];
+                    EquippedCoreActions[2] = KnownCoreActions[i]; // Equip last learned Defensive Core Action
                 }
                 i--;
             }
@@ -123,12 +125,25 @@ public class Creature
         if (KnownEmpoweredActions.Count > 0)
         {
             int i = KnownEmpoweredActions.Count - 1;
-            int empoweredCount = 0;
+            int slot = 0;
 
-            while (i >= 0 && empoweredCount < EMPOWERED_SLOTS)
+            while (i >= 0 && slot < EMPOWERED_SLOTS)
             {
-                EquippedEmpoweredActions.Add(KnownEmpoweredActions[i]);
-                empoweredCount++;
+                EquippedEmpoweredActions[slot] = KnownEmpoweredActions[i];
+                slot++;
+                i--;
+            }
+        }
+
+        if (KnownMasteryActions.Count > 0) 
+        {
+            int i = KnownMasteryActions.Count - 1;
+            int slot = 0;
+
+            while (i >= 0 && slot < MASTERY_SLOTS)
+            {
+                EquippedMasteryActions[slot] = KnownMasteryActions[i];
+                slot++;
                 i--;
             }
         }
