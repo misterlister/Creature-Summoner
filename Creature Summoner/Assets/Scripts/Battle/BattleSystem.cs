@@ -90,15 +90,24 @@ public class BattleSystem : MonoBehaviour
         dialogBox.EnableActionSelect(true);
         if (battleState == BattleState.PlayerCoreActionSelect)
         {
-            dialogBox.SetCoreActionNames(activeCreature.CreatureInstance);
+            dialogBox.SetActionNames(activeCreature.CreatureInstance.EquippedCoreActions);
         }
         else if (battleState == BattleState.PlayerEmpoweredActionSelect)
         {
-            dialogBox.SetEmpoweredActionNames(activeCreature.CreatureInstance);
+            dialogBox.SetActionNames(activeCreature.CreatureInstance.EquippedEmpoweredActions);
+        }
+        else if (battleState == BattleState.PlayerMasteryActionSelect)
+        {
+            dialogBox.SetActionNames(activeCreature.CreatureInstance.EquippedMasteryActions);
         }
         selectionPosition = 0;
     }
+    /*
+    IEnumerator PerformPlayerAction()
+    {
 
+    }
+    */
     private void Update()
     {
         if (state != BattleState.Start 
@@ -179,7 +188,7 @@ public class BattleSystem : MonoBehaviour
         }
         else
         {
-            UpdateCoreActionSelection();
+            UpdateActionSelection(activeCreature.CreatureInstance.EquippedCoreActions);
         }
     }
 
@@ -196,7 +205,7 @@ public class BattleSystem : MonoBehaviour
         }
         else
         {
-            UpdateEmpoweredActionSelection();
+            UpdateActionSelection(activeCreature.CreatureInstance.EquippedEmpoweredActions);
         }
     }
 
@@ -274,7 +283,9 @@ public class BattleSystem : MonoBehaviour
         }
         else if (selectionPosition < dialogBox.ActionText.Count && dialogBox.ActionText[selectionPosition].text != "-")
         {
-            Debug.Log($"{activeCreature.CreatureInstance.Nickname} used {dialogBox.ActionText[selectionPosition].text}");//TEMP
+            dialogBox.EnableActionSelect(false);
+            dialogBox.EnableDialogText(true);
+            //StartCoroutine(PerformPlayerAction());
         }
     }
 
@@ -304,30 +315,12 @@ public class BattleSystem : MonoBehaviour
         }
     }
 
-    void UpdateCoreActionSelection()
+    void UpdateActionSelection(IAction[] actions)
     {
         ActionBase selectedAction = null;
-        if (selectionPosition == 0)
+        if (selectionPosition >= 0 && selectionPosition < actions.Length)
         {
-            selectedAction = activeCreature.CreatureInstance.PhysicalCore?.Action;
-        }
-        else if (selectionPosition == 1)
-        {
-            selectedAction = activeCreature.CreatureInstance.MagicalCore?.Action;
-        }
-        else if (selectionPosition == 2)
-        {
-            selectedAction = activeCreature.CreatureInstance.DefensiveCore?.Action;
-        }
-        dialogBox.UpdateActionSelection(selectionPosition, selectedAction);
-    }
-
-    void UpdateEmpoweredActionSelection()
-    {
-        ActionBase selectedAction = null;
-        if (selectionPosition < activeCreature.CreatureInstance.EquippedEmpoweredActions.Count)
-        {
-            selectedAction = activeCreature.CreatureInstance.EquippedEmpoweredActions[selectionPosition]?.Action;
+            selectedAction = actions[selectionPosition]?.BaseAction;
         }
         dialogBox.UpdateActionSelection(selectionPosition, selectedAction);
     }

@@ -132,45 +132,17 @@ public class BattleDialogBox : MonoBehaviour
         }
     }
 
-    public void SetCoreActionNames(Creature creature)
-    {
-        if (creature.PhysicalCore == null)
-        {
-            actionText[0].text = "-";
-        }
-        else
-        {
-            actionText[0].text = creature.PhysicalCore.Action.TalentName;
-        }
-        if (creature.MagicalCore == null)
-        {
-            actionText[1].text = "-";
-        }
-        else
-        {
-            actionText[1].text = creature.MagicalCore.Action.TalentName;
-        }
-        if (creature.DefensiveCore == null)
-        {
-            actionText[2].text = "-";
-        }
-        else
-        {
-            actionText[2].text = creature.DefensiveCore.Action.TalentName;
-        }
-    }
-
-    public void SetEmpoweredActionNames(Creature creature)
+    public void SetActionNames(IAction[] actions)
     {
         for (int i = 0; i < actionText.Count - 1; i++)
         {
-            if (i < creature.EquippedEmpoweredActions.Count)
-            {
-                actionText[i].text = creature.EquippedEmpoweredActions[i].Action.TalentName;
-            } 
-            else
+            if (i >= actions.Length || actions[i] == null)
             {
                 actionText[i].text = "-";
+            }
+            else
+            {
+                actionText[i].text = actions[i].BaseAction.TalentName;
             }
         }
     }
