@@ -62,7 +62,27 @@ public class BattleDialogBox : MonoBehaviour
     public void EnableActionSelect(bool enabled)
     {
         actionSelect.SetActive(enabled);
+    }
+
+    public void EnableActionDetails(bool enabled)
+    {
         actionDetails.SetActive(enabled);
+    }
+
+    public void ResetActionSelection()
+    {
+        for (int i = 0; i < actionText.Count; i++)
+        {
+            actionText[i].color = Color.black;
+        }
+    }
+
+    public void HighlightBackOption()
+    {
+        actionText[actionText.Count-1].color = highlightColour;
+        battleLogText.text = backText;
+        actionDetails.SetActive(false);
+        EnableDialogText(true);
     }
 
     public void UpdateActionSelection(int selectedAction, ActionBase action)
@@ -80,9 +100,7 @@ public class BattleDialogBox : MonoBehaviour
         }
         if (selectedAction == actionText.Count - 1)
         {
-            battleLogText.text = backText;
-            actionDetails.SetActive(false);
-            EnableDialogText(true);
+            HighlightBackOption();
         }
         else if (action == null)
         {
@@ -106,6 +124,10 @@ public class BattleDialogBox : MonoBehaviour
             else if (action is EmpoweredActionBase empoweredAction)
             {
                 actionEnergy.text = $"Energy Cost: {empoweredAction.EnergyCost}";
+            }
+            else if (action is MasteryActionBase masteryAction)
+            {
+                actionEnergy.text = $"Mastery Cost: {masteryAction.MasteryCost}";
             }
             else
             {
@@ -144,6 +166,23 @@ public class BattleDialogBox : MonoBehaviour
             {
                 actionText[i].text = actions[i].BaseAction.TalentName;
             }
+        }
+    }
+
+    public void DisableActionOptions(int start, int total)
+    {   if (start < actionText.Count && start + total < actionText.Count)
+        {
+            for (int i = start; i < start + total; i++)
+            {
+                actionText[i].gameObject.SetActive(false);
+            }
+        }
+    }
+    
+    public void EnableActionOptions()
+    {
+        for (int i = 0; i < actionText.Count; i++) {
+            actionText[i].gameObject.SetActive(true);
         }
     }
 }
