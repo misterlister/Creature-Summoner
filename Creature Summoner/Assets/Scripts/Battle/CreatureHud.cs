@@ -20,7 +20,10 @@ public class CreatureHud : MonoBehaviour
     [SerializeField] HPBar hpBar;
     [SerializeField] EnergyBar energyBar;
     [SerializeField] GameObject creatureInfoPanel;
+    [SerializeField] GameObject selectionArrow;
     [SerializeField] bool isEnemy;
+
+    public GameObject SelectionArrow => selectionArrow;
 
     public void SetData(Creature creature)
     {
@@ -94,5 +97,10 @@ public class CreatureHud : MonoBehaviour
     public void EnableCreatureInfoPanel(bool enabled)
     {
         creatureInfoPanel.SetActive(enabled);
+    }
+
+    public void EnableSelectionArrow(bool enabled)
+    {
+        selectionArrow.SetActive(enabled);
     }
 }
