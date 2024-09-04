@@ -5,6 +5,8 @@ using UnityEngine;
 public enum BattleState
 {
     Start,
+    NewRound,
+    DetermineTurn,
     PlayerActionCategorySelect,
     PlayerCoreActionSelect,
     PlayerEmpoweredActionSelect,
@@ -18,27 +20,30 @@ public enum BattleState
 
 public class BattleSystem : MonoBehaviour
 {
-    [SerializeField] BattleCreature playerFrontMid;
-    [SerializeField] BattleCreature enemyFrontMid;
+    [SerializeField] BattleCreature[] friends;
+    [SerializeField] BattleCreature[] enemies;
     [SerializeField] BattleDialogBox dialogBox;
     [SerializeField] GameObject actionCategories;
 
+    const int BATTLE_ROWS = 3;
+    const int BATTLE_COLS = 2;
     const float TEXT_DELAY = 0.8f;
-    const KeyCode acceptKey = KeyCode.Z;
-    const KeyCode backKey = KeyCode.X;
+    const KeyCode ACCEPT_KEY = KeyCode.Z;
+    const KeyCode BACK_KEY = KeyCode.X;
 
     public Dictionary<BattleState, int> StateChoices { get; set; }
 
-    public List<BattleCreature> FieldCreatures { get; set; }
+    public BattleField Field { get; set; }
 
     public BattleCreature activeCreature;
 
     public List<BattleCreature> CreatureTargets { get; set; }
+    public List<BattleCreature> InitiativeOrder { get; set; }
+
     public IAction selectedAction;
     BattleState state;
     int selectionPosition;
-
-
+    int round = 0;
 
     private void Start()
     {
@@ -52,35 +57,118 @@ public class BattleSystem : MonoBehaviour
         dialogBox.EnableActionSelect(false);
         dialogBox.EnableActionDetails(false);
 
-        FieldCreatures = new List<BattleCreature>();
         CreatureTargets = new List<BattleCreature>();
+        InitiativeOrder = new List<BattleCreature>();
 
-        playerFrontMid.Setup();
-        FieldCreatures.Add(playerFrontMid);
-        enemyFrontMid.Setup();
-        FieldCreatures.Add(enemyFrontMid);
+        Field = new BattleField(BATTLE_ROWS, BATTLE_COLS);
+
+        // Add player creatures
+        for (int row = 0; row < BATTLE_ROWS; row++)
+        {
+            for (int col = 0; col < BATTLE_COLS; col++)
+            {
+                int pos = row * BATTLE_COLS + col;
+                if (pos < friends.Length && friends[pos].Ignore == false)
+                {
+                    Field.AddCreature(friends[pos], row, col);
+                }
+            }
+        }
+
+        // Add enemy creatures
+        for (int row = 0; row < BATTLE_ROWS; row++)
+        {
+            for (int col = 0; col < BATTLE_COLS; col++)
+            {
+                int pos = row * BATTLE_COLS + col;
+                if (pos < enemies.Length && enemies[pos].Ignore == false)
+                {
+                    Field.AddCreature(enemies[pos], row, col);
+                }
+            }
+        }
 
         StateChoices = new Dictionary<BattleState, int>
         {
             { BattleState.Start, 0 },
+            { BattleState.NewRound, 0 },
+            { BattleState.DetermineTurn, 0 },
             { BattleState.PlayerActionCategorySelect, dialogBox.ActionCategoryText.Count },
             { BattleState.PlayerCoreActionSelect, dialogBox.ActionText.Count },
             { BattleState.PlayerEmpoweredActionSelect, dialogBox.ActionText.Count },
             { BattleState.PlayerMasteryActionSelect, 2 },
             { BattleState.PlayerMoveSelect, 2 },
-            { BattleState.PlayerExamine, FieldCreatures.Count + 1},
-            { BattleState.TargetSelect, FieldCreatures.Count + 1},
+            { BattleState.PlayerExamine, Field.FieldCreatures.Count + 1 },
+            { BattleState.TargetSelect, Field.FieldCreatures.Count + 1 },
             { BattleState.EnemyAction, 0 },
             { BattleState.Busy, 0 }
         };
 
-        activeCreature = playerFrontMid;
-
-        yield return dialogBox.TypeDialog($"You have been attacked by a {enemyFrontMid.CreatureInstance.Species.CreatureName}!");
+        int enemy_num = Field.GetTargets(false, false).Count;
+        
+        yield return dialogBox.TypeDialog($"You have been attacked by {enemy_num} creatures!");
         yield return new WaitForSeconds(TEXT_DELAY);
 
-        ToPlayerActionCategorySelectState();
+        StartRound();
     }
+
+    void StartRound()
+    {
+        round++;
+        SetupInitiative();
+        ToDetermineTurn();
+    }
+
+    void SetupInitiative()
+    {
+        foreach(var creature in Field.FieldCreatures)
+        {
+            creature.RollInitiative();
+            InitiativeOrder.Add(creature);
+        }
+        InitiativeOrder.Sort((c1, c2) => c2.Initiative.CompareTo(c1.Initiative));
+
+        //// DEBUG
+        foreach (var creature in InitiativeOrder)
+        {
+            Debug.Log($"{creature.CreatureInstance.Nickname} rolled {creature.Initiative}");
+        }
+        //// DEBUG
+    }
+
+    void GetActiveCreature()
+    {
+        while (InitiativeOrder.Count > 0)
+        {
+            if (InitiativeOrder[0].IsDefeated)
+            {
+                // Remove defeated creatures from the Initiative tracker
+                InitiativeOrder.RemoveAt(0);
+            }
+            else
+            {
+                // Set next creature's turn
+                activeCreature = InitiativeOrder[0];
+                InitiativeOrder.RemoveAt(0);
+                ToPlayerActionCategorySelectState();
+                return;
+            }
+        }
+        // When Initiative tracker is empty, start a new round
+        ToNewRound();
+    }
+
+    void ToNewRound()
+    {
+        state = BattleState.NewRound;
+    }
+
+    void ToDetermineTurn()
+    {
+        state = BattleState.DetermineTurn;
+        selectionPosition = 0;
+    }
+
 
     void ToPlayerActionCategorySelectState()
     {
@@ -119,7 +207,7 @@ public class BattleSystem : MonoBehaviour
     {
         state = BattleState.PlayerExamine;
         // Update current number of active Creatures
-        StateChoices[BattleState.PlayerExamine] = FieldCreatures.Count + 1;
+        StateChoices[BattleState.PlayerExamine] = Field.FieldCreatures.Count + 1;
         dialogBox.EnableActionCategorySelect(false);
         dialogBox.EnableActionSelect(true);
         dialogBox.EnableDialogText(true);
@@ -131,7 +219,7 @@ public class BattleSystem : MonoBehaviour
     void ToTargetSelectState()
     {
         state = BattleState.TargetSelect;
-        StateChoices[BattleState.TargetSelect] = FieldCreatures.Count + 1;
+        StateChoices[BattleState.TargetSelect] = Field.FieldCreatures.Count + 1;
         dialogBox.EnableActionCategorySelect(false);
         dialogBox.EnableActionSelect(true);
         dialogBox.EnableDialogText(true);
@@ -149,12 +237,20 @@ public class BattleSystem : MonoBehaviour
     {
         yield return dialogBox.TypeDialog($"{activeCreature.CreatureInstance.Nickname} used {action.BaseAction.TalentName}.");
         yield return new WaitForSeconds(TEXT_DELAY);
-        //yield ToPlayerActionCategorySelectState();
+        ToDetermineTurn();
     }
 
     private void Update()
     {
-        if (state != BattleState.Start 
+        if (state == BattleState.NewRound)
+        {
+            StartRound();
+        }
+        else if (state == BattleState.DetermineTurn) 
+        {
+            GetActiveCreature();
+        }
+        else if (state != BattleState.Start
             && state != BattleState.EnemyAction
             && state != BattleState.Busy)
         {
@@ -209,7 +305,7 @@ public class BattleSystem : MonoBehaviour
 
     void HandlePlayerActionCategorySelect()
     {
-        if (Input.GetKeyDown(acceptKey))
+        if (Input.GetKeyDown(ACCEPT_KEY))
         {
             AcceptActionCategorySelection();
         }
@@ -221,12 +317,12 @@ public class BattleSystem : MonoBehaviour
 
     void HandlePlayerCoreActionSelect()
     {
-        if (Input.GetKeyDown(backKey) || (Input.GetKeyDown(acceptKey) && selectionPosition == StateChoices[state] - 1))
+        if (Input.GetKeyDown(BACK_KEY) || (Input.GetKeyDown(ACCEPT_KEY) && selectionPosition == StateChoices[state] - 1))
         {
             selectionPosition = 0;
             ToPlayerActionCategorySelectState();
         }
-        else if (Input.GetKeyDown(acceptKey))
+        else if (Input.GetKeyDown(ACCEPT_KEY))
         {
             AcceptCoreActionSelection();
         }
@@ -238,12 +334,12 @@ public class BattleSystem : MonoBehaviour
 
     void HandlePlayerEmpoweredActionSelect()
     {
-        if (Input.GetKeyDown(backKey) || (Input.GetKeyDown(acceptKey) && selectionPosition == StateChoices[state] - 1))
+        if (Input.GetKeyDown(BACK_KEY) || (Input.GetKeyDown(ACCEPT_KEY) && selectionPosition == StateChoices[state] - 1))
         {
             selectionPosition = 1;
             ToPlayerActionCategorySelectState();
         }
-        else if (Input.GetKeyDown(acceptKey))
+        else if (Input.GetKeyDown(ACCEPT_KEY))
         {
             AcceptEmpoweredActionSelection();
         }
@@ -255,13 +351,13 @@ public class BattleSystem : MonoBehaviour
 
     void HandlePlayerMasteryActionSelect()
     {
-        if (Input.GetKeyDown(backKey) || (Input.GetKeyDown(acceptKey) && selectionPosition == StateChoices[state] - 1))
+        if (Input.GetKeyDown(BACK_KEY) || (Input.GetKeyDown(ACCEPT_KEY) && selectionPosition == StateChoices[state] - 1))
         {
             selectionPosition = 2;
             dialogBox.EnableActionOptions();
             ToPlayerActionCategorySelectState();
         }
-        else if (Input.GetKeyDown(acceptKey))
+        else if (Input.GetKeyDown(ACCEPT_KEY))
         {
             AcceptMasteryActionSelection();
         }
@@ -278,13 +374,13 @@ public class BattleSystem : MonoBehaviour
 
     void HandlePlayerExamine()
     {
-        if (Input.GetKeyDown(backKey) || (Input.GetKeyDown(acceptKey) && selectionPosition == StateChoices[state] - 1))
+        if (Input.GetKeyDown(BACK_KEY) || (Input.GetKeyDown(ACCEPT_KEY) && selectionPosition == StateChoices[state] - 1))
         {
             // Disable the currently open HUD panel before going back
             if (selectionPosition < StateChoices[state] - 1)
             {
                 ResetTargets();
-                FieldCreatures[selectionPosition].Hud.EnableCreatureInfoPanel(false); 
+                Field.FieldCreatures[selectionPosition].Hud.EnableCreatureInfoPanel(false); 
             }
             selectionPosition = 4;
             dialogBox.EnableActionOptions();
@@ -294,11 +390,11 @@ public class BattleSystem : MonoBehaviour
         {
             ResetTargets();
 
-            if (FieldCreatures.Count > selectionPosition)
+            if (Field.FieldCreatures.Count > selectionPosition)
             {
-                FieldCreatures[selectionPosition].Hud.EnableCreatureInfoPanel(true);
-                FieldCreatures[selectionPosition].Hud.EnableSelectionArrow(true);
-                CreatureTargets.Add(FieldCreatures[selectionPosition]);
+                Field.FieldCreatures[selectionPosition].Hud.EnableCreatureInfoPanel(true);
+                Field.FieldCreatures[selectionPosition].Hud.EnableSelectionArrow(true);
+                CreatureTargets.Add(Field.FieldCreatures[selectionPosition]);
             }
             // Makes the action menu highlight the Back option when it reaches the end
             if (selectionPosition == StateChoices[state] - 1)
