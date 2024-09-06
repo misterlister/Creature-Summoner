@@ -33,6 +33,8 @@ public class BattleDialogBox : MonoBehaviour
     public List<TextMeshProUGUI> ActionText => actionText;
     public List<TextMeshProUGUI> ActionCategoryText => actionCategoryText;
 
+    private Coroutine typingCoroutine;
+
     public void SetDialog(string dialog)
     {
         battleLogText.text = dialog;
@@ -46,6 +48,18 @@ public class BattleDialogBox : MonoBehaviour
             battleLogText.text += letter;
             yield return new WaitForSeconds(1f/LettersPerSecond);
         }
+        typingCoroutine = null; // Reset coroutine reference when complete
+    }
+
+    public Coroutine StartTypingDialog(string dialog)
+    {
+        // Stop any active typing coroutine before starting another
+        if (typingCoroutine != null)
+        {
+            StopCoroutine(typingCoroutine);
+        }
+        typingCoroutine = StartCoroutine(TypeDialog(dialog));
+        return typingCoroutine;
     }
 
     public void EnableDialogText(bool enabled)
