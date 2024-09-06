@@ -40,7 +40,6 @@ public class BattleSystem : MonoBehaviour
     public List<BattleCreature> CreatureTargets { get; set; }
     public List<BattleCreature> InitiativeOrder { get; set; }
 
-    public IAction selectedAction;
     BattleState state;
     int selectionPosition;
     int round = 0;
@@ -63,28 +62,24 @@ public class BattleSystem : MonoBehaviour
         Field = new BattleField(BATTLE_ROWS, BATTLE_COLS);
 
         // Add player creatures
-        for (int row = 0; row < BATTLE_ROWS; row++)
+        for (int i = 0; i < friends.Length; i++)
         {
-            for (int col = 0; col < BATTLE_COLS; col++)
+            if (friends[i] != null && !friends[i].Ignore)
             {
-                int pos = row * BATTLE_COLS + col;
-                if (pos < friends.Length && friends[pos].Ignore == false)
-                {
-                    Field.AddCreature(friends[pos], row, col);
-                }
+                int row = i % BATTLE_ROWS; // Calculate row
+                int col = i / BATTLE_ROWS; // Calculate column
+                Field.AddCreature(friends[i], row, col);
             }
         }
 
         // Add enemy creatures
-        for (int row = 0; row < BATTLE_ROWS; row++)
+        for (int i = 0; i < enemies.Length; i++)
         {
-            for (int col = 0; col < BATTLE_COLS; col++)
+            if (enemies[i] != null && !enemies[i].Ignore)
             {
-                int pos = row * BATTLE_COLS + col;
-                if (pos < enemies.Length && enemies[pos].Ignore == false)
-                {
-                    Field.AddCreature(enemies[pos], row, col);
-                }
+                int row = i % BATTLE_ROWS; // Calculate row
+                int col = i / BATTLE_ROWS; // Calculate column
+                Field.AddCreature(enemies[i], row, col);
             }
         }
 
@@ -106,7 +101,7 @@ public class BattleSystem : MonoBehaviour
 
         int enemy_num = Field.GetTargets(false, false).Count;
         
-        yield return dialogBox.TypeDialog($"You have been attacked by {enemy_num} creatures!");
+        yield return dialogBox.StartTypingDialog($"You have been attacked by {enemy_num} creatures!");
         yield return new WaitForSeconds(TEXT_DELAY);
 
         StartRound();
@@ -147,8 +142,14 @@ public class BattleSystem : MonoBehaviour
             }
             else
             {
+                // Deselect previous creature, if any
+                if (activeCreature != null)
+                {
+                    activeCreature.Select(false);
+                }
                 // Set next creature's turn
                 activeCreature = InitiativeOrder[0];
+                activeCreature.Select(true);
                 InitiativeOrder.RemoveAt(0);
                 ToPlayerActionCategorySelectState();
                 return;
@@ -173,7 +174,7 @@ public class BattleSystem : MonoBehaviour
     void ToPlayerActionCategorySelectState()
     {
         state = BattleState.PlayerActionCategorySelect;
-        StartCoroutine(dialogBox.TypeDialog("Choose which kind of action to take"));
+        dialogBox.StartTypingDialog("Choose which kind of action to take");
         dialogBox.EnableActionCategorySelect(true);
         dialogBox.EnableDialogText(true);
         dialogBox.EnableActionSelect(false);
@@ -230,14 +231,26 @@ public class BattleSystem : MonoBehaviour
 
     void ToBusyState()
     {
+        dialogBox.EnableActionSelect(false);
+        dialogBox.EnableActionDetails(false);
+        dialogBox.EnableDialogText(true);
         state = BattleState.Busy;
     }
 
     IEnumerator PerformPlayerAction(IAction action)
     {
-        yield return dialogBox.TypeDialog($"{activeCreature.CreatureInstance.Nickname} used {action.BaseAction.TalentName}.");
+        ToBusyState();
+        yield return dialogBox.StartTypingDialog($"{activeCreature.CreatureInstance.Nickname} used {action.BaseAction.TalentName}.");
         yield return new WaitForSeconds(TEXT_DELAY);
         ToDetermineTurn();
+    }
+
+    IEnumerator DialogMessage(string message)
+    {
+        ToBusyState();
+        yield return dialogBox.StartTypingDialog(message);
+        yield return new WaitForSeconds(TEXT_DELAY);
+        ToPlayerActionCategorySelectState();
     }
 
     private void Update()
@@ -436,12 +449,11 @@ public class BattleSystem : MonoBehaviour
     {
         if (selectionPosition < dialogBox.ActionText.Count && dialogBox.ActionText[selectionPosition].text != "-")
         {
-            if (activeCreature.CreatureInstance.EquippedCoreActions[selectionPosition] != null)
+            CoreAction selected = activeCreature.CreatureInstance.EquippedCoreActions[selectionPosition];
+            if (selected != null)
             {
-                dialogBox.EnableActionSelect(false);
-                dialogBox.EnableActionDetails(false);
-                dialogBox.EnableDialogText(true);
-                StartCoroutine(PerformPlayerAction(activeCreature.CreatureInstance.EquippedCoreActions[selectionPosition]));
+                activeCreature.AddEnergy(selected.Action.EnergyGain);
+                StartCoroutine(PerformPlayerAction(selected));
             } 
             else
             {
@@ -454,7 +466,24 @@ public class BattleSystem : MonoBehaviour
     {
         if (selectionPosition < dialogBox.ActionText.Count && dialogBox.ActionText[selectionPosition].text != "-")
         {
-            Debug.Log($"{activeCreature.CreatureInstance.Nickname} used {dialogBox.ActionText[selectionPosition].text}");//TEMP
+            EmpoweredAction selected = activeCreature.CreatureInstance.EquippedEmpoweredActions[selectionPosition];
+            if (selected != null)
+            {
+                if (selected.Action.EnergyCost <= activeCreature.CreatureInstance.Energy) 
+                {
+                    activeCreature.RemoveEnergy(selected.Action.EnergyCost);
+                    StartCoroutine(PerformPlayerAction(selected));
+                }
+                else
+                {
+                    StartCoroutine(DialogMessage($"{activeCreature.CreatureInstance.Nickname} does not have enough energy"));
+                }
+
+            }
+            else
+            {
+                Debug.Log("error: selected Core move does not match active creature's available moves.");
+            }
         }
     }
 
@@ -468,12 +497,12 @@ public class BattleSystem : MonoBehaviour
 
     void UpdateActionSelection(IAction[] actions)
     {
-        ActionBase selectedAction = null;
+        ActionBase highlightedAction = null;
         if (selectionPosition >= 0 && selectionPosition < actions.Length)
         {
-            selectedAction = actions[selectionPosition]?.BaseAction;
+            highlightedAction = actions[selectionPosition]?.BaseAction;
         }
-        dialogBox.UpdateActionSelection(selectionPosition, selectedAction);
+        dialogBox.UpdateActionSelection(selectionPosition, highlightedAction);
     }
 
     void ResetTargets()
