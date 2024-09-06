@@ -148,5 +148,69 @@ public class Creature
             }
         }
     }
+
+    public void RemoveHP(int amount)
+    {
+        if (amount < 0)
+        {
+            amount = -amount;
+        }
+        if (amount > HP)
+        {
+            HP = 0;
+        }
+        else
+        {
+            HP -= amount;
+        }
+    }
+
+    public void AddHP(int amount)
+    {
+        if (amount < 0)
+        {
+            amount = -amount;
+        }
+        if (amount + HP > MaxHP)
+        {
+            HP = MaxHP;
+        } 
+        else
+        {
+            HP += amount;
+        }
+    }
+    public void RemoveEnergy(int amount)
+    {
+        if (amount < 0)
+        {
+            amount = -amount;
+        }
+        if (amount > Energy)
+        {
+            Energy = 0;
+        }
+        else
+        {
+            Energy -= amount;
+        }
+    }
+
+    public void AddEnergy(int amount)
+    {
+        if (amount < 0)
+        {
+            amount = -amount;
+        }
+        if (amount + Energy > MaxEnergy)
+        {
+            Energy = MaxEnergy;
+        }
+        else
+        {
+            Energy += amount;
+        }
+    }
+
 }
 
