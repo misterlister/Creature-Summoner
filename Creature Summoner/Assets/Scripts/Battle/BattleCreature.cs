@@ -11,6 +11,7 @@ public class BattleCreature : MonoBehaviour
     [SerializeField] GameObject creatureSprite;
     [SerializeField] bool isPlayerUnit;
     [SerializeField] bool ignore;
+    [SerializeField] GameObject selectionAura;
 
     public Creature CreatureInstance { get; set; } = null;
     public int Initiative { get; private set; }
@@ -20,8 +21,9 @@ public class BattleCreature : MonoBehaviour
     public bool IsPlayerUnit => isPlayerUnit;
     public bool Ignore => ignore;
 
-    private const int DEFAULT_SPRITE_SIZE = 80;
+    private const int DEFAULT_SPRITE_SIZE = 75;
     private const int SIZE_CATEGORY_DIFF = 10;
+    private const float AURA_SIZE_MOD = 1.5f;
 
     private void Awake()
     {
@@ -33,6 +35,8 @@ public class BattleCreature : MonoBehaviour
         CreatureInstance = new Creature(species, level);
 
         gameObject.SetActive(true);
+
+        Select(false);
 
         IsDefeated = false;
 
@@ -79,6 +83,11 @@ public class BattleCreature : MonoBehaviour
                 break;
         }
         rectTransform.sizeDelta = new Vector2(dimension, dimension);
+
+        // Adjust the aura size to be slightly larger than the sprite
+        RectTransform auraRectTransform = selectionAura.GetComponent<RectTransform>();
+        float auraDimension = dimension * AURA_SIZE_MOD;
+        auraRectTransform.sizeDelta = new Vector2(auraDimension, auraDimension);
     }
 
     private void ReverseSpriteDirection()
@@ -96,6 +105,35 @@ public class BattleCreature : MonoBehaviour
     public void Defeated()
     {
         IsDefeated = true;
+    }
+
+    public void Select(bool enabled)
+    {
+        selectionAura.SetActive(enabled);
+    }
+
+    public void AddHP(int amount)
+    {
+        CreatureInstance.AddHP(amount);
+        hud.UpdateHP(CreatureInstance.HP, CreatureInstance.MaxHP);
+    }
+
+    public void RemoveHP(int amount)
+    {
+        CreatureInstance.RemoveHP(amount);
+        hud.UpdateHP(CreatureInstance.HP, CreatureInstance.MaxHP);
+    }
+
+    public void AddEnergy(int amount)
+    {
+        CreatureInstance.AddEnergy(amount);
+        hud.UpdateEnergy(CreatureInstance.Energy, CreatureInstance.MaxEnergy);
+    }
+
+    public void RemoveEnergy(int amount)
+    {
+        CreatureInstance.RemoveEnergy(amount);
+        hud.UpdateEnergy(CreatureInstance.Energy, CreatureInstance.MaxEnergy);
     }
 }
 
