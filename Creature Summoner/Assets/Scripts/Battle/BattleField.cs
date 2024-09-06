@@ -35,9 +35,82 @@ public class BattleField
         {
             return false;
         }
-        FieldCreatures.Add(creature);
+
+        InsertCreatureInOrder(creature, row, col);
+
         creature.Setup();
         return true;
+    }
+
+    private void InsertCreatureInOrder(BattleCreature creature, int row, int col)
+    {
+        int index = GetInsertIndex(creature.IsPlayerUnit, row, col);
+        if (index >= FieldCreatures.Count)
+        {
+            FieldCreatures.Add(creature);
+        }
+        else
+        {
+            FieldCreatures.Insert(index, creature);
+        }
+    }
+
+    private int GetInsertIndex(bool isPlayerUnit, int row, int col)
+    {
+        int index = 0;
+
+        // Player's back column comes first (col 1)
+        for (int r = 0; r < rows; r++)
+        {
+            if (PlayerGrid[r, 1] != null)
+            {
+                if (isPlayerUnit && col == 1 && row == r)
+                {
+                    return index;
+                }
+                index++;
+            }
+        }
+
+        // Player's front column comes next (col 0)
+        for (int r = 0; r < rows; r++)
+        {
+            if (PlayerGrid[r, 0] != null)
+            {
+                if (isPlayerUnit && col == 0 && row == r)
+                {
+                    return index;
+                }
+                index++;
+            }
+        }
+
+        // Enemy's front column comes next (col 0)
+        for (int r = 0; r < rows; r++)
+        {
+            if (EnemyGrid[r, 0] != null)
+            {
+                if (!isPlayerUnit && col == 0 && row == r)
+                {
+                    return index;
+                }
+                index++;
+            }
+        }
+
+        // Enemy's back column comes last (col 1)
+        for (int r = 0; r < rows; r++)
+        {
+            if (EnemyGrid[r, 1] != null)
+            {
+                if (!isPlayerUnit && col == 1 && row == r)
+                {
+                    return index;
+                }
+                index++;
+            }
+        }
+        return index;
     }
 
     public bool RemoveCreature(BattleCreature creature)
