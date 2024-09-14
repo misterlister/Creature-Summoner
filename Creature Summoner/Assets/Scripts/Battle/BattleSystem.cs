@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public enum BattleState
@@ -121,7 +122,11 @@ public class BattleSystem : MonoBehaviour
             creature.RollInitiative();
             InitiativeOrder.Add(creature);
         }
-        InitiativeOrder.Sort((c1, c2) => c2.Initiative.CompareTo(c1.Initiative));
+        InitiativeOrder = InitiativeOrder
+        .OrderByDescending(c => c.Initiative)   // Primary: Initiative
+        .ThenByDescending(c => c.CreatureInstance.Speed)  // Secondary: Speed Stat
+        .ThenByDescending(c => c.CreatureInstance.Species.Speed) // Tertiary: Species Base Speed
+        .ToList();
 
         //// DEBUG
         foreach (var creature in InitiativeOrder)
@@ -337,7 +342,7 @@ public class BattleSystem : MonoBehaviour
         }
         else if (Input.GetKeyDown(ACCEPT_KEY))
         {
-            AcceptCoreActionSelection();
+            SelectCoreAction();
         }
         else
         {
@@ -354,7 +359,7 @@ public class BattleSystem : MonoBehaviour
         }
         else if (Input.GetKeyDown(ACCEPT_KEY))
         {
-            AcceptEmpoweredActionSelection();
+            SelectEmpoweredAction();
         }
         else
         {
@@ -372,7 +377,7 @@ public class BattleSystem : MonoBehaviour
         }
         else if (Input.GetKeyDown(ACCEPT_KEY))
         {
-            AcceptMasteryActionSelection();
+            SelectMasteryAction();
         }
         else
         {
@@ -445,7 +450,7 @@ public class BattleSystem : MonoBehaviour
         }
     }
 
-    void AcceptCoreActionSelection()
+    void SelectCoreAction()
     {
         if (selectionPosition < dialogBox.ActionText.Count && dialogBox.ActionText[selectionPosition].text != "-")
         {
@@ -462,7 +467,7 @@ public class BattleSystem : MonoBehaviour
         }
     }
 
-    void AcceptEmpoweredActionSelection()
+    void SelectEmpoweredAction()
     {
         if (selectionPosition < dialogBox.ActionText.Count && dialogBox.ActionText[selectionPosition].text != "-")
         {
@@ -487,7 +492,7 @@ public class BattleSystem : MonoBehaviour
         }
     }
 
-    void AcceptMasteryActionSelection()
+    void SelectMasteryAction()
     {
         if (selectionPosition < dialogBox.ActionText.Count && dialogBox.ActionText[selectionPosition].text != "-")
         {
@@ -504,6 +509,8 @@ public class BattleSystem : MonoBehaviour
         }
         dialogBox.UpdateActionSelection(selectionPosition, highlightedAction);
     }
+
+    
 
     void ResetTargets()
     {
