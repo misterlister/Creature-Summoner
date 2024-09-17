@@ -174,6 +174,9 @@ public class BattleField
 
     public BattleCreature GetCreature(bool isPlayerUnit, int row, int col)
     {
+        if (row >= rows || row < 0) return null;
+        if (col >= cols || col < 0) return null;
+
         var grid = isPlayerUnit ? PlayerGrid : EnemyGrid;
 
         return grid[row, col];
