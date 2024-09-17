@@ -12,7 +12,7 @@ public enum BattleState
     PlayerCoreActionSelect,
     PlayerEmpoweredActionSelect,
     PlayerMasteryActionSelect,
-    PlayerMoveSelect,
+    PlayerMovementSelect,
     PlayerExamine,
     TargetSelect,
     EnemyAction,
@@ -26,13 +26,19 @@ public class BattleSystem : MonoBehaviour
     [SerializeField] BattleDialogBox dialogBox;
     [SerializeField] GameObject actionCategories;
 
-    const int BATTLE_ROWS = 3;
-    const int BATTLE_COLS = 2;
-    const float TEXT_DELAY = 0.8f;
-    const KeyCode ACCEPT_KEY = KeyCode.Z;
-    const KeyCode BACK_KEY = KeyCode.X;
+    const int BATTLE_ROWS = 3; // Number of Rows on each side of the battlefield
+    const int BATTLE_COLS = 2; // Number of Columns on each side of the battlefield
 
-    public Dictionary<BattleState, int> StateChoices { get; set; }
+    const int BATTLE_MENU_COLS = 2; // Number of Columns in the battle selection menu
+    const int CORE_ACTION_COUNT = 3;
+    const int EMPOWERED_ACTION_COUNT = 3;
+    const int MASTERY_ACTION_COUNT = 1;
+
+    const float TEXT_DELAY = 0.8f; // Time delay after text is done printing
+    const KeyCode ACCEPT_KEY = KeyCode.Z; // Keyboard key which accepts options
+    const KeyCode BACK_KEY = KeyCode.X; // Keyboard key which indicates cancelling or going back
+
+    public Dictionary<BattleState, (int rows, int cols)> StateChoices { get; set; }
 
     public BattleField Field { get; set; }
 
@@ -42,8 +48,10 @@ public class BattleSystem : MonoBehaviour
     public List<BattleCreature> InitiativeOrder { get; set; }
 
     BattleState state;
-    int selectionPosition;
-    int round = 0;
+    int selectionPositionX;
+    int selectionPositionY;
+    int combatRound;
+    bool alliedFieldSelected; // Determines if the allied side of the field is selected
 
     private void Start()
     {
@@ -84,23 +92,25 @@ public class BattleSystem : MonoBehaviour
             }
         }
 
-        StateChoices = new Dictionary<BattleState, int>
+        StateChoices = new Dictionary<BattleState, (int rows, int cols)>
         {
-            { BattleState.Start, 0 },
-            { BattleState.NewRound, 0 },
-            { BattleState.DetermineTurn, 0 },
-            { BattleState.PlayerActionCategorySelect, dialogBox.ActionCategoryText.Count },
-            { BattleState.PlayerCoreActionSelect, dialogBox.ActionText.Count },
-            { BattleState.PlayerEmpoweredActionSelect, dialogBox.ActionText.Count },
-            { BattleState.PlayerMasteryActionSelect, 2 },
-            { BattleState.PlayerMoveSelect, 2 },
-            { BattleState.PlayerExamine, Field.FieldCreatures.Count + 1 },
-            { BattleState.TargetSelect, Field.FieldCreatures.Count + 1 },
-            { BattleState.EnemyAction, 0 },
-            { BattleState.Busy, 0 }
+            { BattleState.Start, (0, 0) },
+            { BattleState.NewRound, (0, 0) },
+            { BattleState.DetermineTurn, (0, 0) },
+            { BattleState.PlayerActionCategorySelect, (Mathf.CeilToInt((float)dialogBox.ActionCategoryText.Count/BATTLE_MENU_COLS), BATTLE_MENU_COLS) },
+            { BattleState.PlayerCoreActionSelect, (Mathf.CeilToInt((float)CORE_ACTION_COUNT/BATTLE_MENU_COLS), BATTLE_MENU_COLS) },
+            { BattleState.PlayerEmpoweredActionSelect, (Mathf.CeilToInt((float)EMPOWERED_ACTION_COUNT/BATTLE_MENU_COLS), BATTLE_MENU_COLS) },
+            { BattleState.PlayerMasteryActionSelect, (Mathf.CeilToInt((float)MASTERY_ACTION_COUNT/BATTLE_MENU_COLS), BATTLE_MENU_COLS) },
+            { BattleState.PlayerMovementSelect, (2, BATTLE_COLS) },
+            { BattleState.PlayerExamine, (BATTLE_ROWS + 1, BATTLE_COLS * 2) },
+            { BattleState.TargetSelect, (BATTLE_ROWS + 1, BATTLE_COLS * 2) },
+            { BattleState.EnemyAction, (0, 0) },
+            { BattleState.Busy, (0, 0) }
         };
 
         int enemy_num = Field.GetTargets(false, false).Count;
+        combatRound = 0;
+        alliedFieldSelected = true;
         
         yield return dialogBox.StartTypingDialog($"You have been attacked by {enemy_num} creatures!");
         yield return new WaitForSeconds(TEXT_DELAY);
@@ -110,7 +120,7 @@ public class BattleSystem : MonoBehaviour
 
     void StartRound()
     {
-        round++;
+        combatRound++;
         SetupInitiative();
         ToDetermineTurn();
     }
@@ -172,7 +182,13 @@ public class BattleSystem : MonoBehaviour
     void ToDetermineTurn()
     {
         state = BattleState.DetermineTurn;
-        selectionPosition = 0;
+        resetSelections();
+    }
+
+    void resetSelections(int y = 0, int x = 0)
+    {
+        selectionPositionY = y;
+        selectionPositionX = x;
     }
 
 
@@ -206,32 +222,29 @@ public class BattleSystem : MonoBehaviour
             dialogBox.SetActionNames(activeCreature.CreatureInstance.EquippedMasteryActions);
             dialogBox.DisableActionOptions(1, 2);
         }
-        selectionPosition = 0;
+        resetSelections();
     }
 
     void ToPlayerExamineState()
     {
         state = BattleState.PlayerExamine;
-        // Update current number of active Creatures
-        StateChoices[BattleState.PlayerExamine] = Field.FieldCreatures.Count + 1;
         dialogBox.EnableActionCategorySelect(false);
         dialogBox.EnableActionSelect(true);
         dialogBox.EnableDialogText(true);
         dialogBox.DisableActionOptions(0, 3);
         dialogBox.ResetActionSelection();
-        selectionPosition = 0;
+        resetSelections();
     }
 
     void ToTargetSelectState()
     {
         state = BattleState.TargetSelect;
-        StateChoices[BattleState.TargetSelect] = Field.FieldCreatures.Count + 1;
         dialogBox.EnableActionCategorySelect(false);
         dialogBox.EnableActionSelect(true);
         dialogBox.EnableDialogText(true);
         dialogBox.DisableActionOptions(0, 3);
         dialogBox.ResetActionSelection();
-        selectionPosition = 0;
+        resetSelections();
     }
 
     void ToBusyState()
@@ -272,28 +285,40 @@ public class BattleSystem : MonoBehaviour
             && state != BattleState.EnemyAction
             && state != BattleState.Busy)
         {
-            HandleMenuSelection(StateChoices[state]);
+            HandleMenuSelection();
             HandleStateBasedInput();
         }
     }
 
-    void HandleMenuSelection(int optionCount)
+    void HandleMenuSelection()
     {
         if (Input.GetKeyDown(KeyCode.DownArrow))
         {
-            selectionPosition = (selectionPosition + 2) % optionCount;
+            if (StateChoices[state].rows != 0)
+            {
+                selectionPositionY = (selectionPositionY + 1) % StateChoices[state].rows;
+            }
         }
         else if (Input.GetKeyDown(KeyCode.UpArrow))
         {
-            selectionPosition = (selectionPosition - 2 + optionCount) % optionCount;
+            if (StateChoices[state].rows != 0)
+            {
+                selectionPositionY = (selectionPositionY - 1 + StateChoices[state].rows) % StateChoices[state].rows;
+            }
         }
         else if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
-            selectionPosition = (selectionPosition - 1 + optionCount) % optionCount;
+            if (StateChoices[state].cols != 0)
+            {
+                selectionPositionX = (selectionPositionX - 1 + StateChoices[state].cols) % StateChoices[state].cols;
+            }
         }
         else if (Input.GetKeyDown(KeyCode.RightArrow))
         {
-            selectionPosition = (selectionPosition + 1) % optionCount;
+            if (StateChoices[state].cols != 0)
+            {
+                selectionPositionX = (selectionPositionX + 1) % StateChoices[state].cols;
+            }
         }
     }
 
@@ -328,16 +353,18 @@ public class BattleSystem : MonoBehaviour
             AcceptActionCategorySelection();
         }
         else
-        {
-            dialogBox.UpdateActionCategorySelection(selectionPosition);
+        {;
+            dialogBox.UpdateActionCategorySelection(LinearSelectionPosition());
         }
     }
 
     void HandlePlayerCoreActionSelect()
     {
-        if (Input.GetKeyDown(BACK_KEY) || (Input.GetKeyDown(ACCEPT_KEY) && selectionPosition == StateChoices[state] - 1))
+        if (Input.GetKeyDown(BACK_KEY) || (Input.GetKeyDown(ACCEPT_KEY) 
+            && selectionPositionX == StateChoices[state].rows - 1
+            && selectionPositionY == StateChoices[state].cols - 1))
         {
-            selectionPosition = 0;
+            resetSelections();
             ToPlayerActionCategorySelectState();
         }
         else if (Input.GetKeyDown(ACCEPT_KEY))
@@ -352,9 +379,11 @@ public class BattleSystem : MonoBehaviour
 
     void HandlePlayerEmpoweredActionSelect()
     {
-        if (Input.GetKeyDown(BACK_KEY) || (Input.GetKeyDown(ACCEPT_KEY) && selectionPosition == StateChoices[state] - 1))
+        if (Input.GetKeyDown(BACK_KEY) || (Input.GetKeyDown(ACCEPT_KEY)
+            && selectionPositionX == StateChoices[state].rows - 1
+            && selectionPositionY == StateChoices[state].cols - 1))
         {
-            selectionPosition = 1;
+            resetSelections(0, 1);
             ToPlayerActionCategorySelectState();
         }
         else if (Input.GetKeyDown(ACCEPT_KEY))
@@ -369,9 +398,12 @@ public class BattleSystem : MonoBehaviour
 
     void HandlePlayerMasteryActionSelect()
     {
-        if (Input.GetKeyDown(BACK_KEY) || (Input.GetKeyDown(ACCEPT_KEY) && selectionPosition == StateChoices[state] - 1))
+        int selection = LinearSelectionPosition();
+        if (Input.GetKeyDown(BACK_KEY) || (Input.GetKeyDown(ACCEPT_KEY)
+            && selectionPositionX == StateChoices[state].rows - 1
+            && selectionPositionY == StateChoices[state].cols - 1))
         {
-            selectionPosition = 2;
+            resetSelections(1, 0);
             dialogBox.EnableActionOptions();
             ToPlayerActionCategorySelectState();
         }
@@ -383,7 +415,8 @@ public class BattleSystem : MonoBehaviour
         {
             UpdateActionSelection(activeCreature.CreatureInstance.EquippedMasteryActions);
             // Highlight 'Back' option if last option is selected
-            if (selectionPosition == StateChoices[state] - 1)
+            if (selectionPositionX == StateChoices[state].rows - 1
+            && selectionPositionY == StateChoices[state].cols - 1)
             {
                 dialogBox.HighlightBackOption();
             }
@@ -392,15 +425,19 @@ public class BattleSystem : MonoBehaviour
 
     void HandlePlayerExamine()
     {
-        if (Input.GetKeyDown(BACK_KEY) || (Input.GetKeyDown(ACCEPT_KEY) && selectionPosition == StateChoices[state] - 1))
+        BattleCreature selectedCreature = CreatureByPosition();
+        if (Input.GetKeyDown(BACK_KEY) || (Input.GetKeyDown(ACCEPT_KEY) && selectionPositionY == StateChoices[state].cols - 1))
         {
             // Disable the currently open HUD panel before going back
-            if (selectionPosition < StateChoices[state] - 1)
+            if (selectionPositionY < StateChoices[state].cols - 1)
             {
                 ResetTargets();
-                Field.FieldCreatures[selectionPosition].Hud.EnableCreatureInfoPanel(false); 
+                if (selectedCreature != null)
+                {
+                    selectedCreature.Hud.EnableCreatureInfoPanel(false); 
+                }
             }
-            selectionPosition = 4;
+            resetSelections(2, 0);
             dialogBox.EnableActionOptions();
             ToPlayerActionCategorySelectState();
         }
@@ -408,14 +445,14 @@ public class BattleSystem : MonoBehaviour
         {
             ResetTargets();
 
-            if (Field.FieldCreatures.Count > selectionPosition)
+            if (selectedCreature != null)
             {
-                Field.FieldCreatures[selectionPosition].Hud.EnableCreatureInfoPanel(true);
-                Field.FieldCreatures[selectionPosition].Hud.EnableSelectionArrow(true);
-                CreatureTargets.Add(Field.FieldCreatures[selectionPosition]);
+                selectedCreature.Hud.EnableCreatureInfoPanel(true);
+                selectedCreature.Hud.EnableSelectionArrow(true);
+                CreatureTargets.Add(selectedCreature);
             }
             // Makes the action menu highlight the Back option when it reaches the end
-            if (selectionPosition == StateChoices[state] - 1)
+            if (selectionPositionY == StateChoices[state].rows - 1)
             {
                 dialogBox.HighlightBackOption();
             } 
@@ -428,23 +465,24 @@ public class BattleSystem : MonoBehaviour
 
     void AcceptActionCategorySelection()
     {
-        if (selectionPosition == 0)
+        int selected = LinearSelectionPosition();
+        if (selected == 0)
         {
             ToPlayerActionSelectState(BattleState.PlayerCoreActionSelect);
         }
-        else if (selectionPosition == 1)
+        else if (selected == 1)
         {
             ToPlayerActionSelectState(BattleState.PlayerEmpoweredActionSelect);
         }
-        else if (selectionPosition == 2)
+        else if (selected == 2)
         {
             ToPlayerActionSelectState(BattleState.PlayerMasteryActionSelect);
         }
-        else if (selectionPosition == 3)
+        else if (selected == 3)
         {
             //PlayerActionSelect(BattleState.PlayerMoveSelect);
         }
-        else if (selectionPosition == 4)
+        else if (selected == 4)
         {
             ToPlayerExamineState();
         }
@@ -452,9 +490,10 @@ public class BattleSystem : MonoBehaviour
 
     void SelectCoreAction()
     {
-        if (selectionPosition < dialogBox.ActionText.Count && dialogBox.ActionText[selectionPosition].text != "-")
+        int selection = LinearSelectionPosition();
+        if (selection < dialogBox.ActionText.Count && dialogBox.ActionText[selection].text != "-")
         {
-            CoreAction selected = activeCreature.CreatureInstance.EquippedCoreActions[selectionPosition];
+            CoreAction selected = activeCreature.CreatureInstance.EquippedCoreActions[selection];
             if (selected != null)
             {
                 activeCreature.AddEnergy(selected.Action.EnergyGain);
@@ -469,9 +508,10 @@ public class BattleSystem : MonoBehaviour
 
     void SelectEmpoweredAction()
     {
-        if (selectionPosition < dialogBox.ActionText.Count && dialogBox.ActionText[selectionPosition].text != "-")
+        int selection = LinearSelectionPosition();
+        if (selection < dialogBox.ActionText.Count && dialogBox.ActionText[selection].text != "-")
         {
-            EmpoweredAction selected = activeCreature.CreatureInstance.EquippedEmpoweredActions[selectionPosition];
+            EmpoweredAction selected = activeCreature.CreatureInstance.EquippedEmpoweredActions[selection];
             if (selected != null)
             {
                 if (selected.Action.EnergyCost <= activeCreature.CreatureInstance.Energy) 
@@ -494,23 +534,46 @@ public class BattleSystem : MonoBehaviour
 
     void SelectMasteryAction()
     {
-        if (selectionPosition < dialogBox.ActionText.Count && dialogBox.ActionText[selectionPosition].text != "-")
+        int selection = LinearSelectionPosition();
+        if (selection < dialogBox.ActionText.Count && dialogBox.ActionText[selection].text != "-")
         {
-            Debug.Log($"{activeCreature.CreatureInstance.Nickname} used {dialogBox.ActionText[selectionPosition].text}");//TEMP
+            Debug.Log($"{activeCreature.CreatureInstance.Nickname} used {dialogBox.ActionText[selection].text}");//TEMP
         }
     }
 
     void UpdateActionSelection(IAction[] actions)
     {
+        int selection = LinearSelectionPosition();
         ActionBase highlightedAction = null;
-        if (selectionPosition >= 0 && selectionPosition < actions.Length)
+        if (selection >= 0 && selection < actions.Length)
         {
-            highlightedAction = actions[selectionPosition]?.BaseAction;
+            highlightedAction = actions[selection]?.BaseAction;
         }
-        dialogBox.UpdateActionSelection(selectionPosition, highlightedAction);
+        dialogBox.UpdateActionSelection(selection, highlightedAction);
     }
 
-    
+    int LinearSelectionPosition()
+    {
+        return selectionPositionY * StateChoices[state].cols + selectionPositionX;
+    }
+
+    private BattleCreature CreatureByPosition()
+    {
+        int yIndex = selectionPositionY;
+        int xIndex = selectionPositionX;
+        if (selectionPositionX < BATTLE_COLS)
+        {
+            alliedFieldSelected = true;
+            xIndex = (xIndex + 1) % BATTLE_COLS;
+        }
+        else
+        {
+            alliedFieldSelected = false;
+            xIndex -= BATTLE_COLS;
+
+        }
+        return Field.GetCreature(alliedFieldSelected, yIndex, xIndex);
+    }
 
     void ResetTargets()
     {
