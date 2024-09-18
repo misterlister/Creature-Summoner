@@ -23,13 +23,13 @@ public class Creature
     public float GlancingDamageReduction { get; set; }
     public int ChanceToBeGlanced { get; set; }
 
-    public List<CoreAction> KnownCoreActions { get; set; }
-    public List<EmpoweredAction> KnownEmpoweredActions { get; set; }
-    public List<MasteryAction> KnownMasteryActions { get; set; }
+    public List<CreatureAction> KnownCoreActions { get; set; }
+    public List<CreatureAction> KnownEmpoweredActions { get; set; }
+    public List<CreatureAction> KnownMasteryActions { get; set; }
 
-    public CoreAction[] EquippedCoreActions { get; set; }
-    public EmpoweredAction[] EquippedEmpoweredActions { get; set; }
-    public MasteryAction[] EquippedMasteryActions { get; set; }
+    public CreatureAction[] EquippedCoreActions { get; set; }
+    public CreatureAction[] EquippedEmpoweredActions { get; set; }
+    public CreatureAction[] EquippedMasteryActions { get; set; }
 
     public Creature(CreatureBase creatureBase, int creatureLevel, string nickname = "")
     {
@@ -54,12 +54,12 @@ public class Creature
         GlancingDamageReduction = 0.25f;
         ChanceToBeGlanced = 51;
 
-        KnownCoreActions = new List<CoreAction>();
-        KnownEmpoweredActions = new List<EmpoweredAction>();
-        KnownMasteryActions = new List<MasteryAction>();
-        EquippedCoreActions = new CoreAction[CORE_SLOTS];
-        EquippedEmpoweredActions = new EmpoweredAction[EMPOWERED_SLOTS];
-        EquippedMasteryActions = new MasteryAction[MASTERY_SLOTS];
+        KnownCoreActions = new List<CreatureAction>();
+        KnownEmpoweredActions = new List<CreatureAction>();
+        KnownMasteryActions = new List<CreatureAction>();
+        EquippedCoreActions = new CreatureAction[CORE_SLOTS];
+        EquippedEmpoweredActions = new CreatureAction[EMPOWERED_SLOTS];
+        EquippedMasteryActions = new CreatureAction[MASTERY_SLOTS];
 
         initTalents();
         equipTalents();
@@ -97,17 +97,20 @@ public class Creature
         {
             if (talent.Level <= Level)
             {
-                if (talent.TalentBase is CoreActionBase coreActionBase)
+                if (talent.TalentBase is ActionBase actionBase)
                 {
-                    KnownCoreActions.Add(new CoreAction(coreActionBase));
-                }
-                else if (talent.TalentBase is EmpoweredActionBase empoweredActionBase)
-                {
-                    KnownEmpoweredActions.Add(new EmpoweredAction(empoweredActionBase));
-                }
-                else if (talent.TalentBase is MasteryActionBase masteryActionBase)
-                {
-                    KnownMasteryActions.Add(new MasteryAction(masteryActionBase));
+                    if (actionBase.Category == ActionCategory.Core)
+                    {
+                        KnownCoreActions.Add(new CreatureAction(actionBase));
+                    }
+                    else if (actionBase.Category == ActionCategory.Empowered)
+                    {
+                        KnownEmpoweredActions.Add(new CreatureAction(actionBase));
+                    }
+                    else if (actionBase.Category == ActionCategory.Mastery)
+                    {
+                        KnownMasteryActions.Add(new CreatureAction(actionBase));
+                    }
                 }
             }
         }
@@ -121,15 +124,15 @@ public class Creature
 
             while (i >= 0 && (EquippedCoreActions[0] == null || EquippedCoreActions[1] == null || EquippedCoreActions[2] == null))
             {
-                if (KnownCoreActions[i].Action.Category == ActionCategory.Physical && EquippedCoreActions[0] == null)
+                if (KnownCoreActions[i].Action.Source == ActionSource.Physical && EquippedCoreActions[0] == null)
                 {
                     EquippedCoreActions[0] = KnownCoreActions[i]; // Equip last learned Physical Core Action
                 } 
-                else if (KnownCoreActions[i].Action.Category == ActionCategory.Magical && EquippedCoreActions[1] == null)
+                else if (KnownCoreActions[i].Action.Source == ActionSource.Magical && EquippedCoreActions[1] == null)
                 {
                     EquippedCoreActions[1] = KnownCoreActions[i]; // Equip last learned Magical Core Action
                 } 
-                else if (KnownCoreActions[i].Action.Category == ActionCategory.Defensive && EquippedCoreActions[2] == null)
+                else if (KnownCoreActions[i].Action.Source == ActionSource.Defensive && EquippedCoreActions[2] == null)
                 {
                     EquippedCoreActions[2] = KnownCoreActions[i]; // Equip last learned Defensive Core Action
                 }

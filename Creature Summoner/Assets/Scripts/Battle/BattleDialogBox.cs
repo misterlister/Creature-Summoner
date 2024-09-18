@@ -131,17 +131,17 @@ public class BattleDialogBox : MonoBehaviour
             actionRange.text = action.Ranged ? "Ranged" : "Melee";
             actionPower.text = $"Power: {action.Power}";
             actionAccuracy.text = $"Accuracy: {action.Accuracy}%";
-            if (action is CoreActionBase coreAction)
+            if (action.Category == ActionCategory.Core)
             {
-                actionEnergy.text = $"Energy Gain: {coreAction.EnergyGain}";
+                actionEnergy.text = $"Energy Gain: {action.Energy}";
             }
-            else if (action is EmpoweredActionBase empoweredAction)
+            else if (action.Category == ActionCategory.Empowered)
             {
-                actionEnergy.text = $"Energy Cost: {empoweredAction.EnergyCost}";
+                actionEnergy.text = $"Energy Cost: {action.Energy}";
             }
-            else if (action is MasteryActionBase masteryAction)
+            else if (action.Category == ActionCategory.Mastery)
             {
-                actionEnergy.text = $"Mastery Cost: {masteryAction.MasteryCost}";
+                actionEnergy.text = $"Mastery Cost: {action.Energy}";
             }
             else
             {
@@ -168,7 +168,7 @@ public class BattleDialogBox : MonoBehaviour
         }
     }
 
-    public void SetActionNames(IAction[] actions)
+    public void SetActionNames(CreatureAction[] actions)
     {
         for (int i = 0; i < actionText.Count - 1; i++)
         {
@@ -178,7 +178,7 @@ public class BattleDialogBox : MonoBehaviour
             }
             else
             {
-                actionText[i].text = actions[i].BaseAction.TalentName;
+                actionText[i].text = actions[i].Action.TalentName;
             }
         }
     }

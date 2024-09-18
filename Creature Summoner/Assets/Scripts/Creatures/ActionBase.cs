@@ -2,7 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class ActionBase : Talent
+[CreateAssetMenu(fileName = "NewAction", menuName = "Talents/Create new Action")]
+public class ActionBase : Talent
 {
     const float HIT_MODIFIER = 0.5f;
     const float MAX_HIT = 1.00f;
@@ -16,6 +17,7 @@ public abstract class ActionBase : Talent
 
     [SerializeField] CreatureType type;
     [SerializeField] ActionCategory category;
+    [SerializeField] ActionSource source;
     [SerializeField] int power = 40;
     [SerializeField] int accuracy = 90;
     [SerializeField] bool ranged;
@@ -24,9 +26,11 @@ public abstract class ActionBase : Talent
     [SerializeField] int numTargets = 1;
     [SerializeField] int baseCrit = 5;
     [SerializeField] List<string> tags;
+    [SerializeField] int energy;
 
     public CreatureType Type => type;
     public ActionCategory Category => category;
+    public ActionSource Source => source;
     public int Power => power;
     public int Accuracy => accuracy;
     public bool Ranged => ranged;
@@ -35,6 +39,7 @@ public abstract class ActionBase : Talent
     public int NumTargets => numTargets;
     public int BaseCrit => baseCrit;
     public List<string> Tags => tags;
+    public int Energy => energy;
 
     public int CalculateAccuracy(Creature attacker, Creature defender)
     {
@@ -48,13 +53,13 @@ public abstract class ActionBase : Talent
         float attack = 1f;
         float defense = 1f;
 
-        if (category == ActionCategory.Physical)
+        if (source == ActionSource.Physical)
         {
             attack = attacker.Strength;
             defense = defender.Defense;
         }
 
-        if (category == ActionCategory.Magical)
+        if (source == ActionSource.Magical)
         {
             attack = attacker.Magic;
             defense = defender.Resistance;
