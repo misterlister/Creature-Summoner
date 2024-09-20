@@ -44,8 +44,12 @@ public class BattleSystem : MonoBehaviour
 
     public BattleCreature activeCreature;
 
+    private BattleCreature highlightedCreature;
+
     public List<BattleCreature> CreatureTargets { get; set; }
     public List<BattleCreature> InitiativeOrder { get; set; }
+
+    private ActionBase selectedAction;
 
     Stack<BattleState> stateStack = new Stack<BattleState>();
     Stack<(int y, int x)> positionStack = new Stack<(int y, int x)>();
@@ -185,15 +189,19 @@ public class BattleSystem : MonoBehaviour
     void ToDetermineTurn()
     {
         state = BattleState.DetermineTurn;
-        resetSelections();
+        ResetSelectionPositions();
     }
 
-    void resetSelections(int y = 0, int x = 0)
+    void ResetSelectionPositions(int y = 0, int x = 0)
     {
         selectionPositionY = y;
         selectionPositionX = x;
     }
 
+    void ResetSelectedAction()
+    {
+        selectedAction = null;
+    }
 
     void ToPlayerActionCategorySelectState()
     {
@@ -226,7 +234,7 @@ public class BattleSystem : MonoBehaviour
             dialogBox.SetActionNames(activeCreature.CreatureInstance.EquippedMasteryActions);
             dialogBox.DisableActionOptions(1, 2);
         }
-        resetSelections();
+        ResetSelectionPositions();
     }
 
     void ToPlayerExamineState()
@@ -238,7 +246,7 @@ public class BattleSystem : MonoBehaviour
         dialogBox.EnableDialogText(true);
         dialogBox.DisableActionOptions(0, 3);
         dialogBox.ResetActionSelection();
-        resetSelections();
+        ResetSelectionPositions();
     }
 
     void ToTargetSelectState()
@@ -247,10 +255,10 @@ public class BattleSystem : MonoBehaviour
         state = BattleState.TargetSelect;
         dialogBox.EnableActionCategorySelect(false);
         dialogBox.EnableActionSelect(true);
-        dialogBox.EnableDialogText(true);
+        dialogBox.EnableDialogText(false);
         dialogBox.DisableActionOptions(0, 3);
         dialogBox.ResetActionSelection();
-        resetSelections();
+        ResetSelectionPositions();
     }
 
     void ToBusyState()
@@ -263,11 +271,46 @@ public class BattleSystem : MonoBehaviour
 
     IEnumerator PerformPlayerAction(ActionBase action)
     {
-        ToBusyState();
-        yield return dialogBox.StartTypingDialog($"{activeCreature.CreatureInstance.Nickname} used {action.TalentName}.");
-        yield return new WaitForSeconds(TEXT_DELAY);
-        ClearStacks();
-        ToDetermineTurn();
+        try
+        {
+            // Check for null values and ensure there's at least one target
+            if (selectedAction == null)
+            {
+                Debug.LogError("Error: selectedAction is null.");
+                yield break; // Exit the coroutine if selectedAction is null
+            }
+
+            if (activeCreature == null)
+            {
+                Debug.LogError("Error: activeCreature is null.");
+                yield break; // Exit the coroutine if activeCreature is null
+            }
+
+            if (CreatureTargets == null || CreatureTargets.Count == 0)
+            {
+                Debug.LogError("Error: CreatureTargets is empty or null.");
+                yield break; // Exit the coroutine if there are no targets
+            }
+
+            ToBusyState();
+
+            foreach (var target in CreatureTargets)
+            {
+                selectedAction.UseAction(activeCreature, target);
+            }
+
+            string targetString = CreateTargetsString();
+
+            yield return dialogBox.StartTypingDialog($"{activeCreature.CreatureInstance.Nickname} used {action.TalentName} on {targetString}.");
+            yield return new WaitForSeconds(TEXT_DELAY);
+        }
+        finally
+        {
+            ClearStacks();
+            ResetTargets();
+            ResetSelectedAction();
+            ToDetermineTurn();
+        }
     }
 
     IEnumerator DialogMessage(string message)
@@ -356,7 +399,7 @@ public class BattleSystem : MonoBehaviour
         }
         else if (state == BattleState.TargetSelect)
         {
-            //
+            HandleTargetSelect();
         }
     }
 
@@ -367,7 +410,7 @@ public class BattleSystem : MonoBehaviour
             AcceptActionCategorySelection();
         }
         else
-        {;
+        {
             dialogBox.UpdateActionCategorySelection(LinearSelectionPosition());
         }
     }
@@ -436,8 +479,8 @@ public class BattleSystem : MonoBehaviour
 
     void HandlePlayerExamine()
     {
-        ResetTargets();
-        BattleCreature selectedCreature = CreatureByPosition();
+        UnhighlightCreature();
+
         if (Input.GetKeyDown(BACK_KEY) || (Input.GetKeyDown(ACCEPT_KEY) && selectionPositionY == StateChoices[state].cols - 1))
         {
             dialogBox.EnableActionOptions();
@@ -445,18 +488,68 @@ public class BattleSystem : MonoBehaviour
         }
         else
         {
+            BattleCreature selectedCreature = CreatureByPosition();
             if (selectedCreature != null)
             {
                 // Show panel for the selected creature
-                selectedCreature.Hud.EnableCreatureInfoPanel(true);
-                selectedCreature.Hud.EnableSelectionArrow(true);
-                CreatureTargets.Add(selectedCreature);
+                HighlightCreature(selectedCreature, true);
             }
             if (selectionPositionY == StateChoices[state].rows - 1)
             {
                 // Highlight the Back button
                 dialogBox.HighlightBackOption();
             } 
+            else
+            {
+                // Reset highlighted Back button to black
+                dialogBox.ResetActionSelection();
+            }
+        }
+    }
+
+    void HandleTargetSelect()
+    {
+        UnhighlightCreature();
+     
+        if (Input.GetKeyDown(BACK_KEY) || (Input.GetKeyDown(ACCEPT_KEY) && selectionPositionY == StateChoices[state].cols - 1))
+        {
+            dialogBox.EnableActionOptions();
+            ResetTargets();
+            GoBackToState();
+        }
+        else
+        {
+            BattleCreature selectedCreature = CreatureByPosition();
+            if (selectedCreature != null)
+            {
+                if (Input.GetKeyDown(ACCEPT_KEY))
+                {
+                    AddTarget(selectedCreature);
+                    if (selectedAction == null)
+                    {
+                        Debug.Log("Error: No action selected");
+                    }
+                    else if (CreatureTargets.Count > selectedAction.NumTargets)
+                    {
+                        Debug.Log("Error: Too many targets for action");
+                    }
+                    else if (CreatureTargets.Count == selectedAction.NumTargets)
+                    {
+                        dialogBox.EnableActionOptions();
+                        ConfirmAction();
+                    }
+                }
+                else
+                {
+                    HighlightCreature(selectedCreature);
+                }
+            }
+
+            if (selectionPositionY == StateChoices[state].rows - 1)
+            {
+                // Highlight the Back button
+                dialogBox.HighlightBackOption();
+            }
             else
             {
                 // Reset highlighted Back button to black
@@ -498,8 +591,8 @@ public class BattleSystem : MonoBehaviour
             ActionBase selected = activeCreature.CreatureInstance.EquippedCoreActions[selection].Action;
             if (selected != null)
             {
-                activeCreature.AddEnergy(selected.Energy);
-                StartCoroutine(PerformPlayerAction(selected));
+                selectedAction = selected;
+                ToTargetSelectState();
             } 
             else
             {
@@ -508,9 +601,28 @@ public class BattleSystem : MonoBehaviour
         }
     }
 
-    void ConfirmCoreAction()
+    void ConfirmAction()
     {
+        if (selectedAction == null) 
+        {
+            Debug.Log("Error! No Action selected.");
+            ToDetermineTurn();
+            return;
+        }
+        if (selectedAction.Category == ActionCategory.Core)
+        {
+            activeCreature.AddEnergy(selectedAction.Energy);
+        }
+        else if (selectedAction.Category == ActionCategory.Empowered)
+        {
+            activeCreature.RemoveEnergy(selectedAction.Energy);
+        }
+        else
+        {
+            Debug.Log($"Error: Action category: {selectedAction.Category}");
+        }
 
+        StartCoroutine(PerformPlayerAction(selectedAction));
     }
 
     void SelectEmpoweredAction()
@@ -523,14 +635,13 @@ public class BattleSystem : MonoBehaviour
             {
                 if (selected.Energy <= activeCreature.CreatureInstance.Energy) 
                 {
-                    activeCreature.RemoveEnergy(selected.Energy);
-                    StartCoroutine(PerformPlayerAction(selected));
+                    selectedAction = selected;
+                    ToTargetSelectState();
                 }
                 else
                 {
                     StartCoroutine(DialogMessage($"{activeCreature.CreatureInstance.Nickname} does not have enough energy"));
                 }
-
             }
             else
             {
@@ -582,8 +693,6 @@ public class BattleSystem : MonoBehaviour
         return Field.GetCreature(alliedFieldSelected, yIndex, xIndex);
     }
 
-
-
     void ResetTargets()
     {
         while (CreatureTargets.Count > 0)
@@ -634,10 +743,69 @@ public class BattleSystem : MonoBehaviour
         }
     }
 
+    string CreateTargetsString()
+    {
+        List<string> targetNames = new List<string>();
+
+        foreach (var target in CreatureTargets)
+        {
+            if (target == activeCreature)
+            {
+                targetNames.Add("itself");
+            }
+            else
+            {
+                targetNames.Add(target.CreatureInstance.Nickname);
+            }
+        }
+
+        string targetsString;
+        if (targetNames.Count == 1)
+        {
+            targetsString = targetNames[0];
+        }
+        else if (targetNames.Count == 2)
+        {
+            targetsString = string.Join(" and ", targetNames);
+        }
+        else
+        {
+            targetsString = string.Join(", ", targetNames.Take(targetNames.Count - 1)) + " and " + targetNames.Last();
+        }
+
+        return targetsString;
+    }
+
     void ClearStacks()
     {
         stateStack.Clear();
         positionStack.Clear();
+    }
+
+    void HighlightCreature(BattleCreature creature, bool showHUD = false)
+    {
+        creature.Hud.EnableSelectionArrow(true);
+        if (showHUD)
+        {
+            creature.Hud.EnableCreatureInfoPanel(true);
+        }
+        highlightedCreature = creature;
+    }
+
+    void UnhighlightCreature()
+    {
+        if (highlightedCreature != null)
+        {
+            highlightedCreature.Hud.EnableSelectionArrow(false);
+            highlightedCreature.Hud.EnableCreatureInfoPanel(false);
+            highlightedCreature = null;
+        }
+    }
+
+    void AddTarget(BattleCreature target)
+    {
+        target.Hud.EnableSelectionArrow(true, true);
+        CreatureTargets.Add(target);
     }
 }
 
