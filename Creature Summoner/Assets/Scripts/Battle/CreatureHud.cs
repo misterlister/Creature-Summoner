@@ -24,6 +24,20 @@ public class CreatureHud : MonoBehaviour
     [SerializeField] bool isEnemy;
 
     public GameObject SelectionArrow => selectionArrow;
+    private Image selectionArrowImage;
+
+    void Start()
+    {
+        // Get the Image component from the selection arrow GameObject
+        selectionArrowImage = selectionArrow.GetComponent<Image>();
+
+        // Ensure that the arrow has an Image component
+        if (selectionArrowImage == null)
+        {
+            Debug.LogError("The selectionArrow does not have an Image component!");
+        }
+    }
+
 
     public void SetData(Creature creature)
     {
@@ -99,8 +113,16 @@ public class CreatureHud : MonoBehaviour
         creatureInfoPanel.SetActive(enabled);
     }
 
-    public void EnableSelectionArrow(bool enabled)
+    public void EnableSelectionArrow(bool enabled, bool isSelected = false)
     {
         selectionArrow.SetActive(enabled);
+
+        // Set correct sprite image
+        if (selectionArrowImage != null && enabled)
+        {
+            selectionArrowImage.sprite = isSelected
+                ? CreatureHudManager.Instance.GetSelectionArrow()
+                : CreatureHudManager.Instance.GetHighlightArrow();
+        }
     }
 }
