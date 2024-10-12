@@ -6,9 +6,17 @@ using UnityEngine;
 
 public class Creature
 {
+    // Universal Creature Defaults
     const int CORE_SLOTS = 3;
     const int EMPOWERED_SLOTS = 3;
     const int MASTERY_SLOTS = 1;
+
+    const float GLANCE_REDUCTION = 0.25f;
+    const int GLANCE_CHANCE = 51;
+    const float CRIT_BONUS = 0.4f;
+    const float CRIT_RESISTANCE = 0.0f;
+
+    //
 
     public CreatureBase Species { get; set; }
     public int Level { get; set; }
@@ -22,6 +30,9 @@ public class Creature
 
     public float GlancingDamageReduction { get; set; }
     public int ChanceToBeGlanced { get; set; }
+
+    public float CritBonus { get; set; }
+    public float CritResistance { get; set; }
 
     public List<CreatureAction> KnownCoreActions { get; set; }
     public List<CreatureAction> KnownEmpoweredActions { get; set; }
@@ -51,8 +62,11 @@ public class Creature
         NimbleTraining = 0;
         ResilienceTraining = 0;
 
-        GlancingDamageReduction = 0.25f;
-        ChanceToBeGlanced = 51;
+        GlancingDamageReduction = GLANCE_REDUCTION;
+        ChanceToBeGlanced = GLANCE_CHANCE;
+
+        CritBonus = CRIT_BONUS;
+        CritResistance = CRIT_RESISTANCE;
 
         KnownCoreActions = new List<CreatureAction>();
         KnownEmpoweredActions = new List<CreatureAction>();
