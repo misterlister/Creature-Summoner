@@ -25,9 +25,15 @@ public class BattleCreature : MonoBehaviour
     private const int SIZE_CATEGORY_DIFF = 10;
     private const float AURA_SIZE_MOD = 1.5f;
 
+    public bool Empty { get; private set; } = false;
+
     private void Awake()
     {
         gameObject.SetActive(false);
+        if (species == null || ignore)
+        {
+            Empty = true;
+        }
     }
 
     public void Setup() // Add parameters for species and level later
@@ -46,8 +52,8 @@ public class BattleCreature : MonoBehaviour
         // Set sprite size
         RectTransform spriteRectTransform = creatureSprite.GetComponent<RectTransform>();
         SetSpriteSize(spriteRectTransform, CreatureInstance.Species.Size);
-        
-        if (IsPlayerUnit) 
+
+        if (IsPlayerUnit)
         {
             ReverseSpriteDirection();
         }
@@ -115,25 +121,30 @@ public class BattleCreature : MonoBehaviour
     public void AddHP(int amount)
     {
         CreatureInstance.AddHP(amount);
-        hud.UpdateHP(CreatureInstance.HP, CreatureInstance.MaxHP);
+        hud.UpdateHP();
     }
 
     public void RemoveHP(int amount)
     {
         CreatureInstance.RemoveHP(amount);
-        hud.UpdateHP(CreatureInstance.HP, CreatureInstance.MaxHP);
+        hud.UpdateHP();
+        if (CreatureInstance.HP == 0)
+        {
+            Defeated();
+            creatureSprite.SetActive(false);
+        }
     }
 
     public void AddEnergy(int amount)
     {
         CreatureInstance.AddEnergy(amount);
-        hud.UpdateEnergy(CreatureInstance.Energy, CreatureInstance.MaxEnergy);
+        hud.UpdateEnergy();
     }
 
     public void RemoveEnergy(int amount)
     {
         CreatureInstance.RemoveEnergy(amount);
-        hud.UpdateEnergy(CreatureInstance.Energy, CreatureInstance.MaxEnergy);
+        hud.UpdateEnergy();
     }
 }
 
