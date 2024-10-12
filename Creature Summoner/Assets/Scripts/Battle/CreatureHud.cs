@@ -25,6 +25,7 @@ public class CreatureHud : MonoBehaviour
 
     public GameObject SelectionArrow => selectionArrow;
     private Image selectionArrowImage;
+    private Creature CreatureInstance = null;
 
     void Start()
     {
@@ -41,11 +42,12 @@ public class CreatureHud : MonoBehaviour
 
     public void SetData(Creature creature)
     {
+        CreatureInstance = creature;
         nameText.text = creature.Nickname;
         levelText.text = "Level: " + creature.Level;
 
-        UpdateHP(creature.HP, creature.MaxHP);
-        UpdateEnergy(creature.Energy, creature.MaxEnergy);
+        UpdateHP();
+        UpdateEnergy();
         if (isEnemy)
         {
             energyBar.gameObject.SetActive(false);
@@ -80,31 +82,38 @@ public class CreatureHud : MonoBehaviour
         EnableCreatureInfoPanel(false);
     }
 
-    public void UpdateHP(int currentHP, int maxHP)
+    public void UpdateHP()
     {
-        float hp = ((float)currentHP / maxHP);
-        hpBar.SetHP(hp);
-        if (!isEnemy)
+        if (CreatureInstance != null)
         {
-            hpText.text = $"HP: {currentHP}/{maxHP}";
-        }
-        else
-        {
-            hpText.text = "HP: ???";
+
+            float hp = ((float)CreatureInstance.HP / CreatureInstance.MaxHP);
+            hpBar.SetHP(hp);
+            if (!isEnemy)
+            {
+                hpText.text = $"HP: {CreatureInstance.HP}/{CreatureInstance.MaxHP}";
+            }
+            else
+            {
+                hpText.text = "HP: ???";
+            }
         }
     }
 
-    public void UpdateEnergy(int currentEnergy, int maxEnergy)
+    public void UpdateEnergy()
     {
-        float energy = ((float)currentEnergy / maxEnergy);
-        energyBar.SetEnergy(energy);
-        if (!isEnemy)
+        if (CreatureInstance != null)
         {
-            energyText.text = $"Energy: {currentEnergy}/{maxEnergy}";
-        }
-        else
-        {
-            hpText.text = "Energy: ???";
+            float energy = ((float)CreatureInstance.Energy / CreatureInstance.MaxEnergy);
+            energyBar.SetEnergy(energy);
+            if (!isEnemy)
+            {
+                energyText.text = $"Energy: {CreatureInstance.Energy}/{CreatureInstance.MaxEnergy}";
+            }
+            else
+            {
+                hpText.text = "Energy: ???";
+            }
         }
     }
 
