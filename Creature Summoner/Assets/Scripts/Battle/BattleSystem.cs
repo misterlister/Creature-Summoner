@@ -77,27 +77,8 @@ public class BattleSystem : MonoBehaviour
 
         Field = new BattleField(BATTLE_ROWS, BATTLE_COLS);
 
-        // Add player creatures
-        for (int i = 0; i < friends.Length; i++)
-        {
-            if (friends[i] != null && !friends[i].Ignore)
-            {
-                int row = i % BATTLE_ROWS; // Calculate row
-                int col = i / BATTLE_ROWS; // Calculate column
-                Field.AddCreature(friends[i], row, col);
-            }
-        }
-
-        // Add enemy creatures
-        for (int i = 0; i < enemies.Length; i++)
-        {
-            if (enemies[i] != null && !enemies[i].Ignore)
-            {
-                int row = i % BATTLE_ROWS; // Calculate row
-                int col = i / BATTLE_ROWS; // Calculate column
-                Field.AddCreature(enemies[i], row, col);
-            }
-        }
+        AddCreatures(friends);
+        AddCreatures(enemies);
 
         StateChoices = new Dictionary<BattleState, (int rows, int cols)>
         {
@@ -125,6 +106,21 @@ public class BattleSystem : MonoBehaviour
         StartRound();
     }
 
+    private void AddCreatures(BattleCreature[] creatureArray)
+    {
+        for (int i = 0; i < creatureArray.Length; i++)
+        {
+            if (creatureArray[i] != null &&
+                !creatureArray[i].Ignore &&
+                !creatureArray[i].Empty)
+            {
+                int row = i % BATTLE_ROWS; // Calculate row
+                int col = i / BATTLE_ROWS; // Calculate column
+                Field.AddCreature(creatureArray[i], row, col);
+            }
+        }
+    }
+
     void StartRound()
     {
         combatRound++;
@@ -136,6 +132,7 @@ public class BattleSystem : MonoBehaviour
     {
         foreach(var creature in Field.FieldCreatures)
         {
+            if (creature != null && !creature.Empty)
             creature.RollInitiative();
             InitiativeOrder.Add(creature);
         }
@@ -294,15 +291,26 @@ public class BattleSystem : MonoBehaviour
 
             ToBusyState();
 
+            List<string> battleMessages = new List<string>();
+
+            //string targetMessage = $"{activeCreature.CreatureInstance.Nickname} used {action.TalentName} on {CreateTargetsString()}.";
+            string targetMessage = $"{activeCreature.CreatureInstance.Nickname} used {action.TalentName}.";
+
+            battleMessages.Add(targetMessage);
+
             foreach (var target in CreatureTargets)
             {
-                selectedAction.UseAction(activeCreature, target);
+                List<string> actionMessages = selectedAction.UseAction(activeCreature, target);
+                battleMessages.AddRange(actionMessages);
             }
 
-            string targetString = CreateTargetsString();
+            foreach (var message in battleMessages)
+            {
+                yield return dialogBox.StartTypingDialog(message);
+                yield return new WaitForSeconds(TEXT_DELAY);
+            }
 
-            yield return dialogBox.StartTypingDialog($"{activeCreature.CreatureInstance.Nickname} used {action.TalentName} on {targetString}.");
-            yield return new WaitForSeconds(TEXT_DELAY);
+            
         }
         finally
         {
@@ -742,7 +750,7 @@ public class BattleSystem : MonoBehaviour
                 break;
         }
     }
-
+    /*
     string CreateTargetsString()
     {
         List<string> targetNames = new List<string>();
@@ -775,6 +783,8 @@ public class BattleSystem : MonoBehaviour
 
         return targetsString;
     }
+
+    */
 
     void ClearStacks()
     {
