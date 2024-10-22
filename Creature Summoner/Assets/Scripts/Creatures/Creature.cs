@@ -23,6 +23,7 @@ public class Creature
     public int HP { get; set; }
     public int Energy { get; set; }
     public string Nickname { get; set; }
+    public bool IsDefeated { get; set; }
     private int VitalityTraining;
     private int PowerTraining;
     private int NimbleTraining; 
@@ -47,6 +48,7 @@ public class Creature
         Species = creatureBase;
         Level = creatureLevel;
         HP = MaxHP;
+        IsDefeated = false;
         Energy = 0;
         if (nickname != "")
         {
@@ -181,6 +183,16 @@ public class Creature
         }
     }
 
+    private void Defeated()
+    {
+        IsDefeated = true;
+    }
+
+    private void Revive()
+    {
+        IsDefeated = false;
+    }
+
     public void RemoveHP(int amount)
     {
         if (amount < 0)
@@ -194,6 +206,10 @@ public class Creature
         else
         {
             HP -= amount;
+        }
+        if (HP <= 0)
+        {
+            Defeated();
         }
     }
 
