@@ -17,8 +17,8 @@ public class CreatureHud : MonoBehaviour
     [SerializeField] TextMeshProUGUI speedText;
     [SerializeField] TextMeshProUGUI defenseText;
     [SerializeField] TextMeshProUGUI resistanceText;
-    [SerializeField] HPBar hpBar;
-    [SerializeField] EnergyBar energyBar;
+    [SerializeField] StatBar hpBar;
+    [SerializeField] StatBar energyBar;
     [SerializeField] GameObject creatureInfoPanel;
     [SerializeField] GameObject selectionArrow;
     [SerializeField] bool isEnemy;
@@ -46,8 +46,8 @@ public class CreatureHud : MonoBehaviour
         nameText.text = creature.Nickname;
         levelText.text = "Level: " + creature.Level;
 
-        UpdateHP();
-        UpdateEnergy();
+        SetHP();
+        SetEnergy();
         if (isEnemy)
         {
             energyBar.gameObject.SetActive(false);
@@ -82,39 +82,62 @@ public class CreatureHud : MonoBehaviour
         EnableCreatureInfoPanel(false);
     }
 
-    public void UpdateHP()
+    public IEnumerator UpdateHP()
     {
         if (CreatureInstance != null)
         {
-
             float hp = ((float)CreatureInstance.HP / CreatureInstance.MaxHP);
-            hpBar.SetHP(hp);
-            if (!isEnemy)
-            {
-                hpText.text = $"HP: {CreatureInstance.HP}/{CreatureInstance.MaxHP}";
-            }
-            else
-            {
-                hpText.text = "HP: ???";
-            }
+            yield return hpBar.SetBarSmooth(hp);
+            SetHPText();
         }
     }
 
-    public void UpdateEnergy()
+    public IEnumerator UpdateEnergy()
     {
         if (CreatureInstance != null)
         {
             float energy = ((float)CreatureInstance.Energy / CreatureInstance.MaxEnergy);
-            energyBar.SetEnergy(energy);
-            if (!isEnemy)
-            {
-                energyText.text = $"Energy: {CreatureInstance.Energy}/{CreatureInstance.MaxEnergy}";
-            }
-            else
-            {
-                hpText.text = "Energy: ???";
-            }
+            yield return energyBar.SetBarSmooth(energy);
+            SetEnergyText();
         }
+    }
+
+    private void SetHPText()
+    {
+        if (!isEnemy)
+        {
+            hpText.text = $"HP: {CreatureInstance.HP}/{CreatureInstance.MaxHP}";
+        }
+        else
+        {
+            hpText.text = "HP: ???";
+        }
+    }
+
+    private void SetEnergyText()
+    {
+        if (!isEnemy)
+        {
+            energyText.text = $"Energy: {CreatureInstance.Energy}/{CreatureInstance.MaxEnergy}";
+        }
+        else
+        {
+            energyText.text = "Energy: ???";
+        }
+    }
+
+    private void SetHP()
+    {
+        float hp = ((float)CreatureInstance.HP / CreatureInstance.MaxHP);
+        hpBar.SetBar(hp);
+        SetHPText();
+    }
+
+    private void SetEnergy()
+    {
+        float energy = ((float)CreatureInstance.Energy / CreatureInstance.MaxEnergy);
+        energyBar.SetBar(energy);
+        SetEnergyText();
     }
 
     public void EnableCreatureInfoPanel(bool enabled)

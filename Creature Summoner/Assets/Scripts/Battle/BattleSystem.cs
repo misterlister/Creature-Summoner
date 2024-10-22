@@ -301,6 +301,8 @@ public class BattleSystem : MonoBehaviour
             foreach (var target in CreatureTargets)
             {
                 List<string> actionMessages = selectedAction.UseAction(activeCreature, target);
+                yield return target.UpdateHud();
+                yield return activeCreature.UpdateHud();
                 battleMessages.AddRange(actionMessages);
             }
 

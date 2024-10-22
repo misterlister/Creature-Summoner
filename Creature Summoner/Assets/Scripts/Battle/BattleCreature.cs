@@ -121,14 +121,12 @@ public class BattleCreature : MonoBehaviour
     public void AddHP(int amount)
     {
         CreatureInstance.AddHP(amount);
-        hud.UpdateHP();
     }
 
     public void RemoveHP(int amount)
     {
         CreatureInstance.RemoveHP(amount);
-        hud.UpdateHP();
-        if (CreatureInstance.HP == 0)
+        if (CreatureInstance.IsDefeated)
         {
             Defeated();
             creatureSprite.SetActive(false);
@@ -138,13 +136,17 @@ public class BattleCreature : MonoBehaviour
     public void AddEnergy(int amount)
     {
         CreatureInstance.AddEnergy(amount);
-        hud.UpdateEnergy();
     }
 
     public void RemoveEnergy(int amount)
     {
         CreatureInstance.RemoveEnergy(amount);
-        hud.UpdateEnergy();
+    }
+
+    public IEnumerator UpdateHud()
+    {
+        yield return hud.UpdateHP();
+        yield return hud.UpdateEnergy();
     }
 }
 
