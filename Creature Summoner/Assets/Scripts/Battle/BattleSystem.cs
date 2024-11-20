@@ -34,7 +34,7 @@ public class BattleSystem : MonoBehaviour
     const int EMPOWERED_ACTION_COUNT = 3;
     const int MASTERY_ACTION_COUNT = 1;
 
-    const float TEXT_DELAY = 0.8f; // Time delay after text is done printing
+    const float ATTACK_DELAY = 1f;
     const KeyCode ACCEPT_KEY = KeyCode.Z; // Keyboard key which accepts options
     const KeyCode BACK_KEY = KeyCode.X; // Keyboard key which indicates cancelling or going back
 
@@ -101,7 +101,6 @@ public class BattleSystem : MonoBehaviour
         alliedFieldSelected = true;
         
         yield return dialogBox.StartTypingDialog($"You have been attacked by {enemy_num} creatures!");
-        yield return new WaitForSeconds(TEXT_DELAY);
 
         StartRound();
     }
@@ -266,7 +265,7 @@ public class BattleSystem : MonoBehaviour
         dialogBox.EnableDialogText(true);
     }
 
-    IEnumerator PerformPlayerAction(ActionBase action)
+    IEnumerator PerformAction(ActionBase action)
     {
         try
         {
@@ -293,26 +292,35 @@ public class BattleSystem : MonoBehaviour
 
             List<string> battleMessages = new List<string>();
 
-            //string targetMessage = $"{activeCreature.CreatureInstance.Nickname} used {action.TalentName} on {CreateTargetsString()}.";
             string targetMessage = $"{activeCreature.CreatureInstance.Nickname} used {action.TalentName}.";
 
-            battleMessages.Add(targetMessage);
+            yield return dialogBox.StartTypingDialog(targetMessage);
+
+            //yield return new WaitForSeconds(ATTACK_DELAY); // Not needed anymore?
+
+            activeCreature.PlayAttackAnimation();
 
             foreach (var target in CreatureTargets)
             {
                 List<string> actionMessages = selectedAction.UseAction(activeCreature, target);
-                yield return target.UpdateHud();
-                yield return activeCreature.UpdateHud();
                 battleMessages.AddRange(actionMessages);
+
+                // Start both HUD updates simultaneously and yield for both
+                StartCoroutine(target.UpdateHud());
+                StartCoroutine(activeCreature.UpdateHud());
+
+                // Process the battle messages
+                foreach (var message in battleMessages)
+                {
+                    yield return dialogBox.StartTypingDialog(message);  // Wait for typing to finish
+                }
+
+                // After typing is done, ensure both HUD updates have finished
+                yield return new WaitUntil(() => !target.Hud.IsUpdating && !activeCreature.Hud.IsUpdating);
+
+                battleMessages.Clear();
             }
 
-            foreach (var message in battleMessages)
-            {
-                yield return dialogBox.StartTypingDialog(message);
-                yield return new WaitForSeconds(TEXT_DELAY);
-            }
-
-            
         }
         finally
         {
@@ -327,7 +335,6 @@ public class BattleSystem : MonoBehaviour
     {
         ToBusyState();
         yield return dialogBox.StartTypingDialog(message);
-        yield return new WaitForSeconds(TEXT_DELAY);
         ToPlayerActionCategorySelectState();
     }
 
@@ -632,7 +639,7 @@ public class BattleSystem : MonoBehaviour
             Debug.Log($"Error: Action category: {selectedAction.Category}");
         }
 
-        StartCoroutine(PerformPlayerAction(selectedAction));
+        StartCoroutine(PerformAction(selectedAction));
     }
 
     void SelectEmpoweredAction()
