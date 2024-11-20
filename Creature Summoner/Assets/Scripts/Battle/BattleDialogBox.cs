@@ -30,6 +30,8 @@ public class BattleDialogBox : MonoBehaviour
     const string backText = "Return to the previous menu";
     const string nullText = "No available move";
 
+    const float TEXT_DELAY = 0.8f; // Time delay after text is done printing
+
     public List<TextMeshProUGUI> ActionText => actionText;
     public List<TextMeshProUGUI> ActionCategoryText => actionCategoryText;
 
@@ -48,6 +50,7 @@ public class BattleDialogBox : MonoBehaviour
             battleLogText.text += letter;
             yield return new WaitForSeconds(1f/LettersPerSecond);
         }
+        yield return new WaitForSeconds(TEXT_DELAY);
         typingCoroutine = null; // Reset coroutine reference when complete
     }
 
@@ -59,6 +62,7 @@ public class BattleDialogBox : MonoBehaviour
             StopCoroutine(typingCoroutine);
         }
         typingCoroutine = StartCoroutine(TypeDialog(dialog));
+        
         return typingCoroutine;
     }
 
