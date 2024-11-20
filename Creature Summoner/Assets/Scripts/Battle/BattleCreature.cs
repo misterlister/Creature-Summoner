@@ -2,9 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 
 public class BattleCreature : MonoBehaviour
 {
+    const float ATTACK_ANIMATION_DIST = 40f;
+    const float ATTACK_ANIMATION_SPEED = 0.2f;
+    const float HIT_ANIMATION_DUR = 0.1f;
+    const float SUMMON_ANIMATION_DURATION = 1f;
+
     [SerializeField] CreatureBase species; // For Testing
     [SerializeField] int level; // For Testing
     [SerializeField] CreatureHud hud;
@@ -21,6 +27,10 @@ public class BattleCreature : MonoBehaviour
     public bool IsPlayerUnit => isPlayerUnit;
     public bool Ignore => ignore;
 
+    Image image;
+    Vector3 originalPos;
+    Color originalColor;
+
     private const int DEFAULT_SPRITE_SIZE = 75;
     private const int SIZE_CATEGORY_DIFF = 10;
     private const float AURA_SIZE_MOD = 1.5f;
@@ -34,6 +44,7 @@ public class BattleCreature : MonoBehaviour
         {
             Empty = true;
         }
+        originalPos = image.transform.localPosition;
     }
 
     public void Setup() // Add parameters for species and level later
@@ -46,8 +57,16 @@ public class BattleCreature : MonoBehaviour
 
         IsDefeated = false;
 
-        Image creatureImage = creatureSprite.GetComponent<Image>();
-        creatureImage.sprite = CreatureInstance.Species.FrontSprite;
+        image = creatureSprite.GetComponent<Image>();
+        image.sprite = CreatureInstance.Species.FrontSprite;
+        
+        originalColor = image.color;
+
+        // Set the sprite to transparent to allow fade-in
+        Color fadeInStartColor = originalColor;
+        fadeInStartColor.a = 0;
+        image.color = fadeInStartColor;
+
 
         // Set sprite size
         RectTransform spriteRectTransform = creatureSprite.GetComponent<RectTransform>();
@@ -57,6 +76,8 @@ public class BattleCreature : MonoBehaviour
         {
             ReverseSpriteDirection();
         }
+
+        PlaySummonCreatureAnimation();
 
         hud.SetData(CreatureInstance);
     }
@@ -133,6 +154,12 @@ public class BattleCreature : MonoBehaviour
         }
     }
 
+    public void HitByAttack(int damage)
+    {
+        PlayHitAnimation();
+        RemoveHP(damage);
+    }
+
     public void AddEnergy(int amount)
     {
         CreatureInstance.AddEnergy(amount);
@@ -147,6 +174,34 @@ public class BattleCreature : MonoBehaviour
     {
         yield return hud.UpdateHP();
         yield return hud.UpdateEnergy();
+    }
+
+    public void PlaySummonCreatureAnimation()
+    {
+        image.DOFade(1f, SUMMON_ANIMATION_DURATION).SetEase(Ease.InOutQuad);
+    }
+
+    public void PlayAttackAnimation()
+    {
+        var sequence = DOTween.Sequence();
+        if (isPlayerUnit) 
+        {
+            sequence.Append(image.transform.DOLocalMoveX(originalPos.x + ATTACK_ANIMATION_DIST, ATTACK_ANIMATION_SPEED));
+
+        }
+        else
+        {
+            sequence.Append(image.transform.DOLocalMoveX(originalPos.x - ATTACK_ANIMATION_DIST, ATTACK_ANIMATION_SPEED));
+        }
+
+        sequence.Append(image.transform.DOLocalMoveX(originalPos.x, ATTACK_ANIMATION_SPEED));
+    }
+
+    public void PlayHitAnimation()
+    {
+        var sequence = DOTween.Sequence();
+        sequence.Append(image.DOColor(Color.gray, HIT_ANIMATION_DUR));
+        sequence.Append(image.DOColor(originalColor, HIT_ANIMATION_DUR));
     }
 }
 
