@@ -23,6 +23,8 @@ public class CreatureHud : MonoBehaviour
     [SerializeField] GameObject selectionArrow;
     [SerializeField] bool isEnemy;
 
+    public bool IsUpdating { get; private set; } = false;
+
     public GameObject SelectionArrow => selectionArrow;
     private Image selectionArrowImage;
     private Creature CreatureInstance = null;
@@ -84,22 +86,26 @@ public class CreatureHud : MonoBehaviour
 
     public IEnumerator UpdateHP()
     {
+        IsUpdating = true;
         if (CreatureInstance != null)
         {
             float hp = ((float)CreatureInstance.HP / CreatureInstance.MaxHP);
             yield return hpBar.SetBarSmooth(hp);
             SetHPText();
         }
+        IsUpdating = false;
     }
 
     public IEnumerator UpdateEnergy()
     {
+        IsUpdating = true;
         if (CreatureInstance != null)
         {
             float energy = ((float)CreatureInstance.Energy / CreatureInstance.MaxEnergy);
             yield return energyBar.SetBarSmooth(energy);
             SetEnergyText();
         }
+        IsUpdating=false;
     }
 
     private void SetHPText()
