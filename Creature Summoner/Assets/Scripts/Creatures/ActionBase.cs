@@ -6,7 +6,7 @@ using UnityEngine;
 public class ActionBase : Talent
 {
     //
-    const bool DEBUG = true;
+    bool DEBUG = false;
     //
 
     const float HIT_MODIFIER = 0.5f;
@@ -135,12 +135,24 @@ public class ActionBase : Talent
         {
             Debug.Log($"-------attacker: {attacker.CreatureInstance.Nickname}-------");
         }
-        List<string> actionMessages = new List<string>();
         int accuracy = CalculateAccuracy(attacker.CreatureInstance, defender.CreatureInstance);
         bool hit = rollToHit(accuracy);
         bool glancingBlow = false;
         bool isCrit = false;
         float critMod = 1f;
+
+        // Create the ActionDetails object
+
+        ActionDetails actionDetails = new ActionDetails(attacker.CreatureInstance.Nickname, defender.CreatureInstance.Nickname);
+
+        // Get the effectiveness category
+        Effectiveness effectRating = TypeChart.GetEffectiveness(type, defender.CreatureInstance.Species.Type1, defender.CreatureInstance.Species.Type2);
+
+        actionDetails.EffectRating = effectRating;
+
+        // Get the effectiveness modifier based on the category
+        float effectMod = TypeChart.EffectiveMod[effectRating];
+
         // Check if the attack didn't hit
         if (!hit)
         {
@@ -148,13 +160,14 @@ public class ActionBase : Talent
             glancingBlow = rollForGlancingBlow(defender.CreatureInstance.ChanceToBeGlanced);
             // If it was not glancing, it fully missed
             if (glancingBlow == false) {
-                actionMessages.Add($"The attack missed {defender.CreatureInstance.Nickname}.");
-                return actionMessages; 
+                actionDetails.IsMiss = true;
+                return actionDetails.GetMessages(); 
             }
         }
         int damage = 0;
         if (glancingBlow)
         {
+            actionDetails.IsGlancingBlow = true;
             damage = CalculateDamage(attacker.CreatureInstance, defender.CreatureInstance);
             damage = Mathf.CeilToInt(damage * attacker.CreatureInstance.GlancingDamageReduction);
         }
@@ -163,15 +176,20 @@ public class ActionBase : Talent
             isCrit = rollForCrit(attacker, defender);
             if (isCrit)
             {
+                actionDetails.IsCrit = true;
                 critMod = calculateCritBonus(attacker, defender);
             }
             damage = CalculateDamage(attacker.CreatureInstance, defender.CreatureInstance, critMod);
         }
-        actionMessages.Add(getAttackResultMessage(defender, glancingBlow, isCrit));
-        defender.RemoveHP(damage);
+
+        // Adjust damage for type effectiveness
+        damage = Mathf.Max((int)((float)damage * effectMod), 1);
+        
+        // Deal damage to target
+        defender.HitByAttack(damage);
         if (defender.IsDefeated)
         {
-            actionMessages.Add($"{defender.CreatureInstance.Nickname} was defeated!");
+            actionDetails.IsDefeated = true;
         }
         if (DEBUG)
         {
@@ -180,18 +198,7 @@ public class ActionBase : Talent
             Debug.Log($"critMod: {critMod}");
             Debug.Log($"damage: {damage}");
         }
-        return actionMessages;
-    }
-
-    private string getAttackResultMessage(BattleCreature defender, bool glancingBlow, bool isCrit)
-    {
-        if (glancingBlow)
-            return $"The attack strikes {defender.CreatureInstance.Nickname} with a glancing blow!";
-
-        if (isCrit)
-            return $"The attack strikes {defender.CreatureInstance.Nickname} with a critical hit!";
-
-        return $"The attack strikes {defender.CreatureInstance.Nickname}.";
+        return actionDetails.GetMessages();
     }
 
     public int CalculateCritChance(BattleCreature attacker, BattleCreature defender, float k = 0.5f)
