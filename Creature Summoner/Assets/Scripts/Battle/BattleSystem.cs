@@ -338,7 +338,7 @@ public class BattleSystem : MonoBehaviour
         ToPlayerActionCategorySelectState();
     }
 
-    private void Update()
+    public void HandleUpdate()
     {
         if (state == BattleState.NewRound)
         {
