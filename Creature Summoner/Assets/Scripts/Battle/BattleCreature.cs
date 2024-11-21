@@ -10,6 +10,7 @@ public class BattleCreature : MonoBehaviour
     const float ATTACK_ANIMATION_SPEED = 0.2f;
     const float HIT_ANIMATION_DUR = 0.1f;
     const float SUMMON_ANIMATION_DURATION = 1f;
+    const float DISPERSE_ANIMATION_DURATION = 1.5f;
 
     [SerializeField] CreatureBase species; // For Testing
     [SerializeField] int level; // For Testing
@@ -45,6 +46,7 @@ public class BattleCreature : MonoBehaviour
             Empty = true;
         }
         originalPos = image.transform.localPosition;
+        hud.HideBars();
     }
 
     public void Setup() // Add parameters for species and level later
@@ -52,6 +54,8 @@ public class BattleCreature : MonoBehaviour
         CreatureInstance = new Creature(species, level);
 
         gameObject.SetActive(true);
+
+        hud.ShowBars();
 
         Select(false);
 
@@ -87,6 +91,7 @@ public class BattleCreature : MonoBehaviour
         gameObject.SetActive(false);
         CreatureInstance = null;
         Initiative = 0;
+        hud.HideBars();
     }
 
     private void SetSpriteSize(RectTransform rectTransform, CreatureSize size)
@@ -132,6 +137,8 @@ public class BattleCreature : MonoBehaviour
     public void Defeated()
     {
         IsDefeated = true;
+        PlayDisperseAnimation();
+        hud.HideBars();
     }
 
     public void Select(bool enabled)
@@ -150,7 +157,6 @@ public class BattleCreature : MonoBehaviour
         if (CreatureInstance.IsDefeated)
         {
             Defeated();
-            creatureSprite.SetActive(false);
         }
     }
 
@@ -202,6 +208,11 @@ public class BattleCreature : MonoBehaviour
         var sequence = DOTween.Sequence();
         sequence.Append(image.DOColor(Color.gray, HIT_ANIMATION_DUR));
         sequence.Append(image.DOColor(originalColor, HIT_ANIMATION_DUR));
+    }
+
+    public void PlayDisperseAnimation()
+    {
+        image.DOFade(0f, DISPERSE_ANIMATION_DURATION).SetEase(Ease.InOutQuad);
     }
 }
 
