@@ -1,12 +1,15 @@
+using System;
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-public class PlayerControl : MonoBehaviour
+public class PlayerController : MonoBehaviour
 {
     public float moveSpeed;
     public LayerMask solidObjectsLayer;
     public LayerMask battleLayer;
+    public event Action OnEncountered;
+
     private bool isMoving;
 
     private Vector2 input;
@@ -18,7 +21,7 @@ public class PlayerControl : MonoBehaviour
         animator = GetComponent<Animator> ();
     }
 
-    private void Update()
+    public void HandleUpdate()
     {
         if (!isMoving)
         {
@@ -58,7 +61,7 @@ public class PlayerControl : MonoBehaviour
     }
     private bool IsWalkable(Vector3 targetPos)
     {
-        if (Physics2D.OverlapCircle(targetPos, 0.3f, solidObjectsLayer) != null)
+        if (Physics2D.OverlapCircle(targetPos, 0.2f, solidObjectsLayer) != null)
         {
             return false;
         }
@@ -69,14 +72,11 @@ public class PlayerControl : MonoBehaviour
     {
         if (Physics2D.OverlapCircle(transform.position, 0.2f, battleLayer) != null)
         {
-            if (Random.Range(1,101) <= 10)
+            if (UnityEngine.Random.Range(1,101) <= 10)
             {
-                Debug.Log("Battle Encounter!");
+                OnEncountered();
             }
         }
     }
 
 }
-
-
-//TEST
