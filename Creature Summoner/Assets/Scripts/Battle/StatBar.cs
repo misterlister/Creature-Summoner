@@ -1,10 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class StatBar : MonoBehaviour
 {
     [SerializeField] GameObject barValue;
+    [SerializeField] Image barBackground;
 
     private const float BAR_SPEED = 5f;
     private const float THRESHOLD = 0.01f;
@@ -31,5 +33,17 @@ public class StatBar : MonoBehaviour
 
         // Set the final value precisely to the target to avoid any floating-point precision issues
         barValue.transform.localScale = new Vector3(newVal, 1f);
+    }
+
+    public void Hide()
+    {
+        barValue.gameObject.SetActive(false);
+        barBackground.gameObject.SetActive(false);
+    }
+
+    public void Show()
+    {
+        barValue.gameObject.SetActive(true);
+        barBackground.gameObject.SetActive(true);
     }
 }

@@ -163,4 +163,16 @@ public class CreatureHud : MonoBehaviour
                 : CreatureHudManager.Instance.GetHighlightArrow();
         }
     }
+
+    public void HideBars()
+    {
+        hpBar.Hide();
+        energyBar.Hide();
+    }
+
+    public void ShowBars()
+    {
+        hpBar.Show();
+        energyBar.Show();
+    }
 }
