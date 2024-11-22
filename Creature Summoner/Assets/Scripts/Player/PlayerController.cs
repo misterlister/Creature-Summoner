@@ -74,9 +74,9 @@ public class PlayerController : MonoBehaviour
         {
             if (UnityEngine.Random.Range(1,101) <= 10)
             {
+                animator.SetBool("isMoving", false);
                 OnEncountered();
             }
         }
     }
-
 }
