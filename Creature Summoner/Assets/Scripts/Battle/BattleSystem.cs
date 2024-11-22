@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,6 +26,13 @@ public class BattleSystem : MonoBehaviour
     [SerializeField] BattleCreature[] enemies;
     [SerializeField] BattleDialogBox dialogBox;
     [SerializeField] GameObject actionCategories;
+
+    public event Action<bool> OnBattleOver;
+
+
+    //
+    bool DEBUG = false;
+    //
 
     const int BATTLE_ROWS = 3; // Number of Rows on each side of the battlefield
     const int BATTLE_COLS = 2; // Number of Columns on each side of the battlefield
@@ -60,7 +68,7 @@ public class BattleSystem : MonoBehaviour
     int combatRound;
     bool alliedFieldSelected; // Determines if the allied side of the field is selected
 
-    private void Start()
+    public void StartBattle()
     {
         StartCoroutine(SetupBattle());
     }
@@ -142,9 +150,12 @@ public class BattleSystem : MonoBehaviour
         .ToList();
 
         //// DEBUG
-        foreach (var creature in InitiativeOrder)
+        if (DEBUG)
         {
-            Debug.Log($"{creature.CreatureInstance.Nickname} rolled {creature.Initiative}");
+            foreach (var creature in InitiativeOrder)
+            {
+                Debug.Log($"{creature.CreatureInstance.Nickname} rolled {creature.Initiative}");
+            }
         }
         //// DEBUG
     }
@@ -324,9 +335,20 @@ public class BattleSystem : MonoBehaviour
         }
         finally
         {
+            foreach (var target in CreatureTargets)
+            {
+                if (target.IsDefeated)
+                {
+                    Field.RemoveCreature(target);
+                }
+            }
             ClearStacks();
             ResetTargets();
             ResetSelectedAction();
+            if (Field.IsNoEnemies())
+            {
+                OnBattleOver(true);
+            }
             ToDetermineTurn();
         }
     }
