@@ -14,8 +14,16 @@ public class GameController : MonoBehaviour
 
     private void Start()
     {
+        ToFreeRoamState();
         playerController.OnEncountered += StartBattle;
         battleSystem.OnBattleOver += EndBattle;
+    }
+
+    void ToFreeRoamState()
+    {
+        state = GameState.FreeRoam;
+        battleSystem.gameObject.SetActive(false);
+        worldCamera.gameObject.SetActive(true);
     }
 
     void StartBattle()
@@ -24,14 +32,15 @@ public class GameController : MonoBehaviour
         battleSystem.gameObject.SetActive(true);
         worldCamera.gameObject.SetActive(false);
 
-        battleSystem.StartBattle();
+        var playerTeam = playerController.GetComponent<CreatureTeam>();
+        var enemyTeam = FindFirstObjectByType<MapArea>().GetComponent<MapArea>().GenerateWildCreatureTeam();
+
+        battleSystem.StartBattle(playerTeam, enemyTeam);
     }
 
     void EndBattle(bool won)
     {
-        state = GameState.FreeRoam;
-        battleSystem.gameObject.SetActive(false);
-        worldCamera.gameObject.SetActive(true);
+        ToFreeRoamState();
     }
 
     private void Update()
