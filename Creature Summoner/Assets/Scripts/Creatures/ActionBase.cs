@@ -129,13 +129,13 @@ public class ActionBase : Talent
         return false;
     }
 
-    public List<string> UseAction(BattleCreature attacker, BattleCreature defender)
+    public List<string> UseAction(BattleSlot attacker, BattleSlot defender)
     {
         if (DEBUG)
         {
-            Debug.Log($"-------attacker: {attacker.CreatureInstance.Nickname}-------");
+            Debug.Log($"-------attacker: {attacker.Creature.Nickname}-------");
         }
-        int accuracy = CalculateAccuracy(attacker.CreatureInstance, defender.CreatureInstance);
+        int accuracy = CalculateAccuracy(attacker.Creature, defender.Creature);
         bool hit = rollToHit(accuracy);
         bool glancingBlow = false;
         bool isCrit = false;
@@ -143,10 +143,10 @@ public class ActionBase : Talent
 
         // Create the ActionDetails object
 
-        ActionDetails actionDetails = new ActionDetails(attacker.CreatureInstance.Nickname, defender.CreatureInstance.Nickname);
+        ActionDetails actionDetails = new ActionDetails(attacker.Creature.Nickname, defender.Creature.Nickname);
 
         // Get the effectiveness category
-        Effectiveness effectRating = TypeChart.GetEffectiveness(type, defender.CreatureInstance.Species.Type1, defender.CreatureInstance.Species.Type2);
+        Effectiveness effectRating = TypeChart.GetEffectiveness(type, defender.Creature.Species.Type1, defender.Creature.Species.Type2);
 
         actionDetails.EffectRating = effectRating;
 
@@ -157,7 +157,7 @@ public class ActionBase : Talent
         if (!hit)
         {
             // Check if it was a glancing blow
-            glancingBlow = rollForGlancingBlow(defender.CreatureInstance.ChanceToBeGlanced);
+            glancingBlow = rollForGlancingBlow(defender.Creature.ChanceToBeGlanced);
             // If it was not glancing, it fully missed
             if (glancingBlow == false) {
                 actionDetails.IsMiss = true;
@@ -168,8 +168,8 @@ public class ActionBase : Talent
         if (glancingBlow)
         {
             actionDetails.IsGlancingBlow = true;
-            damage = CalculateDamage(attacker.CreatureInstance, defender.CreatureInstance);
-            damage = Mathf.CeilToInt(damage * attacker.CreatureInstance.GlancingDamageReduction);
+            damage = CalculateDamage(attacker.Creature, defender.Creature);
+            damage = Mathf.CeilToInt(damage * attacker.Creature.GlancingDamageReduction);
         }
         else
         {
@@ -179,7 +179,7 @@ public class ActionBase : Talent
                 actionDetails.IsCrit = true;
                 critMod = calculateCritBonus(attacker, defender);
             }
-            damage = CalculateDamage(attacker.CreatureInstance, defender.CreatureInstance, critMod);
+            damage = CalculateDamage(attacker.Creature, defender.Creature, critMod);
         }
 
         // Adjust damage for type effectiveness
@@ -201,10 +201,10 @@ public class ActionBase : Talent
         return actionDetails.GetMessages();
     }
 
-    public int CalculateCritChance(BattleCreature attacker, BattleCreature defender, float k = 0.5f)
+    public int CalculateCritChance(BattleSlot attacker, BattleSlot defender, float k = 0.5f)
     {
-        int attackerSkill = attacker.CreatureInstance.Skill;
-        int defenderSpeed = defender.CreatureInstance.Speed;
+        int attackerSkill = attacker.Creature.Skill;
+        int defenderSpeed = defender.Creature.Speed;
         if (defenderSpeed == 0) 
         {
             defenderSpeed = 1;
@@ -224,7 +224,7 @@ public class ActionBase : Talent
         return critPercent;
     }
 
-    private bool rollForCrit(BattleCreature attacker, BattleCreature defender)
+    private bool rollForCrit(BattleSlot attacker, BattleSlot defender)
     {
         int critChance = CalculateCritChance(attacker, defender);
         int roll = Random.Range(1, ROLL_CEILING);
@@ -240,11 +240,11 @@ public class ActionBase : Talent
         return false;
     }
 
-    private float calculateCritBonus(BattleCreature attacker, BattleCreature defender)
+    private float calculateCritBonus(BattleSlot attacker, BattleSlot defender)
     {
         float critBonus = 1f;
-        critBonus += attacker.CreatureInstance.CritBonus;
-        critBonus -= defender.CreatureInstance.CritResistance;
+        critBonus += attacker.Creature.CritBonus;
+        critBonus -= defender.Creature.CritResistance;
         float clampedCrit = Mathf.Clamp(critBonus, 1f, 2f);
         if (DEBUG)
         {

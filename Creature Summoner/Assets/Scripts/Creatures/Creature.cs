@@ -1,27 +1,32 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static GameConstants;
 
 
-
+[System.Serializable]
 public class Creature
 {
-    // Universal Creature Defaults
-    const int CORE_SLOTS = 3;
-    const int EMPOWERED_SLOTS = 3;
-    const int MASTERY_SLOTS = 1;
 
-    const float GLANCE_REDUCTION = 0.25f;
-    const int GLANCE_CHANCE = 51;
-    const float CRIT_BONUS = 0.4f;
-    const float CRIT_RESISTANCE = 0.0f;
+    [SerializeField] CreatureBase species;
+    [SerializeField] int level;
 
-    //
+    public CreatureBase Species {
+        get {
+            return species;
+        }
+    }
 
-    public CreatureBase Species { get; set; }
-    public int Level { get; set; }
+    public int Level {
+        get {
+            return level;
+        } 
+    }
+
     public int HP { get; set; }
     public int Energy { get; set; }
+    public int XP { get; set; }
+    public int TotalXP { get; set; }
     public string Nickname { get; set; }
     public bool IsDefeated { get; set; }
     private int VitalityTraining;
@@ -43,21 +48,22 @@ public class Creature
     public CreatureAction[] EquippedEmpoweredActions { get; set; }
     public CreatureAction[] EquippedMasteryActions { get; set; }
 
-    public Creature(CreatureBase creatureBase, int creatureLevel, string nickname = "")
+    public void Init()
     {
-        Species = creatureBase;
-        Level = creatureLevel;
         HP = MaxHP;
         IsDefeated = false;
         Energy = 0;
-        if (nickname != "")
-        {
-            Nickname = nickname;
-        } 
-        else
-        {
-            Nickname = creatureBase.CreatureName;
-        }
+        XP = 0;
+        TotalXP = Level * 100; //Temp Simplified Placeholder
+
+        //if (nickname != "")
+        //{
+        //    Nickname = nickname;
+        //} 
+        //else
+        //{
+        Nickname = species.CreatureName;
+        //}
 
         VitalityTraining = 0;
         PowerTraining = 0;
