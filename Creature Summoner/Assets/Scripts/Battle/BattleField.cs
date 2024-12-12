@@ -2,49 +2,79 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static GameConstants;
 
-public class BattleField
+public class BattleField : MonoBehaviour
 {
     //public WeatherEffect ActiveWeatherEffect { get; set; }
-    public List<BattleCreature> FieldCreatures { get; set; }
-    private BattleCreature[,] PlayerGrid;
-    private BattleCreature[,] EnemyGrid;
+    [SerializeField] private GameObject battleSlotPrefab;
+    [SerializeField] private Transform playerSlotsParent;
+    [SerializeField] private Transform enemySlotsParent;
 
-    int rows;
-    int cols;
+    private BattleSlot[,] PlayerGrid;
+    private BattleSlot[,] EnemyGrid;
+    public List<BattleSlot> FieldCreatures { get; set; } = new List<BattleSlot>();
 
-    public BattleField(int row_num, int col_num)
+
+    private void Start()
     {
-        rows = row_num;
-        cols = col_num;
-        FieldCreatures = new List<BattleCreature>();
-        PlayerGrid = new BattleCreature[rows, cols];
-        EnemyGrid = new BattleCreature[rows, cols];
+        PlayerGrid = CreateBattleSlots(playerSlotsParent, true);
+        EnemyGrid = CreateBattleSlots(enemySlotsParent, true);
     }
 
-    public bool AddCreature(BattleCreature creature, int row, int col)
+    private BattleSlot[,] CreateBattleSlots(Transform parent, bool isPlayer)
     {
-        if (row >= rows || col >= cols) return false;
-
-        var grid = creature.IsPlayerUnit ? PlayerGrid : EnemyGrid;
-        if (grid[row, col] == null)
+        BattleSlot[,] slots = new BattleSlot[BATTLE_ROWS, BATTLE_COLS];
+        for (int col = 0; col < BATTLE_COLS; col++)
         {
-            grid[row, col] = creature;
+            for (int row = 0; row < BATTLE_ROWS; row++)
+            {
+                GameObject slotInstance = Instantiate(battleSlotPrefab, parent);
+                BattleSlot battleSlot = slotInstance.GetComponent<BattleSlot>();
+                battleSlot.Initialize(isPlayer);
+                slots[row, col] = battleSlot;
+            }
+        }
+        return slots;
+    }
+
+    public int EnemyCount()
+    {
+        int count = 0;
+        for (int i = 0; i < BATTLE_ROWS; i++)
+        {
+            for (int j = 0; j < BATTLE_COLS; j++)
+            {
+                if (!EnemyGrid[i, j].IsEmpty)
+                    count++;
+            }
+        }
+        return count;
+    }
+
+    public bool AddCreature(Creature creature, int row, int col, bool isPlayerUnit)
+    {
+        if (row >= BATTLE_ROWS || col >= BATTLE_COLS) return false;
+
+        var grid = isPlayerUnit ? PlayerGrid : EnemyGrid;
+        if (grid[row, col].IsEmpty)
+        {
+            grid[row, col].Setup(creature);
         } 
         else
         {
+            Debug.Log("PROBLEM HERE!");
             return false;
         }
 
-        InsertCreatureInOrder(creature, row, col);
+        InsertCreatureInOrder(grid[row, col], row, col);
 
-        creature.Setup();
         return true;
     }
 
-    private void InsertCreatureInOrder(BattleCreature creature, int row, int col)
+    private void InsertCreatureInOrder(BattleSlot creature, int row, int col)
     {
-        int index = GetInsertIndex(creature.IsPlayerUnit, row, col);
+        int index = GetInsertIndex(creature.IsPlayerSlot, row, col);
         if (index >= FieldCreatures.Count)
         {
             FieldCreatures.Add(creature);
@@ -60,9 +90,9 @@ public class BattleField
         int index = 0;
 
         // Player's back column comes first (col 1)
-        for (int r = 0; r < rows; r++)
+        for (int r = 0; r < BATTLE_ROWS; r++)
         {
-            if (PlayerGrid[r, 1] != null)
+            if (!PlayerGrid[r, 1].IsEmpty)
             {
                 if (isPlayerUnit && col == 1 && row == r)
                 {
@@ -73,9 +103,9 @@ public class BattleField
         }
 
         // Player's front column comes next (col 0)
-        for (int r = 0; r < rows; r++)
+        for (int r = 0; r < BATTLE_ROWS; r++)
         {
-            if (PlayerGrid[r, 0] != null)
+            if (!PlayerGrid[r, 0].IsEmpty)
             {
                 if (isPlayerUnit && col == 0 && row == r)
                 {
@@ -86,9 +116,9 @@ public class BattleField
         }
 
         // Enemy's front column comes next (col 0)
-        for (int r = 0; r < rows; r++)
+        for (int r = 0; r < BATTLE_ROWS; r++)
         {
-            if (EnemyGrid[r, 0] != null)
+            if (!EnemyGrid[r, 0].IsEmpty)
             {
                 if (!isPlayerUnit && col == 0 && row == r)
                 {
@@ -99,9 +129,9 @@ public class BattleField
         }
 
         // Enemy's back column comes last (col 1)
-        for (int r = 0; r < rows; r++)
+        for (int r = 0; r < BATTLE_ROWS; r++)
         {
-            if (EnemyGrid[r, 1] != null)
+            if (!EnemyGrid[r, 1].IsEmpty)
             {
                 if (!isPlayerUnit && col == 1 && row == r)
                 {
@@ -113,28 +143,15 @@ public class BattleField
         return index;
     }
 
-    public bool RemoveCreature(BattleCreature creature)
+    public void RemoveCreature(BattleSlot creature)
     {
-        var grid = creature.IsPlayerUnit? PlayerGrid : EnemyGrid;
-        for (int row = 0; row < rows; row++)
-        {
-            for (int col = 0; col < cols; col++)
-            {
-                if (grid[row, col] == creature)
-                {
-                    grid[row, col] = null;
-                    FieldCreatures.Remove(creature);
-                    creature.Reset();
-                    return true;
-                }
-            }
-        }
-        return false;
+        FieldCreatures.Remove(creature);
+        creature.ClearSlot();
     }
 
-    public List<BattleCreature> GetAdjacentCreatures(BattleCreature creature)
+    public List<BattleSlot> GetAdjacentCreatures(BattleSlot creature)
     {
-        var adjacent = new List<BattleCreature>();
+        var adjacent = new List<BattleSlot>();
         
         (int, int)? coords = GetPosition(creature);
 
@@ -143,25 +160,25 @@ public class BattleField
         int row = coords.Value.Item1;
         int col = coords.Value.Item2;
 
-        var grid = creature.IsPlayerUnit ? PlayerGrid : EnemyGrid;
+        var grid = creature.IsPlayerSlot ? PlayerGrid : EnemyGrid;
 
         if (row > 0) adjacent.Add(grid[row - 1, col]);
-        if (row < rows - 1) adjacent.Add(grid[row + 1, col]);
+        if (row < BATTLE_ROWS - 1) adjacent.Add(grid[row + 1, col]);
         if (col > 0) adjacent.Add(grid[row, col - 1]);
-        if (col < cols - 1) adjacent.Add(grid[row, col + 1]);
+        if (col < BATTLE_COLS - 1) adjacent.Add(grid[row, col + 1]);
 
-        return adjacent.Where(c => c != null).ToList();
+        return adjacent.Where(c => !c.IsEmpty).ToList();
     }
 
-    public (int, int)? GetPosition(BattleCreature creature)
+    public (int, int)? GetPosition(BattleSlot creature)
     {
-        if (creature == null) return null;
+        if (creature.IsEmpty) return null;
 
-        var grid = creature.IsPlayerUnit ? PlayerGrid : EnemyGrid;
+        var grid = creature.IsPlayerSlot ? PlayerGrid : EnemyGrid;
 
-        for (int row = 0; row < rows; row++)
+        for (int row = 0; row < BATTLE_ROWS; row++)
         {
-            for (int col = 0; col < cols; col++)
+            for (int col = 0; col < BATTLE_COLS; col++)
             {
                 if (grid[row, col] == creature)
                 {
@@ -172,27 +189,27 @@ public class BattleField
         return null;
     }
 
-    public BattleCreature GetCreature(bool isPlayerUnit, int row, int col)
+    public BattleSlot GetCreature(bool isPlayerUnit, int row, int col)
     {
-        if (row >= rows || row < 0) return null;
-        if (col >= cols || col < 0) return null;
+        if (row >= BATTLE_ROWS || row < 0) return null;
+        if (col >= BATTLE_COLS || col < 0) return null;
 
         var grid = isPlayerUnit ? PlayerGrid : EnemyGrid;
 
         return grid[row, col];
     }
 
-    public List<BattleCreature> GetTargets(bool isPlayerUnit, bool melee)
+    public List<BattleSlot> GetTargets(bool isPlayerUnit, bool melee)
     {
         var grid = isPlayerUnit ? PlayerGrid : EnemyGrid;
-        int maxCol = melee ? 1 : cols;
-        var targets = new List<BattleCreature>();
+        int maxCol = melee ? 1 : BATTLE_COLS;
+        var targets = new List<BattleSlot>();
 
-        for (int row = 0; row < rows; row++)
+        for (int row = 0; row < BATTLE_ROWS; row++)
         {
             for (int col = 0; col < maxCol; col++)
             {
-                if (grid[row, col] != null)
+                if (!grid[row, col].IsEmpty)
                 {
                     targets.Add(grid[row, col]);
                 }
@@ -201,3 +218,23 @@ public class BattleField
         return targets;
     }
 }
+
+
+/*
+private void Awake()
+{
+    FieldCreatures = new List<BattleSlot>();
+    PlayerGrid = new BattleSlot[BATTLE_ROWS, BATTLE_COLS];
+    EnemyGrid = new BattleSlot[BATTLE_ROWS, BATTLE_COLS];
+    int index = 0;
+    for (int col = 0; col < BATTLE_COLS; col++)
+    {
+        for (int row = 0; row < BATTLE_ROWS; row++)
+        {
+            PlayerGrid[row, col] = playerCreatures[index];
+            EnemyGrid[row, col] = enemyCreatures[index];
+            index++;
+        }
+    }
+}
+*/
