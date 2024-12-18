@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 using Unity.VisualScripting;
+using TMPro;
 
 public class BattleSlot : MonoBehaviour
 {
@@ -16,6 +17,7 @@ public class BattleSlot : MonoBehaviour
     private const int DEFAULT_SPRITE_SIZE = 60;
     private const int SIZE_CATEGORY_DIFF = 10;
     private const float AURA_SIZE_MOD = 1.5f;
+    private const float SLIDER_CHANGE_DURATION = 0.5f;
     
     [SerializeField] private Image spriteHolder;
     [SerializeField] private Slider hpBar;
@@ -26,8 +28,13 @@ public class BattleSlot : MonoBehaviour
     [SerializeField] private GameObject selectionArrowInvalid;
     [SerializeField] private GameObject selectionArrowSelected;
     [SerializeField] private GameObject statusWindow;
-    [SerializeField] private GameObject namePanel;
+    [SerializeField] private TextMeshProUGUI nameField;
+    [SerializeField] private TextMeshProUGUI levelField;
     [SerializeField] private GameObject horizontalArrangement;
+    [SerializeField] private GameObject statRowPrefab;
+
+    private List<GameObject> statRows = new List<GameObject>();
+
     public Creature Creature { get; private set; }
     public bool IsPlayerSlot { get; private set; }
     public bool IsEmpty { get; private set; } = true;
@@ -41,17 +48,22 @@ public class BattleSlot : MonoBehaviour
 
     public void Initialize(bool playerSlot)
     {
+        SetupStatusWindow();
         IsPlayerSlot = playerSlot;
         if (!playerSlot)
         {
-            ReverseSpriteDirection();
             ReverseSlotArrangement();
+        } 
+        else
+        {
+            ReverseSpriteDirection();
         }
     }
     public void Setup(Creature newCreature)
     {
         Creature = newCreature;
         UpdateUi();
+        UpdateStats();
         if (newCreature != null)
         {
             PlaySummonCreatureAnimation();
@@ -77,6 +89,14 @@ public class BattleSlot : MonoBehaviour
         IsEmpty = true;
     }
 
+    public void UpdateStats()
+    {
+        if (Creature != null) {
+            UpdateStatusWindow();
+            levelField.text = Creature.Level.ToString();
+        }
+    }
+
     public void UpdateUi()
     {
         if (Creature != null)
@@ -91,16 +111,19 @@ public class BattleSlot : MonoBehaviour
             originalColor = image.color;
             originalPos = image.transform.localPosition;
 
-            hpBar.value = Creature.HP / (float)Creature.MaxHP;
-            energyBar.value = Creature.Energy / (float)Creature.MaxEnergy;
-            xpBar.value = Creature.XP / 100; // TEMP SIMPLIFIED VALUE
-            spriteHolder.gameObject.SetActive(true);
+            nameField.text = Creature.Nickname;
+
+            Creature.Energy = (int)(Creature.StartingEnergy * Creature.MaxEnergy);
+
+            energyBar.gameObject.SetActive(IsPlayerSlot);
+            xpBar.gameObject.SetActive(IsPlayerSlot);
+
             hpBar.gameObject.SetActive(true);
-            if (IsPlayerSlot)
-            {
-                energyBar.gameObject.SetActive(true);
-                xpBar.gameObject.SetActive(true);
-            }
+
+            hpBar.value = (Creature.HP / (float)Creature.MaxHP) * 100f;
+            energyBar.value = (Creature.Energy / (float)Creature.MaxEnergy) * 100f;
+            xpBar.value = (Creature.XP / 100) * 100f; // TEMP SIMPLIFIED VALUE
+            spriteHolder.gameObject.SetActive(true);
             IsEmpty = false;
         }
         else
@@ -182,33 +205,86 @@ public class BattleSlot : MonoBehaviour
 
     private void ReverseSlotArrangement()
     {
+        // Reverse sprite and stat bar layout for enemies
         HorizontalLayoutGroup horizontalLayoutGroup = horizontalArrangement.GetComponent<HorizontalLayoutGroup>();
-        horizontalLayoutGroup.reverseArrangement = false;
+        horizontalLayoutGroup.reverseArrangement = true;
+
+        // Reverse bar anchor direction for enemies
+        GameObject barLayout = horizontalArrangement.transform.Find("Bars")?.gameObject;
+        if (barLayout != null)
+        {
+            HorizontalLayoutGroup barLayoutGroup = barLayout.GetComponent<HorizontalLayoutGroup>();
+
+            if (barLayoutGroup != null)
+            {
+                // Change child alignment to Middle Left
+                horizontalLayoutGroup.childAlignment = TextAnchor.MiddleLeft;
+            }
+        }
     }
 
+    private void SetupStatusWindow()
+    {
+        AddStatRow("Species", singleValue: true);
+        AddStatRow("Type", singleValue: false);
+        AddStatRow("HP", singleValue: false);
+        AddStatRow("Energy", singleValue: false);
+        AddStatRow("Strength", singleValue: false);
+        AddStatRow("Magic", singleValue: false);
+        AddStatRow("Skill", singleValue: false);
+        AddStatRow("Speed", singleValue: false);
+        AddStatRow("Defense", singleValue: false);
+        AddStatRow("Resistance", singleValue: false);
+    }
 
+    public void UpdateStatusWindow()
+    {
+        if (Creature != null)
+        {
+            statRows[0].GetComponent<StatRow>().UpdateSpecies(Creature.Species.CreatureName);
+            statRows[1].GetComponent<StatRow>().UpdateType(Creature.Species.Type1, Creature.Species.Type2);
+            statRows[2].GetComponent<StatRow>().UpdateStats(Creature.MaxHP, Creature.HP);
+            statRows[3].GetComponent<StatRow>().UpdateStats(Creature.MaxEnergy, Creature.Energy);
+            statRows[4].GetComponent<StatRow>().UpdateStats(Creature.Strength, Creature.Strength);
+            statRows[5].GetComponent<StatRow>().UpdateStats(Creature.Magic, Creature.Magic);
+            statRows[6].GetComponent<StatRow>().UpdateStats(Creature.Skill, Creature.Skill);
+            statRows[7].GetComponent<StatRow>().UpdateStats(Creature.Speed, Creature.Speed);
+            statRows[8].GetComponent<StatRow>().UpdateStats(Creature.Defense, Creature.Defense);
+            statRows[9].GetComponent<StatRow>().UpdateStats(Creature.Resistance, Creature.Resistance);
+        }
+    }
+
+    private void AddStatRow(string statName, bool singleValue)
+    {
+        GameObject newRow = Instantiate(statRowPrefab, statusWindow.transform);
+
+        StatRow statRow = newRow.GetComponent<StatRow>();
+
+        statRow.SetupRow(statName, singleValue);
+
+        statRows.Add(newRow);
+    }
 
     public void RollInitiative()
     {
         Initiative = Random.Range(Creature.Speed / 2, Creature.Speed);
     }
-
-
     public void Defeated()
     {
         IsDefeated = true;
         PlayDisperseAnimation();
         //hud.HideBars();
     }
-
     public void AddHP(int amount)
     {
         Creature.AddHP(amount);
+        StartCoroutine(SmoothSliderChange(hpBar, Creature.HP / (float)Creature.MaxHP));
     }
 
     public void RemoveHP(int amount)
     {
         Creature.RemoveHP(amount);
+        StartCoroutine(SmoothSliderChange(hpBar, Creature.HP / (float)Creature.MaxHP));
         if (Creature.IsDefeated)
         {
             Defeated();
@@ -224,13 +300,28 @@ public class BattleSlot : MonoBehaviour
     public void AddEnergy(int amount)
     {
         Creature.AddEnergy(amount);
+        StartCoroutine(SmoothSliderChange(energyBar, Creature.Energy / (float)Creature.MaxEnergy));
     }
 
     public void RemoveEnergy(int amount)
     {
         Creature.RemoveEnergy(amount);
+        StartCoroutine(SmoothSliderChange(energyBar, Creature.Energy / (float)Creature.MaxEnergy));
     }
 
+    private IEnumerator SmoothSliderChange(Slider slider, float targetValue)
+    {
+        float startValue = slider.value;
+        float elapsedTime = 0f;
+
+        while (elapsedTime < SLIDER_CHANGE_DURATION)
+        {
+            slider.value = Mathf.Lerp(startValue, targetValue, elapsedTime / SLIDER_CHANGE_DURATION);
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+        slider.value = targetValue;
+    }
 
     public void PlaySummonCreatureAnimation()
     {
@@ -269,6 +360,7 @@ public class BattleSlot : MonoBehaviour
         image.DOFade(0f, DISPERSE_ANIMATION_DURATION).SetEase(Ease.InOutQuad);
     }
 }
+
 
 public enum SelectionArrowState
 {
