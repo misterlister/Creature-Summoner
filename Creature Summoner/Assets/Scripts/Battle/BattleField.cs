@@ -19,7 +19,7 @@ public class BattleField : MonoBehaviour
     private void Start()
     {
         PlayerGrid = CreateBattleSlots(playerSlotsParent, true);
-        EnemyGrid = CreateBattleSlots(enemySlotsParent, true);
+        EnemyGrid = CreateBattleSlots(enemySlotsParent, false);
     }
 
     private BattleSlot[,] CreateBattleSlots(Transform parent, bool isPlayer)
