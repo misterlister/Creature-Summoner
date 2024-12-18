@@ -37,6 +37,8 @@ public class Creature
     public float GlancingDamageReduction { get; set; }
     public int ChanceToBeGlanced { get; set; }
 
+    public float StartingEnergy { get; private set; }
+
     public float CritBonus { get; set; }
     public float CritResistance { get; set; }
 
@@ -72,6 +74,8 @@ public class Creature
 
         GlancingDamageReduction = GLANCE_REDUCTION;
         ChanceToBeGlanced = GLANCE_CHANCE;
+
+        StartingEnergy = DEFAULT_STARTING_ENERGY;
 
         CritBonus = CRIT_BONUS;
         CritResistance = CRIT_RESISTANCE;
