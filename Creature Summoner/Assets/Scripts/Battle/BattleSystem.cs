@@ -735,8 +735,8 @@ public class BattleSystem : MonoBehaviour
     {
         while (CreatureTargets.Count > 0)
         {
-            //CreatureTargets[0].Hud.EnableCreatureInfoPanel(false);
-            //CreatureTargets[0].Hud.EnableSelectionArrow(false);
+            CreatureTargets[0].ToggleStatusWindow(false);
+            CreatureTargets[0].UpdateSelectionArrow(SelectionArrowState.None);
             CreatureTargets.RemoveAt(0);
         }
     }
@@ -824,10 +824,10 @@ public class BattleSystem : MonoBehaviour
 
     void HighlightCreature(BattleSlot creature, bool showHUD = false)
     {
-        //creature.Hud.EnableSelectionArrow(true);
+        creature.UpdateSelectionArrow(SelectionArrowState.Valid);
         if (showHUD)
         {
-            //creature.Hud.EnableCreatureInfoPanel(true);
+            creature.ToggleStatusWindow(true);
         }
         highlightedCreature = creature;
     }
@@ -836,15 +836,15 @@ public class BattleSystem : MonoBehaviour
     {
         if (highlightedCreature != null)
         {
-            //highlightedCreature.Hud.EnableSelectionArrow(false);
-            //highlightedCreature.Hud.EnableCreatureInfoPanel(false);
+            highlightedCreature.UpdateSelectionArrow(SelectionArrowState.None);
+            highlightedCreature.ToggleStatusWindow(false);
             highlightedCreature = null;
         }
     }
 
     void AddTarget(BattleSlot target)
     {
-        //target.Hud.EnableSelectionArrow(true, true);
+        target.UpdateSelectionArrow(SelectionArrowState.Selected);
         CreatureTargets.Add(target);
     }
 }
