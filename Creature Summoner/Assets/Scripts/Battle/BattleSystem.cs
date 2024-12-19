@@ -315,10 +315,6 @@ public class BattleSystem : MonoBehaviour
                 List<string> actionMessages = selectedAction.UseAction(activeCreature, target);
                 battleMessages.AddRange(actionMessages);
 
-                // Start both HUD updates simultaneously and yield for both
-                //StartCoroutine(target.UpdateHud());
-                //StartCoroutine(activeCreature.UpdateHud());
-
                 // Process the battle messages
                 foreach (var message in battleMessages)
                 {
@@ -326,7 +322,14 @@ public class BattleSystem : MonoBehaviour
                 }
 
                 // After typing is done, ensure both HUD updates have finished
-                //yield return new WaitUntil(() => !target.Hud.IsUpdating && !activeCreature.Hud.IsUpdating);
+                while (activeCreature.IsUpdating() || target.IsUpdating())
+                {
+                    yield return null; // Wait until all updates are finished
+                }
+                if (target.IsDefeated)
+                {
+                    target.ClearSlot();
+                }
 
                 battleMessages.Clear();
             }
@@ -647,18 +650,6 @@ public class BattleSystem : MonoBehaviour
             ToDetermineTurn();
             return;
         }
-        if (selectedAction.Category == ActionCategory.Core)
-        {
-            activeCreature.AddEnergy(selectedAction.Energy);
-        }
-        else if (selectedAction.Category == ActionCategory.Empowered)
-        {
-            activeCreature.RemoveEnergy(selectedAction.Energy);
-        }
-        else
-        {
-            Debug.Log($"Error: Action category: {selectedAction.Category}");
-        }
 
         StartCoroutine(PerformAction(selectedAction));
     }
@@ -671,7 +662,7 @@ public class BattleSystem : MonoBehaviour
             ActionBase selected = activeCreature.Creature.EquippedEmpoweredActions[selection].Action;
             if (selected != null)
             {
-                if (selected.Energy <= activeCreature.Creature.Energy) 
+                if (selected.EnergyCost <= activeCreature.Creature.Energy) 
                 {
                     selectedAction = selected;
                     ToTargetSelectState();
