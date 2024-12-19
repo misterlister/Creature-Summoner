@@ -30,7 +30,8 @@ public class ActionBase : Talent
     [SerializeField] int numTargets = 1;
     [SerializeField] int baseCrit = 5;
     [SerializeField] List<string> tags;
-    [SerializeField] int energy;
+    [SerializeField] int energyCost = 0;
+    [SerializeField] int energyGain = 0;
 
     public CreatureType Type => type;
     public ActionCategory Category => category;
@@ -43,7 +44,8 @@ public class ActionBase : Talent
     public int NumTargets => numTargets;
     public int BaseCrit => baseCrit;
     public List<string> Tags => tags;
-    public int Energy => energy;
+    public int EnergyCost => energyCost;
+    public int EnergyGain => energyGain;
 
     public int CalculateAccuracy(Creature attacker, Creature defender)
     {
@@ -135,15 +137,25 @@ public class ActionBase : Talent
         {
             Debug.Log($"-------attacker: {attacker.Creature.Nickname}-------");
         }
+
+        // Create the ActionDetails object
+        ActionDetails actionDetails = new ActionDetails(attacker.Creature.Nickname, defender.Creature.Nickname);
+
+        if (energyCost != 0)
+        {
+            attacker.AdjustEnergy(-energyCost);
+        }
+
+        if (energyGain != 0)
+        {
+            attacker.AdjustEnergy(CalculateEnergyGain(attacker));
+        }
+
         int accuracy = CalculateAccuracy(attacker.Creature, defender.Creature);
         bool hit = rollToHit(accuracy);
         bool glancingBlow = false;
         bool isCrit = false;
         float critMod = 1f;
-
-        // Create the ActionDetails object
-
-        ActionDetails actionDetails = new ActionDetails(attacker.Creature.Nickname, defender.Creature.Nickname);
 
         // Get the effectiveness category
         Effectiveness effectRating = TypeChart.GetEffectiveness(type, defender.Creature.Species.Type1, defender.Creature.Species.Type2);
@@ -173,18 +185,18 @@ public class ActionBase : Talent
         }
         else
         {
-            isCrit = rollForCrit(attacker, defender);
+            isCrit = RollForCrit(attacker, defender);
             if (isCrit)
             {
                 actionDetails.IsCrit = true;
-                critMod = calculateCritBonus(attacker, defender);
+                critMod = CalculateCritBonus(attacker, defender);
             }
             damage = CalculateDamage(attacker.Creature, defender.Creature, critMod);
         }
 
         // Adjust damage for type effectiveness
         damage = Mathf.Max((int)((float)damage * effectMod), 1);
-        
+
         // Deal damage to target
         defender.HitByAttack(damage);
         if (defender.IsDefeated)
@@ -224,7 +236,7 @@ public class ActionBase : Talent
         return critPercent;
     }
 
-    private bool rollForCrit(BattleSlot attacker, BattleSlot defender)
+    private bool RollForCrit(BattleSlot attacker, BattleSlot defender)
     {
         int critChance = CalculateCritChance(attacker, defender);
         int roll = Random.Range(1, ROLL_CEILING);
@@ -240,7 +252,7 @@ public class ActionBase : Talent
         return false;
     }
 
-    private float calculateCritBonus(BattleSlot attacker, BattleSlot defender)
+    private float CalculateCritBonus(BattleSlot attacker, BattleSlot defender)
     {
         float critBonus = 1f;
         critBonus += attacker.Creature.CritBonus;
@@ -252,5 +264,10 @@ public class ActionBase : Talent
             Debug.Log($"clampedCrit: {clampedCrit}");
         }
         return clampedCrit;
+    }
+
+    private int CalculateEnergyGain(BattleSlot attacker)
+    {
+        return (int)(attacker.Creature.MaxEnergy * (energyGain / 100f));
     }
 }
