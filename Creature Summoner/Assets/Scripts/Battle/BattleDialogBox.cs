@@ -137,15 +137,15 @@ public class BattleDialogBox : MonoBehaviour
             actionAccuracy.text = $"Accuracy: {action.Accuracy}%";
             if (action.Category == ActionCategory.Core)
             {
-                actionEnergy.text = $"Energy Gain: {action.Energy}";
+                actionEnergy.text = $"Energy Gain: {action.EnergyGain}";
             }
             else if (action.Category == ActionCategory.Empowered)
             {
-                actionEnergy.text = $"Energy Cost: {action.Energy}";
+                actionEnergy.text = $"Energy Cost: {action.EnergyCost}";
             }
             else if (action.Category == ActionCategory.Mastery)
             {
-                actionEnergy.text = $"Mastery Cost: {action.Energy}";
+                actionEnergy.text = $"Mastery Cost: {action.EnergyCost}";
             }
             else
             {
