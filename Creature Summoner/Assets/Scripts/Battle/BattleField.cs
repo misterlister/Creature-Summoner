@@ -18,20 +18,36 @@ public class BattleField : MonoBehaviour
 
     private void Start()
     {
-        PlayerGrid = CreateBattleSlots(playerSlotsParent, true);
-        EnemyGrid = CreateBattleSlots(enemySlotsParent, false);
+        PlayerGrid = CreatePlayerBattleSlots();
+        EnemyGrid = CreateEnemyBattleSlots();
     }
 
-    private BattleSlot[,] CreateBattleSlots(Transform parent, bool isPlayer)
+    private BattleSlot[,] CreatePlayerBattleSlots()
+    {
+        BattleSlot[,] slots = new BattleSlot[BATTLE_ROWS, BATTLE_COLS];
+        for (int col = BATTLE_COLS - 1; col >= 0; col--)
+        {
+            for (int row = 0; row < BATTLE_ROWS; row++)
+            {
+                GameObject slotInstance = Instantiate(battleSlotPrefab, playerSlotsParent);
+                BattleSlot battleSlot = slotInstance.GetComponent<BattleSlot>();
+                battleSlot.Initialize(true);
+                slots[row, col] = battleSlot;
+            }
+        }
+        return slots;
+    }
+
+    private BattleSlot[,] CreateEnemyBattleSlots()
     {
         BattleSlot[,] slots = new BattleSlot[BATTLE_ROWS, BATTLE_COLS];
         for (int col = 0; col < BATTLE_COLS; col++)
         {
             for (int row = 0; row < BATTLE_ROWS; row++)
             {
-                GameObject slotInstance = Instantiate(battleSlotPrefab, parent);
+                GameObject slotInstance = Instantiate(battleSlotPrefab, enemySlotsParent);
                 BattleSlot battleSlot = slotInstance.GetComponent<BattleSlot>();
-                battleSlot.Initialize(isPlayer);
+                battleSlot.Initialize(false);
                 slots[row, col] = battleSlot;
             }
         }
@@ -63,7 +79,7 @@ public class BattleField : MonoBehaviour
         } 
         else
         {
-            Debug.Log("PROBLEM HERE!");
+            Debug.Log($"Error: row ${row} col ${col} player: {isPlayerUnit} can't initialize, as it's not empty!");
             return false;
         }
 
@@ -218,23 +234,3 @@ public class BattleField : MonoBehaviour
         return targets;
     }
 }
-
-
-/*
-private void Awake()
-{
-    FieldCreatures = new List<BattleSlot>();
-    PlayerGrid = new BattleSlot[BATTLE_ROWS, BATTLE_COLS];
-    EnemyGrid = new BattleSlot[BATTLE_ROWS, BATTLE_COLS];
-    int index = 0;
-    for (int col = 0; col < BATTLE_COLS; col++)
-    {
-        for (int row = 0; row < BATTLE_ROWS; row++)
-        {
-            PlayerGrid[row, col] = playerCreatures[index];
-            EnemyGrid[row, col] = enemyCreatures[index];
-            index++;
-        }
-    }
-}
-*/
