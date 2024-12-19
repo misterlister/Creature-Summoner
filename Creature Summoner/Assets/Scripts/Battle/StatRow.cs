@@ -77,12 +77,48 @@ public class StatRow : MonoBehaviour
         }
     }
 
-    public void UpdateSpecies(string species)
+    public void UpdateSingleText(string text, Color colour = default)
     {
-        singleValue.text = species;
-        if (!singleValue)
+        if (colour == default)
         {
-            Debug.LogWarning("Error. Updating species name on non-single value statRow");
+            colour = Color.black;
+        }
+        singleValue.text = text;
+        singleValue.color = colour;
+        if (!singleEntry)
+        {
+            Debug.LogWarning("Error: Updating single text on double value statRow");
+        }
+    }
+
+    public void UpdateDoubleText(string text, string text2, Color colour = default)
+    {
+        if (colour == default)
+        {
+            colour = Color.black;
+        }
+        firstValue.text = text;
+        firstValue.color = colour;
+        secondValue.text = text2;
+        secondValue.color = colour;
+
+        if (singleEntry)
+        {
+            Debug.LogWarning($"Error: Updating double text on single value. Values: {text}, {text2}");
+        }
+    }
+
+    public void UpdateResource(int max, int current, Color colour = default)
+    {
+        if (colour == default)
+        {
+            colour = Color.black;
+        }
+        singleValue.text = $"{current}/{max}";
+        singleValue.color = colour;
+        if (!singleEntry)
+        {
+            Debug.LogWarning("Error: Updating single text on double value statRow");
         }
     }
 }
