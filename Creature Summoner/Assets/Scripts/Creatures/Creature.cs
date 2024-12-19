@@ -27,6 +27,7 @@ public class Creature
     public int Energy { get; set; }
     public int XP { get; set; }
     public int TotalXP { get; set; }
+    public int XPForNextLevel { get; set; }
     public string Nickname { get; set; }
     public bool IsDefeated { get; set; }
     private int VitalityTraining;
@@ -57,6 +58,7 @@ public class Creature
         Energy = 0;
         XP = 0;
         TotalXP = Level * 100; //Temp Simplified Placeholder
+        XPForNextLevel = (Level + 1) * 100; //Temp Simplified Placeholder
 
         //if (nickname != "")
         //{
@@ -270,5 +272,22 @@ public class Creature
         }
     }
 
+    public void AddXP(int amount)
+    {
+        /*
+        if (amount < 0)
+        {
+            amount = -amount;
+        }
+        if (amount + XP > 100)
+        {
+            Energy = MaxEnergy;
+        }
+        else
+        {
+            Energy += amount;
+        }
+        */
+    }
 }
 
