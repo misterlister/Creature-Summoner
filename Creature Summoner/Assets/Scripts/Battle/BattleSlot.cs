@@ -30,6 +30,8 @@ public class BattleSlot : MonoBehaviour
     [SerializeField] private GameObject statusWindow;
     [SerializeField] private TextMeshProUGUI nameField;
     [SerializeField] private TextMeshProUGUI levelField;
+    [SerializeField] private GameObject namePanel;
+    [SerializeField] private GameObject levelPanel;
     [SerializeField] private GameObject horizontalArrangement;
     [SerializeField] private GameObject statRowPrefab;
 
@@ -41,6 +43,14 @@ public class BattleSlot : MonoBehaviour
 
     public int Initiative { get; private set; }
     public bool IsDefeated { get; private set; } = false;
+
+    public bool HPUpdating { get; private set; } = false;
+    public bool EnergyUpdating { get; private set; } = false;
+    public bool XPUpdating { get; private set; } = false;
+
+    private Queue<float> HPUpdates = new Queue<float>();
+    private Queue<float> EnergyUpdates = new Queue<float>();
+    private Queue<float> XPUpdates = new Queue<float>();
 
     Image image;
     Vector3 originalPos;
@@ -58,6 +68,7 @@ public class BattleSlot : MonoBehaviour
         {
             ReverseSpriteDirection();
         }
+        ClearSlot();
     }
     public void Setup(Creature newCreature)
     {
@@ -85,6 +96,9 @@ public class BattleSlot : MonoBehaviour
         ToggleHighlightAura(false);
         ToggleStatusWindow(false);
         UpdateSelectionArrow(SelectionArrowState.None);
+
+        namePanel.SetActive(false);
+        levelPanel.SetActive(false);
 
         IsEmpty = true;
     }
@@ -120,10 +134,14 @@ public class BattleSlot : MonoBehaviour
 
             hpBar.gameObject.SetActive(true);
 
-            hpBar.value = (Creature.HP / (float)Creature.MaxHP) * 100f;
-            energyBar.value = (Creature.Energy / (float)Creature.MaxEnergy) * 100f;
-            xpBar.value = (Creature.XP / 100) * 100f; // TEMP SIMPLIFIED VALUE
+            hpBar.value = (Creature.HP / (float)Creature.MaxHP);
+            energyBar.value = (Creature.Energy / (float)Creature.MaxEnergy);
+            xpBar.value = (Creature.XP / 100); // TEMP SIMPLIFIED VALUE
             spriteHolder.gameObject.SetActive(true);
+
+            namePanel.SetActive(true);
+            levelPanel.SetActive(true);
+
             IsEmpty = false;
         }
         else
@@ -164,7 +182,11 @@ public class BattleSlot : MonoBehaviour
 
     public void ToggleStatusWindow(bool enabled)
     {
-        statusWindow.SetActive(enabled);
+        if (!IsEmpty)
+        {
+            UpdateStatusWindow();
+            statusWindow.SetActive(enabled);
+        }
     }
 
     private void SetSpriteSize(RectTransform rectTransform, CreatureSize size)
@@ -227,8 +249,10 @@ public class BattleSlot : MonoBehaviour
     {
         AddStatRow("Species", singleValue: true);
         AddStatRow("Type", singleValue: false);
-        AddStatRow("HP", singleValue: false);
-        AddStatRow("Energy", singleValue: false);
+        AddStatRow("HP", singleValue: true);
+        AddStatRow("Energy", singleValue: true);
+        AddStatRow("XP", singleValue: true);
+        AddStatRow("--Stat--", singleValue: false);
         AddStatRow("Strength", singleValue: false);
         AddStatRow("Magic", singleValue: false);
         AddStatRow("Skill", singleValue: false);
@@ -241,16 +265,18 @@ public class BattleSlot : MonoBehaviour
     {
         if (Creature != null)
         {
-            statRows[0].GetComponent<StatRow>().UpdateSpecies(Creature.Species.CreatureName);
+            statRows[0].GetComponent<StatRow>().UpdateSingleText(Creature.Species.CreatureName, Color.blue);
             statRows[1].GetComponent<StatRow>().UpdateType(Creature.Species.Type1, Creature.Species.Type2);
-            statRows[2].GetComponent<StatRow>().UpdateStats(Creature.MaxHP, Creature.HP);
-            statRows[3].GetComponent<StatRow>().UpdateStats(Creature.MaxEnergy, Creature.Energy);
-            statRows[4].GetComponent<StatRow>().UpdateStats(Creature.Strength, Creature.Strength);
-            statRows[5].GetComponent<StatRow>().UpdateStats(Creature.Magic, Creature.Magic);
-            statRows[6].GetComponent<StatRow>().UpdateStats(Creature.Skill, Creature.Skill);
-            statRows[7].GetComponent<StatRow>().UpdateStats(Creature.Speed, Creature.Speed);
-            statRows[8].GetComponent<StatRow>().UpdateStats(Creature.Defense, Creature.Defense);
-            statRows[9].GetComponent<StatRow>().UpdateStats(Creature.Resistance, Creature.Resistance);
+            statRows[2].GetComponent<StatRow>().UpdateResource(Creature.MaxHP, Creature.HP, Color.green);
+            statRows[3].GetComponent<StatRow>().UpdateResource(Creature.MaxEnergy, Creature.Energy, Color.magenta);
+            statRows[4].GetComponent<StatRow>().UpdateResource(100, Creature.XP, Color.gray); // PLACEHOLDER XP REQUIREMENT
+            statRows[5].GetComponent<StatRow>().UpdateDoubleText("Base", "Modified");
+            statRows[6].GetComponent<StatRow>().UpdateStats(Creature.Strength, Creature.Strength);
+            statRows[7].GetComponent<StatRow>().UpdateStats(Creature.Magic, Creature.Magic);
+            statRows[8].GetComponent<StatRow>().UpdateStats(Creature.Skill, Creature.Skill);
+            statRows[9].GetComponent<StatRow>().UpdateStats(Creature.Speed, Creature.Speed);
+            statRows[10].GetComponent<StatRow>().UpdateStats(Creature.Defense, Creature.Defense);
+            statRows[11].GetComponent<StatRow>().UpdateStats(Creature.Resistance, Creature.Resistance);
         }
     }
 
@@ -273,42 +299,84 @@ public class BattleSlot : MonoBehaviour
     {
         IsDefeated = true;
         PlayDisperseAnimation();
-        //hud.HideBars();
     }
-    public void AddHP(int amount)
+    public void HitByAttack(int damage)
     {
-        Creature.AddHP(amount);
-        StartCoroutine(SmoothSliderChange(hpBar, Creature.HP / (float)Creature.MaxHP));
+        PlayHitAnimation();
+        AdjustHP(-damage);
     }
 
-    public void RemoveHP(int amount)
+
+    public void AdjustHP(int amount)
     {
-        Creature.RemoveHP(amount);
-        StartCoroutine(SmoothSliderChange(hpBar, Creature.HP / (float)Creature.MaxHP));
+        if (amount > 0)
+        {
+            Creature.AddHP(amount);
+        }
+        else
+        {
+            Creature.RemoveHP(-amount);
+        }
+        
+        HPUpdates.Enqueue(NormalizeInt(Creature.HP, Creature.MaxHP));
+        if (!HPUpdating)
+        {
+            StartCoroutine(ProcessSliderUpdates(HPUpdates, hpBar, nameof(HPUpdating)));
+        }
         if (Creature.IsDefeated)
         {
             Defeated();
         }
     }
 
-    public void HitByAttack(int damage)
+    public void AdjustEnergy(int amount)
     {
-        PlayHitAnimation();
-        RemoveHP(damage);
+        if (amount > 0)
+        {
+            Creature.AddEnergy(amount);
+        }
+        else
+        {
+            Creature.RemoveEnergy(-amount);
+        }
+        
+        EnergyUpdates.Enqueue(NormalizeInt(Creature.Energy, Creature.MaxEnergy));
+        if (!EnergyUpdating)
+        {
+            StartCoroutine(ProcessSliderUpdates(EnergyUpdates, energyBar, nameof(EnergyUpdating)));
+        }
     }
 
-    public void AddEnergy(int amount)
+    public void AddXP(int amount)
     {
-        Creature.AddEnergy(amount);
-        StartCoroutine(SmoothSliderChange(energyBar, Creature.Energy / (float)Creature.MaxEnergy));
+        Creature.AddXP(amount);
+        XPUpdates.Enqueue(NormalizeInt(Creature.XP, 100));
+        if (!XPUpdating)
+        {
+            StartCoroutine(ProcessSliderUpdates(XPUpdates, xpBar, nameof(XPUpdating)));
+        }
     }
 
-    public void RemoveEnergy(int amount)
+    private IEnumerator ProcessSliderUpdates(Queue<float> updatesQueue, Slider slider, string updatingFlagName)
     {
-        Creature.RemoveEnergy(amount);
-        StartCoroutine(SmoothSliderChange(energyBar, Creature.Energy / (float)Creature.MaxEnergy));
+        SetUpdatingFlag(updatingFlagName, true);
+
+        while (updatesQueue.Count > 0)
+        {
+            // Get the new target value for the slider
+            float targetValue = updatesQueue.Dequeue();
+
+            // Ensure the target value stays within bounds
+            targetValue = Mathf.Clamp(targetValue, 0f, 1f);
+
+            // Smoothly transition the slider
+            yield return StartCoroutine(SmoothSliderChange(slider, targetValue));
+        }
+
+        SetUpdatingFlag(updatingFlagName, false);
     }
 
+    // Smooth slider transition
     private IEnumerator SmoothSliderChange(Slider slider, float targetValue)
     {
         float startValue = slider.value;
@@ -321,6 +389,23 @@ public class BattleSlot : MonoBehaviour
             yield return null;
         }
         slider.value = targetValue;
+    }
+
+    // Helper function to set the updating flags dynamically
+    private void SetUpdatingFlag(string flagName, bool value)
+    {
+        switch (flagName)
+        {
+            case nameof(HPUpdating):
+                HPUpdating = value;
+                break;
+            case nameof(EnergyUpdating):
+                EnergyUpdating = value;
+                break;
+            case nameof(XPUpdating):
+                XPUpdating = value;
+                break;
+        }
     }
 
     public void PlaySummonCreatureAnimation()
@@ -358,6 +443,20 @@ public class BattleSlot : MonoBehaviour
     public void PlayDisperseAnimation()
     {
         image.DOFade(0f, DISPERSE_ANIMATION_DURATION).SetEase(Ease.InOutQuad);
+    }
+
+    public bool IsUpdating()
+    {
+        if (HPUpdating || EnergyUpdating || XPUpdating)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private float NormalizeInt(int value, int max)
+    {
+        return (float)value / max;
     }
 }
 
