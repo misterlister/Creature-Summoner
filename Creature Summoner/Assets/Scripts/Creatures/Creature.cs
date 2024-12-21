@@ -116,7 +116,7 @@ public class Creature
 
     private int calc_energy(int baseEnergy)
     {
-        return Mathf.FloorToInt(((baseEnergy * 4 + (VitalityTraining / 5)) * Level) / 100f) + 30 + Level;
+        return Mathf.FloorToInt(((baseEnergy * 4 + (VitalityTraining / 5)) * Level) / 100f) + 10 + Level;
     }
 
     private void initTalents()
