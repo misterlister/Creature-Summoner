@@ -56,8 +56,13 @@ public class BattleSlot : MonoBehaviour
     Vector3 originalPos;
     Color originalColor;
 
-    public void Initialize(bool playerSlot)
+    public int Row { get; private set; }
+    public int Col { get; private set; }
+
+    public void Initialize(bool playerSlot, int row, int col)
     {
+        Row = row; 
+        Col = col;
         SetupStatusWindow();
         IsPlayerSlot = playerSlot;
         if (!playerSlot)
@@ -525,17 +530,6 @@ public void Setup(Creature creature)
     PlaySummonCreatureAnimation();
 
     hud.SetData(Creature);
-}
-
-
-
-public void Reset()
-{
-    creatureSprite.gameObject.SetActive(false);
-    Empty = true;
-    Creature = null;
-    Initiative = 0;
-    hud.HideBars();
 }
 
 */
