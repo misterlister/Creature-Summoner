@@ -3,9 +3,10 @@ using UnityEngine;
 
 public static class GameConstants
 {
-    public const int BATTLE_ROWS = 3; // Number of Rows on each side of the battlefield
-    public const int BATTLE_COLS = 2; // Number of Columns on each side of the battlefield
-    public const int TEAM_SPACES = BATTLE_COLS * BATTLE_ROWS;
+    public const int BATTLE_ROWS = 3; // Number of Rows on the battlefield
+    public const int BATTLE_COLS = 4; // Number of Columns on the battlefield
+    //public const int TEAM_SPACES = BATTLE_COLS * BATTLE_ROWS;
+    public const int ENEMY_COL = BATTLE_COLS / 2;
 
     public const int BATTLE_MENU_COLS = 2; // Number of Columns in the battle selection menu
 
