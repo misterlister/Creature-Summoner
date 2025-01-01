@@ -13,6 +13,7 @@ public class BattleSlot : MonoBehaviour
     const float HIT_ANIMATION_DUR = 0.1f;
     const float SUMMON_ANIMATION_DURATION = 1f;
     const float DISPERSE_ANIMATION_DURATION = 1.5f;
+    const float HEAL_ANIMATION_DURATION = 0.5f;
 
     private const int DEFAULT_SPRITE_SIZE = 60;
     private const int SIZE_CATEGORY_DIFF = 10;
@@ -23,10 +24,18 @@ public class BattleSlot : MonoBehaviour
     [SerializeField] private Slider hpBar;
     [SerializeField] private Slider energyBar;
     [SerializeField] private Slider xpBar;
+
     [SerializeField] private Image highlightAura;
-    [SerializeField] private GameObject selectionArrowValid;
-    [SerializeField] private GameObject selectionArrowInvalid;
-    [SerializeField] private GameObject selectionArrowSelected;
+    [SerializeField] private Sprite activeCreatureAura;
+    [SerializeField] private Sprite negativeTargetAura;
+    [SerializeField] private Sprite positiveTargetAura;
+    [SerializeField] private Sprite moveTargetAura;
+
+    [SerializeField] private Image selectionArrowImage;
+    [SerializeField] private Sprite validArrowSprite;
+    [SerializeField] private Sprite invalidArrowSprite;
+    [SerializeField] private Sprite selectedArrowSprite;
+
     [SerializeField] private GameObject statusWindow;
     [SerializeField] private TextMeshProUGUI nameField;
     [SerializeField] private TextMeshProUGUI levelField;
@@ -40,8 +49,8 @@ public class BattleSlot : MonoBehaviour
     public Creature Creature { get; private set; }
     public bool IsPlayerSlot { get; private set; }
     public bool IsEmpty { get; private set; } = true;
+    public bool ValidTarget { get; private set; }
 
-    public int Initiative { get; private set; }
     public bool IsDefeated { get; private set; } = false;
 
     public bool HPUpdating { get; private set; } = false;
@@ -77,17 +86,20 @@ public class BattleSlot : MonoBehaviour
     }
     public void Setup(Creature newCreature)
     {
+        if (newCreature == null)
+        {
+            ClearSlot();
+            return;
+        }
         Creature = newCreature;
         UpdateUi();
         UpdateStats();
-        if (newCreature != null)
-        {
-            PlaySummonCreatureAnimation();
-        }
+        PlaySummonCreatureAnimation();
     }
 
     public void ClearSlot()
     {
+        Creature = null;
         spriteHolder.sprite = null;
         spriteHolder.gameObject.SetActive(false);
 
@@ -98,8 +110,8 @@ public class BattleSlot : MonoBehaviour
         energyBar.gameObject.SetActive(false);
         xpBar.gameObject.SetActive(false);
 
-        ToggleHighlightAura(false);
         ToggleStatusWindow(false);
+        UpdateHighlightAura(HighlightAuraState.None);
         UpdateSelectionArrow(SelectionArrowState.None);
 
         namePanel.SetActive(false);
@@ -155,37 +167,65 @@ public class BattleSlot : MonoBehaviour
         }
     }
 
-    public void ToggleHighlightAura(bool enabled)
+    public void UpdateHighlightAura(HighlightAuraState state)
     {
-        highlightAura.gameObject.SetActive(enabled);
-    }
-
-    public void UpdateSelectionArrow(SelectionArrowState state)
-    {
-        // Disable all arrows initially
-        selectionArrowValid.SetActive(false);
-        selectionArrowInvalid.SetActive(false);
-        selectionArrowSelected.SetActive(false);
-
-        // Enable the appropriate arrow based on the state
         switch (state)
         {
-            case SelectionArrowState.Valid:
-                selectionArrowValid.SetActive(true);
+            case HighlightAuraState.Active:
+                highlightAura.sprite = activeCreatureAura;
+                highlightAura.gameObject.SetActive(true);
+                ToggleValidTarget(enabled: false);
                 break;
-            case SelectionArrowState.Invalid:
-                selectionArrowInvalid.SetActive(true);
+            case HighlightAuraState.Negative:
+                highlightAura.sprite = negativeTargetAura;
+                highlightAura.gameObject.SetActive(true);
+                ToggleValidTarget(enabled: true);
                 break;
-            case SelectionArrowState.Selected:
-                selectionArrowSelected.SetActive(true);
+            case HighlightAuraState.Positive:
+                highlightAura.sprite = positiveTargetAura;
+                highlightAura.gameObject.SetActive(true);
+                ToggleValidTarget(enabled: true);
                 break;
-            case SelectionArrowState.None:
-                // No arrow is displayed, so do nothing
+            case HighlightAuraState.Move:
+                highlightAura.sprite = moveTargetAura;
+                highlightAura.gameObject.SetActive(true);
+                ToggleValidTarget(enabled: true);
+                break;
+            case HighlightAuraState.None:
+                highlightAura.gameObject.SetActive(false); // Hide the image entirely
+                ToggleValidTarget(enabled: false);
                 break;
         }
     }
 
-    public void ToggleStatusWindow(bool enabled)
+    public void UpdateSelectionArrow(SelectionArrowState state)
+    {
+        switch (state)
+        {
+            case SelectionArrowState.Valid:
+                selectionArrowImage.sprite = validArrowSprite;
+                selectionArrowImage.gameObject.SetActive(true); // Ensure the image is visible
+                break;
+            case SelectionArrowState.Invalid:
+                selectionArrowImage.sprite = invalidArrowSprite;
+                selectionArrowImage.gameObject.SetActive(true);
+                break;
+            case SelectionArrowState.Selected:
+                selectionArrowImage.sprite = selectedArrowSprite;
+                selectionArrowImage.gameObject.SetActive(true);
+                break;
+            case SelectionArrowState.None:
+                selectionArrowImage.gameObject.SetActive(false); // Hide the image entirely
+                break;
+        }
+    }
+
+public void ToggleValidTarget(bool enabled)
+    {
+        ValidTarget = enabled;
+    }
+
+public void ToggleStatusWindow(bool enabled)
     {
         if (!IsEmpty)
         {
@@ -272,9 +312,9 @@ public class BattleSlot : MonoBehaviour
         {
             statRows[0].GetComponent<StatRow>().UpdateSingleText(Creature.Species.CreatureName, Color.blue);
             statRows[1].GetComponent<StatRow>().UpdateType(Creature.Species.Type1, Creature.Species.Type2);
-            statRows[2].GetComponent<StatRow>().UpdateResource(Creature.MaxHP, Creature.HP, Color.green);
-            statRows[3].GetComponent<StatRow>().UpdateResource(Creature.MaxEnergy, Creature.Energy, Color.magenta);
-            statRows[4].GetComponent<StatRow>().UpdateResource(100, Creature.XP, Color.gray); // PLACEHOLDER XP REQUIREMENT
+            statRows[2].GetComponent<StatRow>().UpdateResource(Creature.MaxHP, Creature.HP, GameConstants.HP_COLOUR);
+            statRows[3].GetComponent<StatRow>().UpdateResource(Creature.MaxEnergy, Creature.Energy, GameConstants.ENERGY_COLOUR);
+            statRows[4].GetComponent<StatRow>().UpdateResource(100, Creature.XP, GameConstants.XP_COLOUR); // PLACEHOLDER XP REQUIREMENT
             statRows[5].GetComponent<StatRow>().UpdateDoubleText("Base", "Modified");
             statRows[6].GetComponent<StatRow>().UpdateStats(Creature.Strength, Creature.Strength);
             statRows[7].GetComponent<StatRow>().UpdateStats(Creature.Magic, Creature.Magic);
@@ -296,10 +336,7 @@ public class BattleSlot : MonoBehaviour
         statRows.Add(newRow);
     }
 
-    public void RollInitiative()
-    {
-        Initiative = Random.Range(Creature.Speed / 2, Creature.Speed);
-    }
+
     public void Defeated()
     {
         IsDefeated = true;
@@ -311,6 +348,11 @@ public class BattleSlot : MonoBehaviour
         AdjustHP(-damage);
     }
 
+    public void HitByHealing(int healing)
+    {
+        PlayHealAnimation();
+        AdjustHP(healing);
+    }
 
     public void AdjustHP(int amount)
     {
@@ -445,6 +487,27 @@ public class BattleSlot : MonoBehaviour
         sequence.Append(image.DOColor(originalColor, HIT_ANIMATION_DUR));
     }
 
+    public void PlayHealAnimation()
+    {
+        var sequence = DOTween.Sequence();
+        Vector3 originalScale = image.transform.localScale;
+
+        // Define the healing color (green for a typical healing effect)
+        Color healColor = Color.green;
+
+        // Transition to the healing color and then back to the original color
+        sequence.Append(image.DOColor(healColor, HEAL_ANIMATION_DURATION / 2));
+        sequence.Append(image.DOColor(originalColor, HEAL_ANIMATION_DURATION / 2));
+
+        // Add a scaling effect to emphasize the healing process (optional)
+        sequence.Join(image.transform.DOScale(originalScale * 1.05f, HEAL_ANIMATION_DURATION / 2).SetEase(Ease.OutSine));
+        sequence.Append(image.transform.DOScale(originalScale, HEAL_ANIMATION_DURATION / 2).SetEase(Ease.InSine));
+
+        // (Optional) Add fade-in/fade-out to the color for a smoother effect
+        sequence.Join(image.DOFade(0.8f, HEAL_ANIMATION_DURATION / 2));
+        sequence.Append(image.DOFade(1f, HEAL_ANIMATION_DURATION / 2));
+    }
+
     public void PlayDisperseAnimation()
     {
         image.DOFade(0f, DISPERSE_ANIMATION_DURATION).SetEase(Ease.InOutQuad);
@@ -474,62 +537,11 @@ public enum SelectionArrowState
     None        // No arrow should be displayed
 }
 
-
-/*
-public IEnumerator UpdateHud()
+public enum HighlightAuraState
 {
-    yield return hud.UpdateHP();
-    yield return hud.UpdateEnergy();
+    Active,     // Aura to highlight the active creature
+    Negative,   // Aura to highlight valid targets for offensive actions
+    Positive,   // Aura to highlight valid targets for beneficial actions
+    Move,       // Aura to highlight valid movement spaces
+    None        // No aura should be displayed
 }
-*/
-
-
-/*
-
-private void Awake()
-{
-    creatureSprite.gameObject.SetActive(false);
-    Empty = true;
-    Creature = null;
-    hud.HideBars();
-    if (IsPlayerUnit)
-    {
-        ReverseSpriteDirection();
-    }
-}
-
-public void Setup(Creature creature)
-{
-    Creature = creature;
-
-    Empty = false;
-
-    hud.ShowBars();
-
-    Select(false);
-
-    IsDefeated = false;
-
-    creatureSprite.gameObject.SetActive(true);
-    image = creatureSprite.GetComponent<Image>();
-    image.sprite = Creature.Species.FrontSprite;
-
-    originalColor = image.color;
-
-    // Set the sprite to transparent to allow fade-in
-    Color fadeInStartColor = originalColor;
-    fadeInStartColor.a = 0;
-    image.color = fadeInStartColor;
-
-    originalPos = image.transform.localPosition;
-
-    // Set sprite size
-    RectTransform spriteRectTransform = creatureSprite.GetComponent<RectTransform>();
-    SetSpriteSize(spriteRectTransform, CreatureInstance.Species.Size);
-
-    PlaySummonCreatureAnimation();
-
-    hud.SetData(Creature);
-}
-
-*/
