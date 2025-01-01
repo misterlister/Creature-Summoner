@@ -1,6 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using static GameConstants;
+using static UnityEditor.UIElements.ToolbarMenu;
 
 [CreateAssetMenu(fileName = "NewAction", menuName = "Talents/Create new Action")]
 public class ActionBase : Talent
@@ -9,39 +12,29 @@ public class ActionBase : Talent
     bool DEBUG = false;
     //
 
-    const float HIT_MODIFIER = 0.5f;
-    const float MAX_HIT = 100f;
-    const float MIN_HIT = 10f;
-    const int MIN_DAMAGE = 1;
-    const int BASE_VARIANCE = 85;
-    const int VARIANCE_ADJUSTMENT = 10;
-    const int MIN_VARIANCE = BASE_VARIANCE - VARIANCE_ADJUSTMENT;
-    const int MAX_VARIANCE = BASE_VARIANCE + VARIANCE_ADJUSTMENT;
-    const int ROLL_CEILING = 101;
-
     [SerializeField] CreatureType type;
     [SerializeField] ActionCategory category;
     [SerializeField] ActionSource source;
-    [SerializeField] int power = 40;
-    [SerializeField] int accuracy = 90;
-    [SerializeField] bool ranged;
-    [SerializeField] bool offensive = true;
-    [SerializeField] bool preparation = false;
-    [SerializeField] int numTargets = 1;
-    [SerializeField] int baseCrit = 5;
-    [SerializeField] List<string> tags;
+    [SerializeField] ActionRange range;
     [SerializeField] int energyCost = 0;
     [SerializeField] int energyGain = 0;
+    [SerializeField] int power = 40;
+    [SerializeField] int accuracy = 90;
+    [SerializeField] int baseCrit = 5;
+    [SerializeField] AOE areaOfEffect = AOE.Single;
+    [SerializeField] bool offensive = true;
+    [SerializeField] bool preparation = false;
+    [SerializeField] List<string> tags;
 
     public CreatureType Type => type;
     public ActionCategory Category => category;
     public ActionSource Source => source;
     public int Power => power;
     public int Accuracy => accuracy;
-    public bool Ranged => ranged;
+    public ActionRange Range => range;
     public bool Offensive => offensive;
     public bool Preparation => preparation;
-    public int NumTargets => numTargets;
+    public AOE AreaOfEffect => areaOfEffect;
     public int BaseCrit => baseCrit;
     public List<string> Tags => tags;
     public int EnergyCost => energyCost;
@@ -78,7 +71,7 @@ public class ActionBase : Talent
             defense = defender.Resistance;
         }
 
-        if (critMod > 1.0f) 
+        if (critMod > 1.0f)
         {
             defense = Mathf.Max(attack, defense * 0.8f);
         }
@@ -90,9 +83,44 @@ public class ActionBase : Talent
         return Mathf.Max((int)damage, 1);
     }
 
+    public int CalculateHealing(Creature healer, int healingValue, float critMod = 1.0f)
+    {
+        float creature_power = 1f;
+
+        if (source == ActionSource.Physical)
+        {
+            creature_power = healer.compare_stat_to_average(Stat.Strength);
+        }
+
+        if (source == ActionSource.Magical)
+        {
+            creature_power = healer.compare_stat_to_average(Stat.Magic);
+        }
+        float variance = getHealVariance(healer);
+        float healing = ((((healer.Level / 3 + 1) * power * creature_power) / 50 + 1) * critMod * variance);
+
+        return Mathf.Max((int)healing, 1);
+    }
+
     private float getVariance(Creature attacker, Creature defender)
     {
         float ratio = (float)attacker.Skill / defender.Speed;
+        int varianceRange = (int)(BASE_VARIANCE + ((ratio - 1) * VARIANCE_ADJUSTMENT));
+        int clampedVarianceRange = Mathf.Clamp(varianceRange, MIN_VARIANCE, MAX_VARIANCE);
+        int variance = Random.Range(clampedVarianceRange, ROLL_CEILING);
+        if (DEBUG)
+        {
+            Debug.Log($"Ratio: {ratio}");
+            Debug.Log($"VarianceRange: {varianceRange}");
+            Debug.Log($"clampedVarianceRange: {clampedVarianceRange}");
+            Debug.Log($"variance roll: {variance}");
+        }
+        return variance / 100f;
+    }
+
+    private float getHealVariance(Creature healer)
+    {
+        float ratio = healer.compare_stat_to_average(Stat.Skill);
         int varianceRange = (int)(BASE_VARIANCE + ((ratio - 1) * VARIANCE_ADJUSTMENT));
         int clampedVarianceRange = Mathf.Clamp(varianceRange, MIN_VARIANCE, MAX_VARIANCE);
         int variance = Random.Range(clampedVarianceRange, ROLL_CEILING);
@@ -121,16 +149,6 @@ public class ActionBase : Talent
         return false;
     }
 
-    private bool rollForGlancingBlow(int glanceChance)
-    {
-        int roll = Random.Range(1, ROLL_CEILING);
-        if (roll <= glanceChance)
-        {
-            return true;
-        }
-        return false;
-    }
-
     public List<string> UseAction(BattleSlot attacker, BattleSlot defender)
     {
         if (DEBUG)
@@ -138,19 +156,82 @@ public class ActionBase : Talent
             Debug.Log($"-------attacker: {attacker.Creature.Nickname}-------");
         }
 
+        if (source == ActionSource.Defensive)
+        {
+            return UseDefensiveAction(attacker, defender);
+        }
+
+        if (offensive)
+        {
+            return UseOffensiveAction(attacker, defender);
+        }
+
+        else
+        {
+            return UseHealingAction(attacker, defender);
+        }
+
+    }
+
+    public List<string> UseOffensiveAction(BattleSlot attacker, BattleSlot defender)
+    {
         // Create the ActionDetails object
         ActionDetails actionDetails = new ActionDetails(attacker.Creature.Nickname, defender.Creature.Nickname);
+        int accuracy = CalculateAccuracy(attacker.Creature, defender.Creature);
+        bool hit = rollToHit(accuracy);
+        bool isCrit = false;
+        float critMod = 1f;
+        int damage = 0;
 
-        if (energyCost != 0)
+        // Get the effectiveness category
+        Effectiveness effectRating = TypeChart.GetEffectiveness(type, defender.Creature.Species.Type1, defender.Creature.Species.Type2);
+
+        actionDetails.EffectRating = effectRating;
+
+        // Get the effectiveness modifier based on the category
+        float effectMod = TypeChart.EffectiveMod[effectRating];
+
+        // Check if the attack was a hit or glancing blow
+        if (hit)
         {
-            attacker.AdjustEnergy(-energyCost);
+            isCrit = RollForCrit(attacker, defender);
+            if (isCrit)
+            {
+                actionDetails.IsCrit = true;
+                critMod = CalculateCritBonus(attacker, defender);
+            }
+            damage = CalculateDamage(attacker.Creature, defender.Creature, critMod);
+        }
+        else
+        {
+            actionDetails.IsGlancingBlow = true;
+            damage = CalculateDamage(attacker.Creature, defender.Creature);
+            damage = Mathf.CeilToInt(damage * attacker.Creature.GlancingDamageReduction);
         }
 
-        if (energyGain != 0)
-        {
-            attacker.AdjustEnergy(CalculateEnergyGain(attacker));
-        }
+        // Adjust damage for type effectiveness
+        damage = Mathf.Max((int)((float)damage * effectMod), 1);
 
+        // Deal damage to target
+        defender.HitByAttack(damage);
+        if (defender.IsDefeated)
+        {
+            actionDetails.IsDefeated = true;
+        }
+        if (DEBUG)
+        {
+            Debug.Log($"hit?: {hit}");
+            Debug.Log($"isCrit: {isCrit}");
+            Debug.Log($"critMod: {critMod}");
+            Debug.Log($"damage: {damage}");
+        }
+        return actionDetails.GetMessages();
+    }
+
+    public List<string> UseDefensiveAction(BattleSlot attacker, BattleSlot defender)
+    {
+        // Create the ActionDetails object
+        ActionDetails actionDetails = new ActionDetails(attacker.Creature.Nickname, defender.Creature.Nickname);
         int accuracy = CalculateAccuracy(attacker.Creature, defender.Creature);
         bool hit = rollToHit(accuracy);
         bool glancingBlow = false;
@@ -165,17 +246,6 @@ public class ActionBase : Talent
         // Get the effectiveness modifier based on the category
         float effectMod = TypeChart.EffectiveMod[effectRating];
 
-        // Check if the attack didn't hit
-        if (!hit)
-        {
-            // Check if it was a glancing blow
-            glancingBlow = rollForGlancingBlow(defender.Creature.ChanceToBeGlanced);
-            // If it was not glancing, it fully missed
-            if (glancingBlow == false) {
-                actionDetails.IsMiss = true;
-                return actionDetails.GetMessages(); 
-            }
-        }
         int damage = 0;
         if (glancingBlow)
         {
@@ -209,6 +279,36 @@ public class ActionBase : Talent
             Debug.Log($"isCrit: {isCrit}");
             Debug.Log($"critMod: {critMod}");
             Debug.Log($"damage: {damage}");
+        }
+        return actionDetails.GetMessages();
+    }
+
+    public List<string> UseHealingAction(BattleSlot attacker, BattleSlot defender)
+    {
+        // Create the ActionDetails object
+        ActionDetails actionDetails = new ActionDetails(attacker.Creature.Nickname, defender.Creature.Nickname);
+
+        bool isCrit = false;
+        float critMod = 1f;
+
+        int healing = 0;
+
+        isCrit = RollForCrit(attacker, defender);
+        if (isCrit)
+        {
+            actionDetails.IsCrit = true;
+            critMod = CalculateCritBonus(attacker, defender);
+        }
+        healing = CalculateHealing(attacker.Creature, power, critMod);
+
+        // Heal damage from target
+        defender.HitByHealing(healing);
+
+        if (DEBUG)
+        {
+            Debug.Log($"isCrit: {isCrit}");
+            Debug.Log($"critMod: {critMod}");
+            Debug.Log($"healing: {healing}");
         }
         return actionDetails.GetMessages();
     }
@@ -269,5 +369,21 @@ public class ActionBase : Talent
     private int CalculateEnergyGain(BattleSlot attacker)
     {
         return (int)(attacker.Creature.MaxEnergy * (energyGain / 100f));
+    }
+
+    public void PayEnergyCost(BattleSlot attacker)
+    {
+        if (EnergyCost != 0)
+        {
+            attacker.AdjustEnergy(-EnergyCost);
+        }
+    }
+
+    public void GenerateEnergy(BattleSlot attacker)
+    {
+        if (EnergyGain != 0)
+        {
+            attacker.AdjustEnergy(CalculateEnergyGain(attacker));
+        }
     }
 }
