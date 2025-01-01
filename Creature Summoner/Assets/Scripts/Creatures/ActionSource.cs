@@ -7,3 +7,16 @@ public enum ActionSource
     Magical,
     Defensive
 }
+
+public enum AOE
+{
+    Single,
+    SmallArc,
+    WideArc,
+    Line,
+    SmallCone,
+    LargeCone,
+    Square,
+    Field,
+    Burst
+}
