@@ -17,9 +17,19 @@ public class CreatureTeam : MonoBehaviour
 
     private void Start()
     {
-        foreach (var creature in creatures)
+        for (int i = 0; i < creatures.Count; i++)
         {
-            creature.Init();
+            if (creatures[i] != null)
+            {
+                if (creatures[i].Species == null)
+                {
+                    creatures[i] = null; // Assign null to empty creature slots
+                }
+                else
+                {
+                    creatures[i].Init(); // Initialize the creature
+                }
+            }
         }
     }
 
@@ -30,7 +40,10 @@ public class CreatureTeam : MonoBehaviour
         // Initialize the creatures if not already done
         foreach (var creature in creatures)
         {
-            creature.Init();
+            if (creature != null)
+            {
+                creature.Init();
+            }
         }
     }
 
