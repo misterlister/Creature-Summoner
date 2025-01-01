@@ -16,6 +16,9 @@ public class PlayerController : MonoBehaviour
 
     private Animator animator;
 
+    const float DEADZONE = 0.19f;
+
+
     private void Awake()
     {
         animator = GetComponent<Animator> ();
@@ -25,17 +28,21 @@ public class PlayerController : MonoBehaviour
     {
         if (!isMoving)
         {
-            input.x = Input.GetAxisRaw("Horizontal");
-            input.y = Input.GetAxisRaw("Vertical");
+            input.x = Input.GetAxis("Horizontal");
+            input.y = Input.GetAxis("Vertical");
 
-            if (input != Vector2.zero) 
+            // Apply dead zone to both x and y input
+            if (Mathf.Abs(input.x) < DEADZONE) input.x = 0f;
+            if (Mathf.Abs(input.y) < DEADZONE) input.y = 0f;
+
+            if (input != Vector2.zero)
             {
                 animator.SetFloat("moveX", input.x);
                 animator.SetFloat("moveY", input.y);
 
-                var targetPos = transform.position;
-                targetPos.x += input.x;
-                targetPos.y += input.y;
+                // Calculate target position as Vector2
+                var targetPos = (Vector2)transform.position + input;
+
                 if (IsWalkable(targetPos))
                 {
                     StartCoroutine(Move(targetPos));
@@ -44,6 +51,7 @@ public class PlayerController : MonoBehaviour
         }
         animator.SetBool("isMoving", isMoving);
     }
+
 
     IEnumerator Move(Vector3 targetPos)
     {
