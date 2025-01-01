@@ -3,9 +3,21 @@ using UnityEngine;
 
 public static class GameConstants
 {
+    public const float HIT_MODIFIER = 0.5f;    // Value that controls how much accuracy changes based on stat ratio
+    public const float MAX_HIT = 100f;         // Ceiling for accuracy of actions
+    public const float MIN_HIT = 10f;          // Floor for accuracy of actions
+    public const int MIN_DAMAGE = 1;           // Minimum damage that can be dealt by actions
+    public const int BASE_VARIANCE = 85;       // Base floor for damage variance
+    public const int VARIANCE_ADJUSTMENT = 10; // Max distance that damage variance ranges can have from base
+    public const int MIN_VARIANCE = BASE_VARIANCE - VARIANCE_ADJUSTMENT;   // Minimum floor for damage variance
+    public const int MAX_VARIANCE = BASE_VARIANCE + VARIANCE_ADJUSTMENT;   // Maximum ceiling for damage variance
+    public const int ROLL_CEILING = 101;       // Maximum value that can be rolled for random die rolls
+
     public const int BATTLE_ROWS = 3; // Number of Rows on the battlefield
     public const int BATTLE_COLS = 4; // Number of Columns on the battlefield
+
     //public const int TEAM_SPACES = BATTLE_COLS * BATTLE_ROWS;
+
     public const int ENEMY_COL = BATTLE_COLS / 2;
 
     public const int BATTLE_MENU_COLS = 2; // Number of Columns in the battle selection menu
@@ -14,8 +26,9 @@ public static class GameConstants
     public const int EMPOWERED_SLOTS = 3;
     public const int MASTERY_SLOTS = 1;
 
+    public const int AVERAGE_STAT = 40;
+
     public const float GLANCE_REDUCTION = 0.25f;
-    public const int GLANCE_CHANCE = 51;
     public const float CRIT_BONUS = 0.4f;
     public const float CRIT_RESISTANCE = 0.0f;
 
@@ -37,4 +50,40 @@ public static class GameConstants
         { CreatureType.Cold, new Color(0.4f, 1f, 0.8f) },           // Cyan
         { CreatureType.None, new Color(0f, 0f, 0f) }                // Black
     };
+
+    public static readonly Color HP_COLOUR = new Color(0.5f, 1f, 0.5f);
+    public static readonly Color ENERGY_COLOUR = new Color(1f, 0f, 1f);
+    public static readonly Color XP_COLOUR = new Color(1f, 0.85f, 0f);
+
+    public static readonly Dictionary<AOE, (int y, int x)> AOEOptions = new Dictionary<AOE, (int y, int x)>
+    {
+        { AOE.Single, (1,1)},
+        { AOE.SmallArc, (2,1)},
+        { AOE.WideArc, (1,1)},
+        { AOE.Line, (1,1)},
+        { AOE.SmallCone, (2,1)},
+        { AOE.LargeCone, (1,1)},
+        { AOE.Square, (2,1)},
+        { AOE.Field, (1,1)},
+        { AOE.Burst, (1,1)},
+    };
+}
+
+public enum ActionRange
+{
+    Melee,
+    Ranged,
+    Self
+}
+
+public enum Stat
+{
+    HP,
+    Energy,
+    Strength,
+    Magic,
+    Skill,
+    Speed,
+    Defense,
+    Resistance
 }
