@@ -36,7 +36,6 @@ public class Creature
     private int ResilienceTraining;
 
     public float GlancingDamageReduction { get; set; }
-    public int ChanceToBeGlanced { get; set; }
 
     public float StartingEnergy { get; private set; }
 
@@ -50,6 +49,8 @@ public class Creature
     public CreatureAction[] EquippedCoreActions { get; set; }
     public CreatureAction[] EquippedEmpoweredActions { get; set; }
     public CreatureAction[] EquippedMasteryActions { get; set; }
+
+    public int Initiative { get; set; }
 
     public void Init()
     {
@@ -75,7 +76,6 @@ public class Creature
         ResilienceTraining = 0;
 
         GlancingDamageReduction = GLANCE_REDUCTION;
-        ChanceToBeGlanced = GLANCE_CHANCE;
 
         StartingEnergy = DEFAULT_STARTING_ENERGY;
 
@@ -91,7 +91,6 @@ public class Creature
 
         initTalents();
         equipTalents();
-
     }
 
     public int MaxHP { get { return calc_hp(Species.HP); } }
@@ -107,6 +106,34 @@ public class Creature
     private int calc_stat(int baseStat, int trainingVal)
     {
         return Mathf.FloorToInt(((baseStat * 4 + (trainingVal / 5)) * Level) / 100f) + 5;
+    }
+
+    public float compare_stat_to_average(Stat stat)
+    {
+        int statVal = 0;
+        switch (stat)
+        {
+            case Stat.Strength:
+                statVal = Strength;
+                break;
+            case Stat.Magic:
+                statVal = Magic;
+                break;
+            case Stat.Skill:
+                statVal = Skill;
+                break;
+            case Stat.Speed:
+                statVal = Speed;
+                break;
+            case Stat.Defense:
+                statVal = Defense;
+                break;
+            case Stat.Resistance:
+                statVal = Resistance;
+                break;
+        }
+        int averageStat = Mathf.FloorToInt(((AVERAGE_STAT * 4) * Level) / 100f) + 5;
+        return statVal / averageStat;
     }
 
     private int calc_hp(int baseHp)
@@ -203,6 +230,11 @@ public class Creature
     private void Revive()
     {
         IsDefeated = false;
+    }
+
+    public void RollInitiative()
+    {
+        Initiative = Random.Range(Speed / 2, Speed);
     }
 
     public void RemoveHP(int amount)
