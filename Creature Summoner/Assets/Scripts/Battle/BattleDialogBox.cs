@@ -132,7 +132,7 @@ public class BattleDialogBox : MonoBehaviour
             actionDetails.SetActive(true);
             actionType.text = $"{action.Type}";
             actionSource.text = $"{action.Category}";
-            actionRange.text = action.Ranged ? "Ranged" : "Melee";
+            actionRange.text = action.Range.ToString();
             actionPower.text = $"Power: {action.Power}";
             actionAccuracy.text = $"Accuracy: {action.Accuracy}%";
             if (action.Category == ActionCategory.Core)
@@ -151,7 +151,7 @@ public class BattleDialogBox : MonoBehaviour
             {
                 actionEnergy.text = "";
             }
-            actionTargets.text = $"Targets: {action.NumTargets}";
+            actionTargets.text = $"Targets: {action.AreaOfEffect.ToString()}";
             actionPrep.text = action.Preparation ? "Prepared Action" : "";
             actionDescription.text = $"{action.Description}";
         }
