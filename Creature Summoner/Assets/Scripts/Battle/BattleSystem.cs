@@ -43,17 +43,18 @@ public class BattleSystem : MonoBehaviour
     const KeyCode ACCEPT_KEY = KeyCode.Z; // Keyboard key which accepts options
     const KeyCode BACK_KEY = KeyCode.X; // Keyboard key which indicates cancelling or going back
 
-    public Dictionary<BattleState, (int rows, int cols)> StateChoices { get; set; }
-
     public BattleSlot activeCreature;
-
     private BattleSlot selectedCreature;
-
-    public List<BattleSlot> CreatureTargets { get; set; }
-    public BattleSlot TargetedCreature { get; set; }
-    public List<BattleSlot> InitiativeOrder { get; set; }
-
+    private BattleSlot TargetedCreature;
     private ActionBase selectedAction;
+
+    private Dictionary<BattleState, (int rows, int cols)> StateChoices;
+    private List<BattleSlot> CreatureTargets;
+    private List<BattleSlot> SelectableTargets;
+    private List<Creature> InitiativeOrder;
+
+    private bool movementChosen = false;
+    private BattleSlot previousMovementSpace = null;
 
     Stack<BattleState> stateStack = new Stack<BattleState>();
     Stack<(int y, int x)> positionStack = new Stack<(int y, int x)>();
@@ -67,7 +68,7 @@ public class BattleSystem : MonoBehaviour
     {
         CreatureTargets = new List<BattleSlot>();
         TargetedCreature = null;
-        InitiativeOrder = new List<BattleSlot>();
+        InitiativeOrder = new List<Creature>();
 
         StateChoices = new Dictionary<BattleState, (int rows, int cols)>
         {
@@ -148,14 +149,14 @@ public class BattleSystem : MonoBehaviour
     {
         foreach(var creature in Field.FieldCreatures)
         {
-            if (creature != null && !creature.IsEmpty)
-            creature.Creature.RollInitiative();
+            if (creature != null && !creature.IsDefeated)
+            creature.RollInitiative();
             InitiativeOrder.Add(creature);
         }
         InitiativeOrder = InitiativeOrder
-        .OrderByDescending(c => c.Creature.Initiative)   // Primary: Initiative
-        .ThenByDescending(c => c.Creature.Speed)  // Secondary: Speed Stat
-        .ThenByDescending(c => c.Creature.Species.Speed) // Tertiary: Species Base Speed
+        .OrderByDescending(c => c.Initiative)   // Primary: Initiative
+        .ThenByDescending(c => c.Speed)  // Secondary: Speed Stat
+        .ThenByDescending(c => c.Species.Speed) // Tertiary: Species Base Speed
         .ToList();
 
         //// DEBUG
@@ -163,7 +164,7 @@ public class BattleSystem : MonoBehaviour
         {
             foreach (var creature in InitiativeOrder)
             {
-                Debug.Log($"{creature.Creature.Nickname} rolled {creature.Creature.Initiative}");
+                Debug.Log($"{creature.Nickname} rolled {creature.Initiative}");
             }
         }
         //// DEBUG
@@ -186,10 +187,10 @@ public class BattleSystem : MonoBehaviour
                     activeCreature.UpdateHighlightAura(HighlightAuraState.None);
                 }
                 // Set next creature's turn
-                activeCreature = InitiativeOrder[0];
+                activeCreature = InitiativeOrder[0].BattleSlot;
                 activeCreature.UpdateHighlightAura(HighlightAuraState.Active);
                 InitiativeOrder.RemoveAt(0);
-                ToPlayerActionCategorySelectState();
+                ToPlayerActionCategorySelectState(true);
                 return;
             }
         }
@@ -226,14 +227,19 @@ public class BattleSystem : MonoBehaviour
         selectedAction = null;
     }
 
-    void ToPlayerActionCategorySelectState()
+    void ToPlayerActionCategorySelectState(bool back_transition = false)
     {
+        if (!back_transition)
+        {
+            PushState();
+        }
         state = BattleState.PlayerActionCategorySelect;
         dialogBox.StartTypingDialog("Choose which kind of action to take");
         dialogBox.EnableActionCategorySelect(true);
         dialogBox.EnableDialogText(true);
         dialogBox.EnableActionSelect(false);
         dialogBox.EnableActionDetails(false);
+        ResetSelectionPositions();
     }
 
     void ToPlayerActionSelectState(BattleState battleState, bool back_transition = false)
@@ -247,6 +253,7 @@ public class BattleSystem : MonoBehaviour
         dialogBox.EnableDialogText(false);
         dialogBox.EnableActionSelect(true);
         dialogBox.EnableActionDetails(true);
+        dialogBox.EnableActionOptions();
         if (battleState == BattleState.PlayerCoreActionSelect)
         {
             dialogBox.SetActionNames(activeCreature.Creature.EquippedCoreActions);
@@ -261,6 +268,21 @@ public class BattleSystem : MonoBehaviour
             dialogBox.DisableActionOptions(1, 2);
         }
         ResetSelectionPositions();
+    }
+
+    void ToMoveSelectState(bool back_transition = false)
+    {
+        if (!back_transition)
+        {
+            PushState();
+        }
+        state = BattleState.PlayerMovementSelect;
+        dialogBox.EnableActionCategorySelect(false);
+        dialogBox.EnableActionSelect(true);
+        dialogBox.EnableDialogText(true);
+        dialogBox.DisableActionOptions(0, 3);
+        dialogBox.ResetActionSelection();
+        ResetSelectionPositions(GetTargetSelf(activeCreature));
     }
 
     void ToPlayerExamineState()
@@ -287,7 +309,7 @@ public class BattleSystem : MonoBehaviour
         dialogBox.EnableDialogText(false);
         dialogBox.DisableActionOptions(0, 3);
         dialogBox.ResetActionSelection();
-        UpdateValidTargets(activeCreature, selectedAction);
+        UpdateSelectableTargets(activeCreature, selectedAction);
         ResetSelectionPositions(GetStartingTarget());
     }
 
@@ -305,7 +327,9 @@ public class BattleSystem : MonoBehaviour
         dialogBox.ResetActionSelection();
         SetAOEStateChoices(selectedAction);
         Field.ResetTargetHighlights(activeCreature);
+        HighlightAuraState highlightAura = (selectedAction.ActionClass == ActionClass.Attack) ? HighlightAuraState.Negative : HighlightAuraState.Positive;
         CreatureTargets = Field.GetAOETargets(TargetedCreature, selectedAction, selectionPositionY, isPlayer: activeCreature.IsPlayerSlot);
+        HighlightUnitList(CreatureTargets, highlightAura);
         ResetSelectionPositions();
     }
 
@@ -395,16 +419,7 @@ public class BattleSystem : MonoBehaviour
                 }
             }
             selectedAction.GenerateEnergy(activeCreature);
-            ClearStacks();
-            ResetSelectedTargets();
-            UntargetCreature();
-            Field.ResetTargetHighlights(activeCreature);
-            ResetSelectedAction();
-            if (Field.EnemyCount() == 0)
-            {
-                OnBattleOver(true);
-            }
-            ToDetermineTurn();
+            EndTurn();
         }
     }
 
@@ -412,7 +427,7 @@ public class BattleSystem : MonoBehaviour
     {
         ToBusyState();
         yield return dialogBox.StartTypingDialog(message);
-        ToPlayerActionCategorySelectState();
+        ToPlayerActionCategorySelectState(true);
     }
 
     public void HandleUpdate()
@@ -429,6 +444,7 @@ public class BattleSystem : MonoBehaviour
             || state == BattleState.PlayerCoreActionSelect
             || state == BattleState.PlayerEmpoweredActionSelect
             || state == BattleState.PlayerMasteryActionSelect
+            || state == BattleState.PlayerMovementSelect
             || state == BattleState.PlayerExamine
             || state == BattleState.TargetSelect
             || state == BattleState.AOESelect)
@@ -472,39 +488,42 @@ public class BattleSystem : MonoBehaviour
 
     void HandleStateBasedInput()
     {
-        if (state == BattleState.PlayerActionCategorySelect)
+        switch (state)
         {
-            HandlePlayerActionCategorySelect();
-        }
-        else if (state == BattleState.PlayerCoreActionSelect)
-        {
-            HandlePlayerCoreActionSelect();
-        }
-        else if (state == BattleState.PlayerEmpoweredActionSelect)
-        {
-            HandlePlayerEmpoweredActionSelect();
-        }
-        else if (state == BattleState.PlayerMasteryActionSelect)
-        {
-            HandlePlayerMasteryActionSelect();
-        }
-        else if (state == BattleState.PlayerExamine)
-        {
-            HandlePlayerExamine();
-        }
-        else if (state == BattleState.TargetSelect)
-        {
-            HandleTargetSelect();
-        }
-        else if (state == BattleState.AOESelect)
-        {
-            HandleAOESelect();
+            case BattleState.PlayerActionCategorySelect:
+                HandlePlayerActionCategorySelect();
+                break;
+            case BattleState.PlayerCoreActionSelect:
+                HandlePlayerCoreActionSelect();
+                break;
+            case BattleState.PlayerEmpoweredActionSelect:
+                HandlePlayerEmpoweredActionSelect();
+                break;
+            case BattleState.PlayerMasteryActionSelect:
+                HandlePlayerMasteryActionSelect();
+                break;
+            case BattleState.PlayerMovementSelect:
+                HandlePlayerMovementSelect();
+                break;
+            case BattleState.PlayerExamine:
+                HandlePlayerExamine();
+                break;
+            case BattleState.TargetSelect:
+                HandleTargetSelect();
+                break;
+            case BattleState.AOESelect:
+                HandleAOESelect();
+                break;
         }
     }
 
     void HandlePlayerActionCategorySelect()
     {
-        if (Input.GetKeyDown(ACCEPT_KEY))
+        if (Input.GetKeyDown(BACK_KEY) && movementChosen)
+        {
+            GoBackToState();
+        }
+        else if (Input.GetKeyDown(ACCEPT_KEY))
         {
             AcceptActionCategorySelection();
         }
@@ -575,6 +594,56 @@ public class BattleSystem : MonoBehaviour
         }
     }
 
+    void HandlePlayerMovementSelect()
+    {
+        DeselectCreature();
+        Field.ResetTargetHighlights(activeCreature);
+
+        if (Input.GetKeyDown(BACK_KEY) || (Input.GetKeyDown(ACCEPT_KEY) && selectionPositionY == StateChoices[state].rows - 1))
+        {
+            ResetSelectableTargets();
+            GoBackToState();
+        }
+        else
+        {
+            if (selectionPositionY == StateChoices[state].rows - 1)
+            {
+                // Highlight the Back button
+                dialogBox.HighlightBackOption();
+            }
+            else
+            {
+                // Reset highlighted Back button to black
+                dialogBox.ResetActionSelection();
+
+                SelectableTargets = Field.GetMoveTargets(activeCreature);
+                HighlightUnitList(SelectableTargets, HighlightAuraState.Move);
+
+                // Get a reference for the currently selected creature
+                int row = selectionPositionY;
+                int col = selectionPositionX + ((activeCreature.IsPlayerSlot)? 0 : ENEMY_COL);
+                BattleSlot pointerLocation = Field.GetCreature(row, col);
+
+                bool valid_target = SelectableTargets.Contains(pointerLocation);
+
+                if (Input.GetKeyDown(ACCEPT_KEY) && valid_target)
+                {
+                    Field.SwapSlots(activeCreature, pointerLocation);
+                    previousMovementSpace = activeCreature;
+                    activeCreature = pointerLocation;
+                    UntargetCreature();
+                    Field.ResetTargetHighlights(activeCreature);
+                    SetMovementChosen(true);
+                    ToPlayerActionCategorySelectState(false);
+                }
+                else
+                {
+                    SelectCreature(pointerLocation, valid_target);
+                }
+            }
+        }
+    }
+
     void HandlePlayerExamine()
     {
         DeselectCreature();
@@ -595,11 +664,16 @@ public class BattleSystem : MonoBehaviour
             {
                 // Reset highlighted Back button to black
                 dialogBox.ResetActionSelection();
-                BattleSlot selectedCreature = Field.GetCreature(selectionPositionY, selectionPositionX);
-                if (selectedCreature != null)
+                BattleSlot pointerLocation = Field.GetCreature(selectionPositionY, selectionPositionX);
+
+                // Show panel for the selected creature
+                if (pointerLocation.IsEmpty) 
                 {
-                    // Show panel for the selected creature
-                    SelectCreature(selectedCreature, true);
+                    SelectCreature(pointerLocation, false);
+                }
+                else
+                {
+                    SelectCreature(pointerLocation, true, true);
                 }
             }
         }
@@ -612,7 +686,9 @@ public class BattleSystem : MonoBehaviour
         if (Input.GetKeyDown(BACK_KEY) || (Input.GetKeyDown(ACCEPT_KEY) && selectionPositionY == StateChoices[state].rows - 1))
         {
             dialogBox.EnableActionOptions();
+            dialogBox.UpdateActionDetails(selectedAction);
             Field.ResetTargetHighlights(activeCreature);
+            ResetSelectableTargets();
             GoBackToState();
         }
         else
@@ -626,50 +702,48 @@ public class BattleSystem : MonoBehaviour
             {
                 // Reset highlighted Back button to black
                 dialogBox.ResetActionSelection();
-                UpdateValidTargets(activeCreature, selectedAction);
-                BattleSlot selectedCreature = Field.GetCreature(selectionPositionY, selectionPositionX);
-                if (selectedCreature != null)
+                UpdateSelectableTargets(activeCreature, selectedAction);
+                BattleSlot pointerLocation = Field.GetCreature(selectionPositionY, selectionPositionX);
+
+
+                if (pointerLocation == null)
                 {
-                    (int, int)? coords = GetTargetSelf(selectedCreature);
+                    dialogBox.UpdateActionDetails(selectedAction);
+                }
+                else
+                {
+                    dialogBox.UpdateActionDetails(selectedAction, activeCreature.Creature, pointerLocation.Creature);
+                    (int, int)? coords = GetTargetSelf(pointerLocation);
                     if (DEBUG)
                     {
                         Debug.Log($"Row: {coords.Value.Item1} Col: {coords.Value.Item2}");
                         Debug.Log($"SelectionX: {selectionPositionX}, SelectionY: {selectionPositionY}");
                     }
+
                     // If the accept key isn't selected, simply highlight the creature's position
-                    if (!Input.GetKeyDown(ACCEPT_KEY))
+                    bool valid_target = SelectableTargets.Contains(pointerLocation);
+                    if (Input.GetKeyDown(ACCEPT_KEY) && valid_target)
                     {
-                        SelectCreature(selectedCreature);
-                    }
-                    else
-                    {
-                        if (selectedCreature.IsEmpty)
+                        TargetCreature(pointerLocation);
+                        if (selectedAction == null)
                         {
-                            // Can't target empty space
+                            Debug.Log("Error: No action selected");
                         }
-                        else if (selectedAction.Range != ActionRange.Self && selectedCreature == activeCreature)
+                        else if (selectedAction.AreaOfEffect != AOE.Single)
                         {
-                            // Can't target self with an ability that doesn't have range of self
+                            ToAOESelectState();
                         }
                         else
                         {
-                            TargetCreature(selectedCreature);
-                            if (selectedAction == null)
-                            {
-                                Debug.Log("Error: No action selected");
-                            }
-                            else if (selectedAction.AreaOfEffect != AOE.Single)
-                            {
-                                ToAOESelectState();
-                            }
-                            else
-                            {
-                                Field.ResetTargetHighlights(activeCreature);
-                                HighlightTargets();
-                                dialogBox.EnableActionOptions();
-                                ConfirmAction();
-                            }
+                            Field.ResetTargetHighlights(activeCreature);
+                            HighlightTargets();
+                            dialogBox.EnableActionOptions();
+                            ConfirmAction();
                         }
+                    }
+                    else
+                    {
+                        SelectCreature(pointerLocation, valid_target);
                     }
                 }
             }
@@ -681,7 +755,7 @@ public class BattleSystem : MonoBehaviour
         Field.ResetTargetHighlights(activeCreature);
         if (Input.GetKeyDown(BACK_KEY) || (Input.GetKeyDown(ACCEPT_KEY) && selectionPositionY == StateChoices[state].rows - 1))
         {
-            ResetSelectedTargets();
+            ResetCreatureTargets();
             UntargetCreature();
             GoBackToState();
         }
@@ -696,7 +770,10 @@ public class BattleSystem : MonoBehaviour
             {
                 // Reset highlighted Back button to black
                 dialogBox.ResetActionSelection();
+                HighlightAuraState highlightAura = (selectedAction.ActionClass == ActionClass.Attack) ? HighlightAuraState.Negative : HighlightAuraState.Positive;
                 CreatureTargets = Field.GetAOETargets(TargetedCreature, selectedAction, selectionPositionY, isPlayer: activeCreature.IsPlayerSlot);
+                HighlightUnitList(CreatureTargets, highlightAura);
+
                 if (!Input.GetKeyDown(ACCEPT_KEY))
                 {
                     // Just show highlighting?
@@ -736,7 +813,14 @@ public class BattleSystem : MonoBehaviour
         }
         else if (selected == 3)
         {
-            //PlayerActionSelect(BattleState.PlayerMoveSelect);
+            if (movementChosen == true)
+            {
+                dialogBox.StartTypingDialog("Move action already chosen");
+            }
+            else
+            {
+                ToMoveSelectState();
+            }
         }
         else if (selected == 4)
         {
@@ -816,7 +900,7 @@ public class BattleSystem : MonoBehaviour
         {
             highlightedAction = actions[selection]?.Action;
         }
-        dialogBox.UpdateActionSelection(selection, highlightedAction);
+        dialogBox.UpdateActionSelection(selection, highlightedAction, activeCreature.Creature);
     }
 
     int LinearSelectionPosition()
@@ -824,7 +908,7 @@ public class BattleSystem : MonoBehaviour
         return selectionPositionY * StateChoices[state].cols + selectionPositionX;
     }
 
-    void ResetSelectedTargets()
+    void ResetCreatureTargets()
     {
         while (CreatureTargets.Count > 0)
         {
@@ -869,7 +953,7 @@ public class BattleSystem : MonoBehaviour
         switch (state)
         {
             case BattleState.PlayerActionCategorySelect:
-                ToPlayerActionCategorySelectState();
+                ToPlayerActionCategorySelectState(true);
                 break;
             case BattleState.PlayerCoreActionSelect:
                 ToPlayerActionSelectState(state, true);
@@ -884,7 +968,11 @@ public class BattleSystem : MonoBehaviour
                 ToTargetSelectState(true);
                 break;
             case BattleState.PlayerMovementSelect:
-                //ADD LATER
+                Field.SwapSlots(previousMovementSpace, activeCreature);
+                activeCreature = previousMovementSpace;
+                ResetMovementSpace();
+                SetMovementChosen(false);
+                ToMoveSelectState(true);
                 break;
             default:
                 Debug.Log($"Error handling transition to state: {state}");///
@@ -898,18 +986,30 @@ public class BattleSystem : MonoBehaviour
         positionStack.Clear();
     }
 
-    void SelectCreature(BattleSlot creature, bool showHUD = false)
+    void ResetMovementSpace()
     {
+        previousMovementSpace = null;
+    }
+
+    void SetMovementChosen(bool set)
+    {
+        movementChosen = set;
+    }
+
+    void SelectCreature(BattleSlot creature, bool valid, bool showHUD = false)
+    {
+        if (creature == null) return;
+
         // Change arrow if the creature isn't already selected
         if (creature != TargetedCreature)
         {
-            if (creature.IsEmpty)
+            if (valid)
             {
-                creature.UpdateSelectionArrow(SelectionArrowState.Invalid);
+                creature.UpdateSelectionArrow(SelectionArrowState.Valid);
             }
             else
             {
-                creature.UpdateSelectionArrow(SelectionArrowState.Valid);
+                creature.UpdateSelectionArrow(SelectionArrowState.Invalid);
             }
         }
 
@@ -924,11 +1024,7 @@ public class BattleSystem : MonoBehaviour
     {
         if (selectedCreature != null)
         {
-            // Only reset the arrow state if it's not selected as a target
-            if (!CreatureTargets.Contains(selectedCreature))
-            {
-                selectedCreature.UpdateSelectionArrow(SelectionArrowState.None);
-            }
+            selectedCreature.UpdateSelectionArrow(SelectionArrowState.None);
             selectedCreature.ToggleStatusWindow(false);
             selectedCreature = null;
         }
@@ -942,15 +1038,18 @@ public class BattleSystem : MonoBehaviour
 
     void UntargetCreature()
     {
-        TargetedCreature.UpdateSelectionArrow(SelectionArrowState.None);
-        TargetedCreature = null;
+        if (TargetedCreature != null)
+        {
+            TargetedCreature.UpdateSelectionArrow(SelectionArrowState.None);
+            TargetedCreature = null;
+        }
     }
 
     void HighlightTargets()
     {
         if (selectedAction != null)
         {
-            HighlightAuraState highlightAura = selectedAction.Offensive ? HighlightAuraState.Negative : HighlightAuraState.Positive;
+            HighlightAuraState highlightAura = (selectedAction.ActionClass == ActionClass.Attack) ? HighlightAuraState.Negative : HighlightAuraState.Positive;
             foreach (var target in CreatureTargets)
             {
                 target.UpdateHighlightAura(highlightAura);
@@ -976,35 +1075,47 @@ public class BattleSystem : MonoBehaviour
         {
             return null;
         }
-        // If this is a positive action by the player, or a negative one by an enemy, target the player side
-        if (activeCreature.IsPlayerSlot && !selectedAction.Offensive || !activeCreature.IsPlayerSlot && selectedAction.Offensive)
+        // If this is a support action by the player, or an attack action by an enemy, target the player side
+        if (activeCreature.IsPlayerSlot && selectedAction.ActionClass == ActionClass.Support 
+            || !activeCreature.IsPlayerSlot && selectedAction.ActionClass == ActionClass.Attack)
         {
             playerTarget = true;
         }
         foreach (var creature in Field.FieldCreatures) 
         {
-            if (creature.IsPlayerSlot == playerTarget && creature.ValidTarget)
+            BattleSlot slot = creature.BattleSlot;
+            if (slot.IsPlayerSlot == playerTarget && slot.ValidTarget)
             {
-                return (creature.Row, creature.Col);
+                return (slot.Row, slot.Col);
             }
         }
         return null;
     }
 
-    public void UpdateValidTargets(BattleSlot selectedCreature, ActionBase selectedAction)
+    public void UpdateSelectableTargets(BattleSlot selectedCreature, ActionBase selectedAction)
     {
-        HighlightAuraState highlightAuraState = selectedAction.Offensive ? HighlightAuraState.Negative : HighlightAuraState.Positive;
+        HighlightAuraState highlightAuraState = (selectedAction.ActionClass == ActionClass.Attack) ? HighlightAuraState.Negative : HighlightAuraState.Positive;
         switch (selectedAction.Range)
         {
             case ActionRange.Self:
-                selectedCreature.UpdateHighlightAura(highlightAuraState);
+                SelectableTargets.Clear();
+                SelectableTargets.Add(selectedCreature);
                 break;
             case ActionRange.Melee:
-                Field.GetMeleeTargets(selectedCreature, highlightAuraState);
+                SelectableTargets = Field.GetMeleeTargets(selectedCreature);
                 break;
             case ActionRange.Ranged:
-                Field.GetRangedTargets(selectedCreature, highlightAuraState);
+                SelectableTargets = Field.GetRangedTargets(selectedCreature);
                 break;
+        }
+        HighlightUnitList(SelectableTargets, highlightAuraState);
+    }
+
+    public void HighlightUnitList(List<BattleSlot> battleSlots, HighlightAuraState highlightAuraState)
+    {
+        foreach (BattleSlot slot in battleSlots)
+        {
+            slot.UpdateHighlightAura(highlightAuraState);
         }
     }
 
@@ -1024,6 +1135,29 @@ public class BattleSystem : MonoBehaviour
         {
             Debug.LogError($"Invalid AOE type: {action.AreaOfEffect}");
         }
+    }
+
+    private void EndTurn()
+    {
+        ClearStacks();
+        ResetCreatureTargets();
+        ResetSelectableTargets();
+        ResetMovementSpace();
+        SetMovementChosen(false);
+        UntargetCreature();
+        ResetMovementSpace();
+        Field.ResetTargetHighlights();
+        ResetSelectedAction();
+        if (Field.EnemyCount() == 0)
+        {
+            OnBattleOver(true);
+        }
+        ToDetermineTurn();
+    }
+
+    private void ResetSelectableTargets()
+    {
+        SelectableTargets.Clear();
     }
 }
 
