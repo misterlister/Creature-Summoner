@@ -51,6 +51,7 @@ public class Creature
     public CreatureAction[] EquippedMasteryActions { get; set; }
 
     public int Initiative { get; set; }
+    public BattleSlot BattleSlot { get; private set; }
 
     public void Init()
     {
@@ -133,7 +134,7 @@ public class Creature
                 break;
         }
         int averageStat = Mathf.FloorToInt(((AVERAGE_STAT * 4) * Level) / 100f) + 5;
-        return statVal / averageStat;
+        return (float)statVal / averageStat;
     }
 
     private int calc_hp(int baseHp)
@@ -179,17 +180,27 @@ public class Creature
 
             while (i >= 0 && (EquippedCoreActions[0] == null || EquippedCoreActions[1] == null || EquippedCoreActions[2] == null))
             {
-                if (KnownCoreActions[i].Action.Source == ActionSource.Physical && EquippedCoreActions[0] == null)
+                CreatureAction currentAction = KnownCoreActions[i];
+                if (currentAction.Action.Source == ActionSource.Physical && currentAction.Action.ActionClass == ActionClass.Attack)
                 {
-                    EquippedCoreActions[0] = KnownCoreActions[i]; // Equip last learned Physical Core Action
+                    if (EquippedCoreActions[0] == null)
+                    {
+                        EquippedCoreActions[0] = currentAction; // Equip last learned Physical Attack Core Action
+                    }
                 } 
-                else if (KnownCoreActions[i].Action.Source == ActionSource.Magical && EquippedCoreActions[1] == null)
+                else if (currentAction.Action.Source == ActionSource.Magical && currentAction.Action.ActionClass == ActionClass.Attack)
                 {
-                    EquippedCoreActions[1] = KnownCoreActions[i]; // Equip last learned Magical Core Action
+                    if (EquippedCoreActions[1] == null)
+                    {
+                        EquippedCoreActions[1] = currentAction; // Equip last learned Magical Attack Core Action
+                    }
                 } 
-                else if (KnownCoreActions[i].Action.Source == ActionSource.Defensive && EquippedCoreActions[2] == null)
+                else if (currentAction.Action.ActionClass == ActionClass.Support)
                 {
-                    EquippedCoreActions[2] = KnownCoreActions[i]; // Equip last learned Defensive Core Action
+                    if (EquippedCoreActions[2] == null)
+                    {
+                        EquippedCoreActions[2] = currentAction; // Equip last learned Supoort Core Action
+                    }
                 }
                 i--;
             }
@@ -320,6 +331,19 @@ public class Creature
             Energy += amount;
         }
         */
+    }
+    public bool IsSingleType()
+    {
+        if (Species.Type2 == CreatureType.None || Species.Type1 == Species.Type2)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    public void SetBattleSlot(BattleSlot slot)
+    {
+        BattleSlot = slot;
     }
 }
 
