@@ -4,8 +4,20 @@ public enum ActionSource
 {
     None,
     Physical,
-    Magical,
-    Defensive
+    Magical
+}
+
+public enum ActionClass
+{
+    Attack,
+    Support
+}
+
+public enum ActionCategory
+{
+    Core,
+    Empowered,
+    Mastery
 }
 
 public enum AOE
@@ -19,4 +31,9 @@ public enum AOE
     Square,
     Field,
     Burst
+}
+
+public enum ActionTag
+{
+    Healing
 }
