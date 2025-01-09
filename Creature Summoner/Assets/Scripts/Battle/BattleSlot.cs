@@ -86,12 +86,13 @@ public class BattleSlot : MonoBehaviour
     }
     public void Setup(Creature newCreature)
     {
+        ClearSlot();
         if (newCreature == null)
         {
-            ClearSlot();
             return;
         }
         Creature = newCreature;
+        newCreature.SetBattleSlot(this);
         UpdateUi();
         UpdateStats();
         PlaySummonCreatureAnimation();
@@ -99,6 +100,10 @@ public class BattleSlot : MonoBehaviour
 
     public void ClearSlot()
     {
+        if (Creature != null)
+        {
+            Creature.SetBattleSlot(null);
+        }
         Creature = null;
         spriteHolder.sprite = null;
         spriteHolder.gameObject.SetActive(false);
