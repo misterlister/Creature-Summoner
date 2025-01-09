@@ -15,7 +15,7 @@ public class BattleField : MonoBehaviour
 
     private BattleSlot[,] BattleGrid;
 
-    public List<BattleSlot> FieldCreatures { get; set; } = new List<BattleSlot>();
+    public List<Creature> FieldCreatures { get; set; } = new List<Creature>();
 
 
     private void Start()
@@ -97,39 +97,18 @@ public class BattleField : MonoBehaviour
             Debug.Log($"Error: row ${row} col ${col} player: {isPlayerUnit} can't insert into non-empty row!");
             return false;
         }
+
         if (creature != null)
         {
-            InsertCreatureInOrder(BattleGrid[row, col], row, col);
+            FieldCreatures.Add(creature);
         }
 
         return true;
     }
 
-    private void InsertCreatureInOrder(BattleSlot creature, int row, int col)
-    {
-        int index = GetInsertIndex(row, col);
-        if (index >= FieldCreatures.Count)
-        {
-            FieldCreatures.Add(creature);
-        }
-        else
-        {
-            FieldCreatures.Insert(index, creature);
-        }
-    }
-
-    private int GetInsertIndex(int row, int col)
-    {
-        // Calculate the base index based on the column
-        int baseIndex = col * BATTLE_ROWS;
-
-        // Add the row offset within the column
-        return baseIndex + row;
-    }
-
     public void RemoveCreature(BattleSlot slot)
     {
-        FieldCreatures.Remove(slot);
+        FieldCreatures.Remove(slot.Creature);
         slot.ClearSlot();
     }
     public BattleSlot GetCreature(int row, int col)
@@ -140,10 +119,12 @@ public class BattleField : MonoBehaviour
         return BattleGrid[row, col];
     }
 
-    public void GetMeleeTargets(BattleSlot creature, HighlightAuraState highlightAura)
+    public List<BattleSlot> GetMeleeTargets(BattleSlot creature)
     {
         int row = creature.Row;
         int col = creature.Col;
+
+        List<BattleSlot> targets = new List<BattleSlot>();
 
         // Define the relative offsets for the 8 neighboring cells (4 cardinal + 4 diagonal)
         (int, int)[] directions = {
@@ -159,60 +140,70 @@ public class BattleField : MonoBehaviour
             int newRow = row + dRow;
             int newCol = col + dCol;
 
-            // Skip invalid positions (out of bounds) and empty spaces directly
+            // Skip invalid positions (out of bounds) and empty spaces
             if (newRow < 0 || newRow >= BATTLE_ROWS || newCol < 0 || newCol >= BATTLE_COLS || BattleGrid[newRow, newCol].IsEmpty)
                 continue;
 
             // Update aura for valid, non-empty neighbors
-            BattleGrid[newRow, newCol].UpdateHighlightAura(highlightAura);
+            targets.Add(BattleGrid[newRow, newCol]);
         }
 
         // Check "two spaces" away in straight lines (up, down, left, right)
-        CheckTwoSpaces(row, col, highlightAura);
+        targets.AddRange(AddDistantMeleeTargets(row, col));
 
         // Check "behind diagonal" targets if space in between is empty
-        CheckBehindDiagonals(row, col, highlightAura);
+        targets.AddRange(AddDiagonalMeleeTargets(row, col));
+
+        return targets;
     }
 
-    private void CheckTwoSpaces(int row, int col, HighlightAuraState highlightAura)
+    private List<BattleSlot> AddDistantMeleeTargets(int row, int col)
     {
+        List<BattleSlot> targets = new List<BattleSlot>();
+
         // Two spaces away (only if the intermediate space is empty and the target is non-empty)
         if (row > 1 && BattleGrid[row - 1, col].IsEmpty && !BattleGrid[row - 2, col].IsEmpty) // Two Up
-            BattleGrid[row - 2, col].UpdateHighlightAura(highlightAura);
+            targets.Add(BattleGrid[row - 2, col]);
 
         if (row < BATTLE_ROWS - 2 && BattleGrid[row + 1, col].IsEmpty && !BattleGrid[row + 2, col].IsEmpty) // Two Down
-            BattleGrid[row + 2, col].UpdateHighlightAura(highlightAura);
+            targets.Add(BattleGrid[row + 2, col]);
 
         if (col > 1 && BattleGrid[row, col - 1].IsEmpty && !BattleGrid[row, col - 2].IsEmpty) // Two Left
-            BattleGrid[row, col - 2].UpdateHighlightAura(highlightAura);
+            targets.Add(BattleGrid[row, col - 2]);
 
         if (col < BATTLE_COLS - 2 && BattleGrid[row, col + 1].IsEmpty && !BattleGrid[row, col + 2].IsEmpty) // Two Right
-            BattleGrid[row, col + 2].UpdateHighlightAura(highlightAura);
+            targets.Add(BattleGrid[row, col + 2]);
+        return targets;
     }
 
 
-    private void CheckBehindDiagonals(int row, int col, HighlightAuraState highlightAura)
+    private List<BattleSlot> AddDiagonalMeleeTargets(int row, int col)
     {
+        List<BattleSlot> targets = new List<BattleSlot>();
+
         // Behind diagonal targets (check if space in between is empty and target is non-empty)
         if (row > 1 && col > 1 && BattleGrid[row - 1, col - 1].IsEmpty && !BattleGrid[row - 2, col - 2].IsEmpty) // Behind Up-Left
-            BattleGrid[row - 2, col - 2].UpdateHighlightAura(highlightAura);
+            targets.Add(BattleGrid[row - 2, col - 2]);
 
         if (row > 1 && col < BATTLE_COLS - 2 && BattleGrid[row - 1, col + 1].IsEmpty && !BattleGrid[row - 2, col + 2].IsEmpty) // Behind Up-Right
-            BattleGrid[row - 2, col + 2].UpdateHighlightAura(highlightAura);
+            targets.Add(BattleGrid[row - 2, col + 2]);
 
         if (row < BATTLE_ROWS - 2 && col > 1 && BattleGrid[row + 1, col - 1].IsEmpty && !BattleGrid[row + 2, col - 2].IsEmpty) // Behind Down-Left
-            BattleGrid[row + 2, col - 2].UpdateHighlightAura(highlightAura);
+            targets.Add(BattleGrid[row + 2, col - 2]);
 
         if (row < BATTLE_ROWS - 2 && col < BATTLE_COLS - 2 && BattleGrid[row + 1, col + 1].IsEmpty && !BattleGrid[row + 2, col + 2].IsEmpty) // Behind Down-Right
-            BattleGrid[row + 2, col + 2].UpdateHighlightAura(highlightAura);
+            targets.Add(BattleGrid[row + 2, col + 2]);
+        return targets;
     }
 
 
 
-    public void GetRangedTargets(BattleSlot creature, HighlightAuraState highlightAura)
+    public List<BattleSlot> GetRangedTargets(BattleSlot creature)
     {
         int row = creature.Row;
         int col = creature.Col;
+
+        List<BattleSlot> targets = new List<BattleSlot>();
 
         // Calculate the opposite diagonal coordinates once
         var oppositeDiagonal = GetOppositeDiagonal(row, col);
@@ -233,8 +224,9 @@ public class BattleField : MonoBehaviour
             }
 
             // Update aura for valid, non-empty target positions
-            target.UpdateHighlightAura(highlightAura);
+            targets.Add(target);
         }
+        return targets;
     }
 
     // Helper to get the creature on the opposite diagonal (if any)
@@ -254,87 +246,134 @@ public class BattleField : MonoBehaviour
 
     public void ResetTargetHighlights(BattleSlot activeCreature = null)
     {
-        foreach (var creature in FieldCreatures) {
-            if (creature == activeCreature)
+        for (int row = 0; row < BATTLE_ROWS; row++) // Loop through rows
+        {
+            for (int col = 0; col < BATTLE_COLS; col++) // Loop through columns
             {
-                creature.UpdateHighlightAura(HighlightAuraState.Active);
-            }
-            else
-            {
-                creature.UpdateHighlightAura(HighlightAuraState.None);
+                BattleSlot slot = BattleGrid[row, col];
+                if (slot == null)
+                {
+                    Debug.Log($"Error: BattleSlot Row: {row} col {col} is null");
+                }
+
+                if (activeCreature != null && slot == activeCreature)
+                {
+                    slot.UpdateHighlightAura(HighlightAuraState.Active);
+                }
+                else
+                {
+                    slot.UpdateHighlightAura(HighlightAuraState.None);
+                }
             }
         }
     }
 
+    public List<BattleSlot> GetMoveTargets(BattleSlot currentSlot, int distance = 1)
+    {
+        List<BattleSlot> targets = new List<BattleSlot>();
+        if (currentSlot == null)
+        {
+            return targets;
+        }
+        int currentRow = currentSlot.Row;
+        int currentCol = currentSlot.Col;
+
+        int startCol = (currentSlot.IsPlayerSlot)? 0 : ENEMY_COL;
+        int lastCol = (currentSlot.IsPlayerSlot) ? ENEMY_COL : BATTLE_COLS;
+
+        for (int col = startCol; col < lastCol; col++)
+        {
+            for (int row = 0; row < BATTLE_ROWS; row++)
+            {
+                // Skip the current position
+                if (currentRow == row && currentCol == col)
+                {
+                    continue;
+                }
+
+                // Check distance between current and target positions
+                int distanceToTarget = Mathf.Abs(currentRow - row) + Mathf.Abs(currentCol - col);
+                if (distanceToTarget <= distance)
+                {
+                    BattleSlot slot = BattleGrid[row, col];
+                    targets.Add(slot);
+                }
+            }
+        }
+        
+        return targets;
+    }
+
     public List<BattleSlot> GetAOETargets(BattleSlot target, ActionBase action, int yChoice, bool isPlayer)
     {
-        List<BattleSlot> result = new List<BattleSlot>();
+        List<BattleSlot> targets = new List<BattleSlot>();
         if (target == null || action == null)
         {
-            return result;
+            return targets;
         }
-        HighlightAuraState highlightAura = action.Offensive ? HighlightAuraState.Negative : HighlightAuraState.Positive;
+        
         int targetRow = target.Row;
         int targetCol = target.Col;
 
-        result.Add(target);
-        target.UpdateHighlightAura(highlightAura);
+        targets.Add(target);
 
         switch (action.AreaOfEffect)
         {
             case AOE.Single:
                 break;
             case AOE.Line:
-                HandleLineAOE(result, targetRow, targetCol, highlightAura, isPlayer);
+                targets.AddRange(AddLineAOETargets(targetRow, targetCol, isPlayer));
                 break;
             case AOE.SmallArc:
-                HandleArcAOE(result, targetRow, targetCol, highlightAura, width: 2, yChoice);
+                targets.AddRange(AddArcAOETargets(targetRow, targetCol, width: 2, yChoice));
                 break;
             case AOE.WideArc:
-                HandleArcAOE(result, targetRow, targetCol, highlightAura, width: 3, yChoice);
+                targets.AddRange(AddArcAOETargets(targetRow, targetCol, width: 3, yChoice));
                 break;
             case AOE.SmallCone:
-                HandleConeAOE(result, targetRow, targetCol, highlightAura, width: 2, yChoice, isPlayer);
+                targets.AddRange(AddConeAOETargets(targetRow, targetCol, width: 2, yChoice, isPlayer));
                 break;
             case AOE.LargeCone:
-                HandleConeAOE(result, targetRow, targetCol, highlightAura, width: 3, yChoice, isPlayer);
+                targets.AddRange(AddConeAOETargets(targetRow, targetCol, width: 3, yChoice, isPlayer));
                 break;
             case AOE.Square:
-                HandleRectAOE(result, targetRow, targetCol, highlightAura, width: 2, yChoice, isPlayer);
+                targets.AddRange(AddRectAOETargets(targetRow, targetCol, width: 2, yChoice, isPlayer));
                 break;
             case AOE.Field:
-                HandleRectAOE(result, targetRow, targetCol, highlightAura, width: 3, yChoice, isPlayer);
+                targets.AddRange(AddRectAOETargets(targetRow, targetCol, width: 3, yChoice, isPlayer));
                 break;
             case AOE.Burst:
-                HandleBurstAOE(result, targetRow, targetCol, highlightAura);
+                targets.AddRange(AddBurstAOETargets(targetRow, targetCol));
                 break;
             default:
                 break;
         }
-        return result;
+        return targets;
     }
 
-    private void HandleLineAOE(List<BattleSlot> result, int row, int col, HighlightAuraState highlightAura, bool isPlayer)
+
+    private List<BattleSlot> AddLineAOETargets(int row, int col, bool isPlayer)
     {
+        List<BattleSlot> targets = new List<BattleSlot>();
         int newCol = isPlayer ? col + 1 : col - 1;
         if (newCol >= 0 && newCol < BATTLE_COLS)
         {
             BattleSlot slot = BattleGrid[row, newCol];
-            result.Add(slot);
-            slot.UpdateHighlightAura(highlightAura);
+            targets.Add(slot);
         }
+        return targets;
     }
 
-    private void HandleArcAOE(List<BattleSlot> result, int row, int col, HighlightAuraState highlightAura, int width, int yChoice)
+    private List<BattleSlot> AddArcAOETargets(int row, int col, int width, int yChoice)
     {
+        List<BattleSlot> targets = new List<BattleSlot>();
         // Select the row above (if within bounds)
         if (width == 3 || yChoice == 0)
         {
             if (row - 1 >= 0) // Ensure row above is within bounds
             {
                 BattleSlot slot = BattleGrid[row - 1, col];
-                result.Add(slot);
-                slot.UpdateHighlightAura(highlightAura);
+                targets.Add(slot);
             }
         }
         if (width == 3 || yChoice == 1)
@@ -343,14 +382,15 @@ public class BattleField : MonoBehaviour
             if (row + 1 < BATTLE_ROWS) // Ensure row below is within bounds
             {
                 BattleSlot slot = BattleGrid[row + 1, col];
-                result.Add(slot);
-                slot.UpdateHighlightAura(highlightAura);
+                targets.Add(slot);
             }
         }
+        return targets;
     }
 
-    private void HandleConeAOE(List<BattleSlot> result, int row, int col, HighlightAuraState highlightAura, int width, int yChoice, bool isPlayer)
+    private List<BattleSlot> AddConeAOETargets(int row, int col, int width, int yChoice, bool isPlayer)
     {
+        List<BattleSlot> targets = new List<BattleSlot>();
         // Calculate the column offset based on whether it's the player or the enemy
         int colOffset = isPlayer ? 1 : -1;
         // Ensure the column is within bounds
@@ -358,8 +398,7 @@ public class BattleField : MonoBehaviour
         {
             // Select the space behind the target (same row, 1 column over)
             BattleSlot slotBehind = BattleGrid[row, col + colOffset];
-            result.Add(slotBehind);
-            slotBehind.UpdateHighlightAura(highlightAura);
+            targets.Add(slotBehind);
 
             // Select the space above (if within bounds)
             if (row - 1 >= 0) // Ensure row below is within bounds
@@ -367,8 +406,7 @@ public class BattleField : MonoBehaviour
                 if (width == 3 || yChoice == 0)
                 {
                     BattleSlot slotAbove = BattleGrid[row - 1, col + colOffset];
-                    result.Add(slotAbove);
-                    slotAbove.UpdateHighlightAura(highlightAura);
+                    targets.Add(slotAbove);
                 }
             }
             // Select the space below (if within bounds)
@@ -377,15 +415,16 @@ public class BattleField : MonoBehaviour
                 if (width == 3 || yChoice == 1)
                 {
                     BattleSlot slotBelow = BattleGrid[row + 1, col + colOffset];
-                    result.Add(slotBelow);
-                    slotBelow.UpdateHighlightAura(highlightAura);
+                    targets.Add(slotBelow);
                 }
             }
         }
+        return targets;
     }
 
-    private void HandleRectAOE(List<BattleSlot> result, int row, int col, HighlightAuraState highlightAura, int width, int yChoice, bool isPlayer)
+    private List<BattleSlot> AddRectAOETargets(int row, int col, int width, int yChoice, bool isPlayer)
     {
+        List<BattleSlot> targets = new List<BattleSlot>();
         // Calculate the column offset based on whether it's the player or the enemy
         int colOffset = isPlayer ? 1 : -1;
         if (row - 1 >= 0) // Ensure row above is within bounds
@@ -394,8 +433,7 @@ public class BattleField : MonoBehaviour
             {
                 // Select the space above the target (same column, 1 row above)
                 BattleSlot slotAbove = BattleGrid[row - 1, col];
-                result.Add(slotAbove);
-                slotAbove.UpdateHighlightAura(highlightAura);
+                targets.Add(slotAbove);
             }
         }
 
@@ -405,8 +443,7 @@ public class BattleField : MonoBehaviour
             {
                 // Select the space below the target (same column, 1 row below)
                 BattleSlot slotBelow = BattleGrid[row + 1, col];
-                result.Add(slotBelow);
-                slotBelow.UpdateHighlightAura(highlightAura);
+                targets.Add(slotBelow);
             }
         }
         // Ensure the column behind is within bounds
@@ -414,8 +451,7 @@ public class BattleField : MonoBehaviour
         {
             // Select the space behind the target (same row, 1 column over)
             BattleSlot slotBehind = BattleGrid[row, col + colOffset];
-            result.Add(slotBehind);
-            slotBehind.UpdateHighlightAura(highlightAura);
+            targets.Add(slotBehind);
 
             // Select the space above (if within bounds)
             if (row - 1 >= 0) // Ensure row below is within bounds
@@ -423,8 +459,7 @@ public class BattleField : MonoBehaviour
                 if (width == 3 || yChoice == 0)
                 {
                     BattleSlot slotAbove = BattleGrid[row - 1, col + colOffset];
-                    result.Add(slotAbove);
-                    slotAbove.UpdateHighlightAura(highlightAura);
+                    targets.Add(slotAbove);
                 }
             }
 
@@ -434,47 +469,54 @@ public class BattleField : MonoBehaviour
                 if (width == 3 || yChoice == 1)
                 {
                     BattleSlot slotBelow = BattleGrid[row + 1, col + colOffset];
-                    result.Add(slotBelow);
-                    slotBelow.UpdateHighlightAura(highlightAura);
+                    targets.Add(slotBelow);
                 }
             }
-
         }
+        return targets;
     }
 
-    private void HandleBurstAOE(List<BattleSlot> result, int row, int col, HighlightAuraState highlightAura)
+    private List<BattleSlot> AddBurstAOETargets(int row, int col)
     {
+        List<BattleSlot> targets = new List<BattleSlot>();
         // Ensure row below is within bounds
         if (row - 1 >= 0)
         {
             // Select the space above the target (same column, 1 row above)
             BattleSlot slotAbove = BattleGrid[row - 1, col];
-            result.Add(slotAbove);
-            slotAbove.UpdateHighlightAura(highlightAura);
+            targets.Add(slotAbove);
         }
         // Ensure row below is within bounds
         if (row + 1 < BATTLE_ROWS) 
         {
             // Select the space below the target (same column, 1 row below)
             BattleSlot slotBelow = BattleGrid[row + 1, col];
-            result.Add(slotBelow);
-            slotBelow.UpdateHighlightAura(highlightAura);
+            targets.Add(slotBelow);
         }
         // Ensure the column behind is within bounds
         if (col - 1 >= 0)
         {
             // Select the space behind the target (same row, 1 column back)
             BattleSlot slotBehind = BattleGrid[row, col - 1];
-            result.Add(slotBehind);
-            slotBehind.UpdateHighlightAura(highlightAura);
+            targets.Add(slotBehind);
         }
         // Ensure the column in front is within bounds
         if (col + 1 < BATTLE_COLS)
         {
             // Select the space in front of the target (same row, 1 column in front)
             BattleSlot slotAhead = BattleGrid[row, col + 1];
-            result.Add(slotAhead);
-            slotAhead.UpdateHighlightAura(highlightAura);
+            targets.Add(slotAhead);
         }
+        return targets;
+    }
+
+    public void SwapSlots(BattleSlot slot1, BattleSlot slot2)
+    {
+        Creature creature1 = slot1.Creature;
+        Creature creature2 = slot2.Creature;
+        slot1.ClearSlot();
+        slot2.ClearSlot();
+        slot1.Setup(creature2);
+        slot2.Setup(creature1);
     }
 }
