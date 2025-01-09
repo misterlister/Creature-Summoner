@@ -3,7 +3,10 @@ using UnityEngine;
 
 public static class GameConstants
 {
-    public const float HIT_MODIFIER = 0.5f;    // Value that controls how much accuracy changes based on stat ratio
+    // ACTION CONSTANTS
+
+    public const float ACCURACY_ADJUSTMENT_FACTOR = 0.5f;    // Value that controls how much accuracy changes based on stat ratio
+    public const float STATUS_RESIST_ADJUSTMENT_FACTOR = 1f;    // Value that controls how much accuracy changes based on stat ratio
     public const float MAX_HIT = 100f;         // Ceiling for accuracy of actions
     public const float MIN_HIT = 10f;          // Floor for accuracy of actions
     public const int MIN_DAMAGE = 1;           // Minimum damage that can be dealt by actions
@@ -13,18 +16,20 @@ public static class GameConstants
     public const int MAX_VARIANCE = BASE_VARIANCE + VARIANCE_ADJUSTMENT;   // Maximum ceiling for damage variance
     public const int ROLL_CEILING = 101;       // Maximum value that can be rolled for random die rolls
 
+    public const int CORE_SLOTS = 3;
+    public const int EMPOWERED_SLOTS = 3;
+    public const int MASTERY_SLOTS = 1;
+
+    // BATTLEFIELD CONSTANTS
+
     public const int BATTLE_ROWS = 3; // Number of Rows on the battlefield
     public const int BATTLE_COLS = 4; // Number of Columns on the battlefield
-
-    //public const int TEAM_SPACES = BATTLE_COLS * BATTLE_ROWS;
 
     public const int ENEMY_COL = BATTLE_COLS / 2;
 
     public const int BATTLE_MENU_COLS = 2; // Number of Columns in the battle selection menu
 
-    public const int CORE_SLOTS = 3;
-    public const int EMPOWERED_SLOTS = 3;
-    public const int MASTERY_SLOTS = 1;
+    // STAT CONSTANTS
 
     public const int AVERAGE_STAT = 40;
 
@@ -33,6 +38,19 @@ public static class GameConstants
     public const float CRIT_RESISTANCE = 0.0f;
 
     public const float DEFAULT_STARTING_ENERGY = 0.25f;
+
+    // TYPE CONSTANTS
+
+    public const float V_EFF_SINGLE = 4f;
+    public const float V_EFF_DUAL = 2.25f;
+    public const float EFF_SINGLE = 2f;
+    public const float EFF_DUAL = 1.5f;
+    public const float NEUTRAL = 1f;
+    public const float INEFF_DUAL = 0.66f;
+    public const float INEFF_SINGLE = 0.5f;
+    public const float V_INEFF_DUAL = 0.44f;
+    public const float V_INEFF_SINGLE = 0.25f;
+
 
     public static readonly Dictionary<CreatureType, Color> TypeColours = new Dictionary<CreatureType, Color>()
     {
