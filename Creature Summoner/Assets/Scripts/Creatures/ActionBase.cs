@@ -15,6 +15,7 @@ public class ActionBase : Talent
     [SerializeField] CreatureType type;
     [SerializeField] ActionCategory category;
     [SerializeField] ActionSource source;
+    [SerializeField] ActionClass actionClass;
     [SerializeField] ActionRange range;
     [SerializeField] int energyCost = 0;
     [SerializeField] int energyGain = 0;
@@ -22,28 +23,27 @@ public class ActionBase : Talent
     [SerializeField] int accuracy = 90;
     [SerializeField] int baseCrit = 5;
     [SerializeField] AOE areaOfEffect = AOE.Single;
-    [SerializeField] bool offensive = true;
     [SerializeField] bool preparation = false;
-    [SerializeField] List<string> tags;
+    [SerializeField] List<ActionTag> tags;
 
     public CreatureType Type => type;
     public ActionCategory Category => category;
     public ActionSource Source => source;
+    public ActionClass ActionClass => actionClass;
     public int Power => power;
     public int Accuracy => accuracy;
     public ActionRange Range => range;
-    public bool Offensive => offensive;
     public bool Preparation => preparation;
     public AOE AreaOfEffect => areaOfEffect;
     public int BaseCrit => baseCrit;
-    public List<string> Tags => tags;
+    public List<ActionTag> Tags => tags;
     public int EnergyCost => energyCost;
     public int EnergyGain => energyGain;
 
     public int CalculateAccuracy(Creature attacker, Creature defender)
     {
         float ratio = ((attacker.Skill - (float)defender.Speed) / defender.Speed);
-        float hitChance = accuracy * (1 + HIT_MODIFIER * ratio);
+        float hitChance = accuracy * (1 + ACCURACY_ADJUSTMENT_FACTOR * ratio);
         float clampedHitChance = Mathf.Clamp(hitChance, MIN_HIT, MAX_HIT);
         if (DEBUG)
         {
@@ -52,6 +52,22 @@ public class ActionBase : Talent
             Debug.Log($"Clamped hit Chance: {clampedHitChance}");
         }
         return (int)(clampedHitChance);
+    }
+
+    public int CalculateStatusAccuracy(Creature attacker, Creature defender)
+    {
+        int defenseStat = (Source == ActionSource.Magical)? defender.Defense : defender.Resistance;
+        int statusResist = defenseStat + defender.Energy;
+        float ratio = ((attacker.Skill - (float)statusResist) / statusResist);
+        float statusChance = accuracy * (1 + STATUS_RESIST_ADJUSTMENT_FACTOR * ratio);
+        float clampedStatusChance = Mathf.Clamp(statusChance, MIN_HIT, MAX_HIT);
+        if (DEBUG)
+        {
+            Debug.Log($"Status resist ratio: {ratio}");
+            Debug.Log($"Raw status Chance: {statusChance}");
+            Debug.Log($"Clamped status Chance: {clampedStatusChance}");
+        }
+        return (int)(clampedStatusChance);
     }
 
     public int CalculateDamage(Creature attacker, Creature defender, float critMod = 1.0f)
@@ -156,19 +172,19 @@ public class ActionBase : Talent
             Debug.Log($"-------attacker: {attacker.Creature.Nickname}-------");
         }
 
-        if (source == ActionSource.Defensive)
-        {
-            return UseDefensiveAction(attacker, defender);
-        }
-
-        if (offensive)
+        if (actionClass == ActionClass.Attack)
         {
             return UseOffensiveAction(attacker, defender);
         }
 
-        else
+        if (tags.Contains(ActionTag.Healing))
         {
             return UseHealingAction(attacker, defender);
+        }
+
+        else
+        {
+            return UseDefenseAction(attacker, defender);
         }
 
     }
@@ -184,7 +200,12 @@ public class ActionBase : Talent
         int damage = 0;
 
         // Get the effectiveness category
-        Effectiveness effectRating = TypeChart.GetEffectiveness(type, defender.Creature.Species.Type1, defender.Creature.Species.Type2);
+        Effectiveness effectRating = TypeChart.GetEffectiveness(
+            type, 
+            attacker.Creature.IsSingleType(), 
+            defender.Creature.Species.Type1, 
+            defender.Creature.Species.Type2
+            );
 
         actionDetails.EffectRating = effectRating;
 
@@ -194,11 +215,11 @@ public class ActionBase : Talent
         // Check if the attack was a hit or glancing blow
         if (hit)
         {
-            isCrit = RollForCrit(attacker, defender);
+            isCrit = RollForCrit(attacker.Creature, defender.Creature);
             if (isCrit)
             {
                 actionDetails.IsCrit = true;
-                critMod = CalculateCritBonus(attacker, defender);
+                critMod = CalculateCritBonus(attacker.Creature, defender.Creature);
             }
             damage = CalculateDamage(attacker.Creature, defender.Creature, critMod);
         }
@@ -220,6 +241,7 @@ public class ActionBase : Talent
         }
         if (DEBUG)
         {
+            Debug.Log($"Effectiveness: {effectMod}");
             Debug.Log($"hit?: {hit}");
             Debug.Log($"isCrit: {isCrit}");
             Debug.Log($"critMod: {critMod}");
@@ -228,58 +250,11 @@ public class ActionBase : Talent
         return actionDetails.GetMessages();
     }
 
-    public List<string> UseDefensiveAction(BattleSlot attacker, BattleSlot defender)
+    public List<string> UseDefenseAction(BattleSlot attacker, BattleSlot defender)
     {
         // Create the ActionDetails object
         ActionDetails actionDetails = new ActionDetails(attacker.Creature.Nickname, defender.Creature.Nickname);
-        int accuracy = CalculateAccuracy(attacker.Creature, defender.Creature);
-        bool hit = rollToHit(accuracy);
-        bool glancingBlow = false;
-        bool isCrit = false;
-        float critMod = 1f;
-
-        // Get the effectiveness category
-        Effectiveness effectRating = TypeChart.GetEffectiveness(type, defender.Creature.Species.Type1, defender.Creature.Species.Type2);
-
-        actionDetails.EffectRating = effectRating;
-
-        // Get the effectiveness modifier based on the category
-        float effectMod = TypeChart.EffectiveMod[effectRating];
-
-        int damage = 0;
-        if (glancingBlow)
-        {
-            actionDetails.IsGlancingBlow = true;
-            damage = CalculateDamage(attacker.Creature, defender.Creature);
-            damage = Mathf.CeilToInt(damage * attacker.Creature.GlancingDamageReduction);
-        }
-        else
-        {
-            isCrit = RollForCrit(attacker, defender);
-            if (isCrit)
-            {
-                actionDetails.IsCrit = true;
-                critMod = CalculateCritBonus(attacker, defender);
-            }
-            damage = CalculateDamage(attacker.Creature, defender.Creature, critMod);
-        }
-
-        // Adjust damage for type effectiveness
-        damage = Mathf.Max((int)((float)damage * effectMod), 1);
-
-        // Deal damage to target
-        defender.HitByAttack(damage);
-        if (defender.IsDefeated)
-        {
-            actionDetails.IsDefeated = true;
-        }
-        if (DEBUG)
-        {
-            Debug.Log($"glancingBlow: {glancingBlow}");
-            Debug.Log($"isCrit: {isCrit}");
-            Debug.Log($"critMod: {critMod}");
-            Debug.Log($"damage: {damage}");
-        }
+        actionDetails.IsDefensive = true;
         return actionDetails.GetMessages();
     }
 
@@ -293,11 +268,11 @@ public class ActionBase : Talent
 
         int healing = 0;
 
-        isCrit = RollForCrit(attacker, defender);
+        isCrit = RollForCrit(attacker.Creature, defender.Creature);
         if (isCrit)
         {
             actionDetails.IsCrit = true;
-            critMod = CalculateCritBonus(attacker, defender);
+            critMod = CalculateCritBonus(attacker.Creature, defender.Creature);
         }
         healing = CalculateHealing(attacker.Creature, power, critMod);
 
@@ -313,10 +288,10 @@ public class ActionBase : Talent
         return actionDetails.GetMessages();
     }
 
-    public int CalculateCritChance(BattleSlot attacker, BattleSlot defender, float k = 0.5f)
+    public int CalculateCritChance(Creature attacker, Creature defender, float k = 0.5f)
     {
-        int attackerSkill = attacker.Creature.Skill;
-        int defenderSpeed = defender.Creature.Speed;
+        int attackerSkill = attacker.Skill;
+        int defenderSpeed = defender.Speed;
         if (defenderSpeed == 0) 
         {
             defenderSpeed = 1;
@@ -336,7 +311,7 @@ public class ActionBase : Talent
         return critPercent;
     }
 
-    private bool RollForCrit(BattleSlot attacker, BattleSlot defender)
+    private bool RollForCrit(Creature attacker, Creature defender)
     {
         int critChance = CalculateCritChance(attacker, defender);
         int roll = Random.Range(1, ROLL_CEILING);
@@ -352,11 +327,11 @@ public class ActionBase : Talent
         return false;
     }
 
-    private float CalculateCritBonus(BattleSlot attacker, BattleSlot defender)
+    private float CalculateCritBonus(Creature attacker, Creature defender)
     {
         float critBonus = 1f;
-        critBonus += attacker.Creature.CritBonus;
-        critBonus -= defender.Creature.CritResistance;
+        critBonus += attacker.CritBonus;
+        critBonus -= defender.CritResistance;
         float clampedCrit = Mathf.Clamp(critBonus, 1f, 2f);
         if (DEBUG)
         {
@@ -366,9 +341,9 @@ public class ActionBase : Talent
         return clampedCrit;
     }
 
-    private int CalculateEnergyGain(BattleSlot attacker)
+    private int CalculateEnergyGain(Creature attacker)
     {
-        return (int)(attacker.Creature.MaxEnergy * (energyGain / 100f));
+        return (int)(attacker.MaxEnergy * (energyGain / 100f));
     }
 
     public void PayEnergyCost(BattleSlot attacker)
@@ -383,7 +358,7 @@ public class ActionBase : Talent
     {
         if (EnergyGain != 0)
         {
-            attacker.AdjustEnergy(CalculateEnergyGain(attacker));
+            attacker.AdjustEnergy(CalculateEnergyGain(attacker.Creature));
         }
     }
 }
