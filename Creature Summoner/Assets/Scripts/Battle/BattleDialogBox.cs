@@ -21,10 +21,11 @@ public class BattleDialogBox : MonoBehaviour
     [SerializeField] TextMeshProUGUI actionSource;
     [SerializeField] TextMeshProUGUI actionRange;
     [SerializeField] TextMeshProUGUI actionPower;
+    [SerializeField] TextMeshProUGUI adjustedPower;
     [SerializeField] TextMeshProUGUI actionAccuracy;
     [SerializeField] TextMeshProUGUI actionEnergy;
     [SerializeField] TextMeshProUGUI actionTargets;
-    [SerializeField] TextMeshProUGUI actionPrep;
+    [SerializeField] TextMeshProUGUI actionCrit;
     [SerializeField] TextMeshProUGUI actionDescription;
 
     const string backText = "Return to the previous menu";
@@ -103,7 +104,7 @@ public class BattleDialogBox : MonoBehaviour
         EnableDialogText(true);
     }
 
-    public void UpdateActionSelection(int selectedAction, ActionBase action)
+    public void UpdateActionSelection(int selectedAction, ActionBase action, Creature attacker = null)
     {
         for (int i = 0; i < actionText.Count; i++)
         {
@@ -120,7 +121,15 @@ public class BattleDialogBox : MonoBehaviour
         {
             HighlightBackOption();
         }
-        else if (action == null)
+        else
+        {
+            UpdateActionDetails(action, attacker);
+        }
+    }
+
+    public void UpdateActionDetails(ActionBase action, Creature attacker = null, Creature defender = null)
+    {
+        if (action == null)
         {
             battleLogText.text = nullText;
             actionDetails.SetActive(false);
@@ -130,11 +139,28 @@ public class BattleDialogBox : MonoBehaviour
         {
             EnableDialogText(false);
             actionDetails.SetActive(true);
-            actionType.text = $"{action.Type}";
-            actionSource.text = $"{action.Category}";
+            actionType.text = $"Type: {action.Type}";
+            actionSource.text = $"{action.Source}";
             actionRange.text = action.Range.ToString();
             actionPower.text = $"Power: {action.Power}";
-            actionAccuracy.text = $"Accuracy: {action.Accuracy}%";
+            float powerRatio = 1f;
+            if (attacker != null)
+            {
+                if (action.Source == ActionSource.Physical)
+                {
+                    powerRatio = attacker.compare_stat_to_average(Stat.Strength);
+                }
+                else if (action.Source == ActionSource.Magical)
+                {
+                    powerRatio = attacker.compare_stat_to_average(Stat.Magic);
+                }
+            }
+            int adjPower = ((int)(powerRatio * action.Power));
+            adjustedPower.text = $"Adjusted: {adjPower}";
+
+            int accuracy = (attacker == null || defender == null) ? action.Accuracy : action.CalculateAccuracy(attacker, defender);
+            actionAccuracy.text = $"Accuracy: {accuracy}%";
+
             if (action.Category == ActionCategory.Core)
             {
                 actionEnergy.text = $"Energy Gain: {action.EnergyGain}";
@@ -151,8 +177,9 @@ public class BattleDialogBox : MonoBehaviour
             {
                 actionEnergy.text = "";
             }
-            actionTargets.text = $"Targets: {action.AreaOfEffect.ToString()}";
-            actionPrep.text = action.Preparation ? "Prepared Action" : "";
+            actionTargets.text = $"AOE: {action.AreaOfEffect.ToString()}";
+            int critChance = (attacker == null || defender == null) ? action.BaseCrit : action.CalculateCritChance(attacker, defender);
+            actionCrit.text = $"Crit Chance: {critChance}%";
             actionDescription.text = $"{action.Description}";
         }
     }
