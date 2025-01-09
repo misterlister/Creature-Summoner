@@ -1,7 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
+using static GameConstants;
 
 public enum CreatureType
 {
@@ -22,23 +20,32 @@ public enum CreatureType
 
 public enum Effectiveness
 {
-    VeryIneffective,
-    Ineffective,
+    VeryEffectiveSingle,
+    VeryEffectiveDual,
+    EffectiveSingle,
+    EffectiveDual,
     Neutral,
-    Effective,
-    VeryEffective
+    IneffectiveDual,
+    IneffectiveSingle,
+    VeryIneffectiveDual,
+    VeryIneffectiveSingle,
 }
 
 public class TypeChart
 {
     public static Dictionary<Effectiveness, float> EffectiveMod = new Dictionary<Effectiveness, float>
     {
-        {Effectiveness.VeryIneffective, 0.44f},
-        {Effectiveness.Ineffective, 0.66f},
-        {Effectiveness.Neutral, 1f},
-        {Effectiveness.Effective, 1.5f},
-        {Effectiveness.VeryEffective, 2.25f}
+        {Effectiveness.VeryEffectiveSingle, V_EFF_SINGLE},
+        {Effectiveness.VeryEffectiveDual, V_EFF_DUAL},
+        {Effectiveness.EffectiveSingle, EFF_SINGLE},
+        {Effectiveness.EffectiveDual, EFF_DUAL},
+        {Effectiveness.Neutral, NEUTRAL},
+        {Effectiveness.IneffectiveDual, INEFF_DUAL},
+        {Effectiveness.IneffectiveSingle, INEFF_SINGLE},
+        {Effectiveness.VeryIneffectiveDual, V_INEFF_DUAL},
+        {Effectiveness.VeryIneffectiveSingle, V_INEFF_SINGLE},
     };
+
     const int NEU = 0;
     const int EFF = 1;
     const int INF = -1;
@@ -64,9 +71,12 @@ public class TypeChart
 
     public static Effectiveness GetEffectiveness(
         CreatureType attackType, 
+        bool singleTypeAttacker,
         CreatureType defenseType1 = CreatureType.None, 
-        CreatureType defenseType2 = CreatureType.None)
+        CreatureType defenseType2 = CreatureType.None
+        )
     {
+        bool singleTypeDefender = (defenseType1 == defenseType2 || defenseType2 == CreatureType.None);
         int type1Effect = chart[(int)attackType][(int)defenseType1];
         int type2Effect = chart[(int)attackType][(int)defenseType2];
         int combinedEffect = type1Effect + type2Effect;
@@ -74,13 +84,41 @@ public class TypeChart
         switch (combinedEffect)
         {
             case -2:
-                return Effectiveness.VeryIneffective;
+                if (singleTypeDefender)
+                {
+                    return Effectiveness.VeryIneffectiveSingle;
+                }
+                else
+                {
+                    return Effectiveness.VeryIneffectiveDual;
+                }
             case -1:
-                return Effectiveness.Ineffective;
+                if (singleTypeDefender)
+                {
+                    return Effectiveness.IneffectiveSingle;
+                }
+                else
+                {
+                    return Effectiveness.IneffectiveDual;
+                }
             case 1:
-                return Effectiveness.Effective;
+                if (singleTypeAttacker)
+                {
+                    return Effectiveness.EffectiveSingle;
+                }
+                else
+                {
+                    return Effectiveness.EffectiveDual;
+                }
             case 2:
-                return Effectiveness.VeryEffective;
+                if (singleTypeAttacker)
+                {
+                    return Effectiveness.VeryEffectiveSingle;
+                }
+                else
+                {
+                    return Effectiveness.VeryEffectiveDual;
+                }
             default:
                 return Effectiveness.Neutral;
         }

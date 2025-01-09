@@ -10,6 +10,7 @@ public class ActionDetails
     public bool IsCrit { get; set; }
     public bool IsMiss { get; set; }
     public bool IsGlancingBlow { get; set; }
+    public bool IsDefensive { get; set; }
     public Effectiveness EffectRating { get; set; }
 
     private List<string> actionMessages;
@@ -65,25 +66,29 @@ public class ActionDetails
 
         if (IsCrit)
             return $"The attack strikes {DefenderName} with a critical hit!";
+        if (IsDefensive)
+        {
+            return $"{AttackerName} defended itself";
+        }
 
         return $"The attack strikes {DefenderName}.";
     }
 
     private string getEffectivenessMessage()
     {
-        if (EffectRating == Effectiveness.VeryIneffective)
+        if (EffectRating == Effectiveness.VeryIneffectiveDual || EffectRating == Effectiveness.VeryIneffectiveSingle)
         {
             return "The attack type is very ineffective!";
         }
-        else if (EffectRating == Effectiveness.Ineffective)
+        else if (EffectRating == Effectiveness.IneffectiveDual || EffectRating == Effectiveness.IneffectiveSingle)
         {
             return "The attack type is ineffective.";
         }
-        else if (EffectRating == Effectiveness.VeryEffective)
+        else if (EffectRating == Effectiveness.VeryEffectiveDual || EffectRating == Effectiveness.VeryEffectiveSingle)
         {
             return "The attack type is very effective!";
         }
-        else if (EffectRating == Effectiveness.Effective)
+        else if (EffectRating == Effectiveness.EffectiveDual || EffectRating == Effectiveness.EffectiveSingle)
         {
             return "The attack type is effective.";
         }
