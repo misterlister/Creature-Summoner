@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d44bb7e47a028ab4f85d92f003fbeacd, type: 3}
+  m_Name: Metalpede
+  m_EditorClassIdentifier: 
+  creatureName: Metalpede
+  description: 
+  frontSprite: {fileID: 21300000, guid: 4984ef79d5c313049a31e21266e30e65, type: 3}
+  type1: 8
+  type2: 0
+  size: 1
+  hp: 36
+  energy: 34
+  strength: 36
+  magic: 30
+  skill: 32
+  speed: 36
+  defense: 60
+  resistance: 36
+  learnableTalents:
+  - talentBase: {fileID: 11400000, guid: 0a1629779d38fc94e880902ea9bb7573, type: 2}
+    level: 0
+  - talentBase: {fileID: 11400000, guid: d0a9fe768c90ae54fa3bbbadd0af9558, type: 2}
+    level: 0
+  - talentBase: {fileID: 11400000, guid: e8407a767f651f24e9965446150ecf1d, type: 2}
+    level: 0

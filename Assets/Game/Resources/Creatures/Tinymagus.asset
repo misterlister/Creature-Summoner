@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d44bb7e47a028ab4f85d92f003fbeacd, type: 3}
+  m_Name: Tinymagus
+  m_EditorClassIdentifier: 
+  creatureName: Tinymagus
+  description: 
+  frontSprite: {fileID: 21300000, guid: fe0d86d3113b0a2448585ff85553121b, type: 3}
+  type1: 2
+  type2: 0
+  size: 1
+  hp: 24
+  energy: 60
+  strength: 8
+  magic: 56
+  skill: 52
+  speed: 36
+  defense: 20
+  resistance: 44
+  learnableTalents:
+  - talentBase: {fileID: 11400000, guid: e4448373afcddba46bf0bbed4c2ea161, type: 2}
+    level: 0
+  - talentBase: {fileID: 11400000, guid: 9f067577005d9ea42966c8a98668d303, type: 2}
+    level: 0
+  - talentBase: {fileID: 11400000, guid: 90371eaf51bbc0340af0488d50e25867, type: 2}
+    level: 0
+  - talentBase: {fileID: 11400000, guid: 31143f680768569468c2c7586e7b2e48, type: 2}
+    level: 10
+  - talentBase: {fileID: 11400000, guid: 0b60a13baf776d9428dd787699fdc6e4, type: 2}
+    level: 15

@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d44bb7e47a028ab4f85d92f003fbeacd, type: 3}
+  m_Name: Pyrequill
+  m_EditorClassIdentifier: 
+  creatureName: Pyrequill
+  description: 
+  frontSprite: {fileID: 21300000, guid: 3aea60a85717a13478469c21fde36985, type: 3}
+  type1: 7
+  type2: 0
+  size: 2
+  hp: 46
+  energy: 48
+  strength: 40
+  magic: 56
+  skill: 38
+  speed: 48
+  defense: 37
+  resistance: 37
+  learnableTalents:
+  - talentBase: {fileID: 11400000, guid: ac17ccc810d9dcb4f9341fc122eb5cd5, type: 2}
+    level: 0
+  - talentBase: {fileID: 11400000, guid: 04cbdc49e0ec888499fc7743a9f6e0ed, type: 2}
+    level: 0
+  - talentBase: {fileID: 11400000, guid: e8407a767f651f24e9965446150ecf1d, type: 2}
+    level: 0

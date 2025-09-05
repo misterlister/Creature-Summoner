@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d44bb7e47a028ab4f85d92f003fbeacd, type: 3}
+  m_Name: TreeDragie
+  m_EditorClassIdentifier: 
+  creatureName: TreeDragie
+  description: 
+  frontSprite: {fileID: 21300000, guid: 4935a35843de0fb4385894af22ea14de, type: 3}
+  type1: 10
+  type2: 0
+  size: 1
+  hp: 32
+  energy: 45
+  strength: 40
+  magic: 49
+  skill: 48
+  speed: 52
+  defense: 37
+  resistance: 37
+  learnableTalents:
+  - talentBase: {fileID: 11400000, guid: 657b188ac8cf5e44e8c7ad01a4fae645, type: 2}
+    level: 0
+  - talentBase: {fileID: 11400000, guid: 0d055bf5e1cfc7049b9f3473707d95b3, type: 2}
+    level: 0
+  - talentBase: {fileID: 11400000, guid: 90371eaf51bbc0340af0488d50e25867, type: 2}
+    level: 0
+  - talentBase: {fileID: 11400000, guid: fcba21938a83c884db297922b2c4a762, type: 2}
+    level: 15
+  - talentBase: {fileID: 11400000, guid: dd36d98417f0f0144b5bee39d1026e52, type: 2}
+    level: 15

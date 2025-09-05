@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d44bb7e47a028ab4f85d92f003fbeacd, type: 3}
+  m_Name: Tardigarde
+  m_EditorClassIdentifier: 
+  creatureName: Tardigarde
+  description: 
+  frontSprite: {fileID: 21300000, guid: dd55fd4d4ea2623499e37786e4d430dd, type: 3}
+  type1: 2
+  type2: 12
+  size: 2
+  hp: 99
+  energy: 50
+  strength: 28
+  magic: 28
+  skill: 30
+  speed: 5
+  defense: 60
+  resistance: 40
+  learnableTalents:
+  - talentBase: {fileID: 11400000, guid: e4448373afcddba46bf0bbed4c2ea161, type: 2}
+    level: 0
+  - talentBase: {fileID: 11400000, guid: 015a2e489d11b4541bc9296fd276dcb8, type: 2}
+    level: 0
+  - talentBase: {fileID: 11400000, guid: e8407a767f651f24e9965446150ecf1d, type: 2}
+    level: 0
+  - talentBase: {fileID: 11400000, guid: ff3ce5e9cf40a4e479d1c3d97810776d, type: 2}
+    level: 15

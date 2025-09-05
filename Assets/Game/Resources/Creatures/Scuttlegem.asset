@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d44bb7e47a028ab4f85d92f003fbeacd, type: 3}
+  m_Name: Scuttlegem
+  m_EditorClassIdentifier: 
+  creatureName: Scuttlegem
+  description: 
+  frontSprite: {fileID: 21300000, guid: 56b90faee1bbde94daf91cee93cf6a73, type: 3}
+  type1: 5
+  type2: 0
+  size: 0
+  hp: 36
+  energy: 36
+  strength: 32
+  magic: 34
+  skill: 30
+  speed: 32
+  defense: 52
+  resistance: 48
+  learnableTalents:
+  - talentBase: {fileID: 11400000, guid: bdcc2f257cac2b3448a700bfbb70ad21, type: 2}
+    level: 0
+  - talentBase: {fileID: 11400000, guid: d79454c2190f1ed46a5f9c56316bdea7, type: 2}
+    level: 0
+  - talentBase: {fileID: 11400000, guid: e8407a767f651f24e9965446150ecf1d, type: 2}
+    level: 0

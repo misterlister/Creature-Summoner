@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d44bb7e47a028ab4f85d92f003fbeacd, type: 3}
+  m_Name: FireMeerkat
+  m_EditorClassIdentifier: 
+  creatureName: FireMeerkat
+  description: 
+  frontSprite: {fileID: 21300000, guid: 00319cb70829e854cb3f4be7ccda3e99, type: 3}
+  type1: 7
+  type2: 0
+  size: 1
+  hp: 40
+  energy: 36
+  strength: 28
+  magic: 40
+  skill: 40
+  speed: 52
+  defense: 32
+  resistance: 32
+  learnableTalents:
+  - talentBase: {fileID: 11400000, guid: ac17ccc810d9dcb4f9341fc122eb5cd5, type: 2}
+    level: 0
+  - talentBase: {fileID: 11400000, guid: 04cbdc49e0ec888499fc7743a9f6e0ed, type: 2}
+    level: 0
+  - talentBase: {fileID: 11400000, guid: 90371eaf51bbc0340af0488d50e25867, type: 2}
+    level: 0

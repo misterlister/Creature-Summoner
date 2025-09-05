@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d44bb7e47a028ab4f85d92f003fbeacd, type: 3}
+  m_Name: Snowtail
+  m_EditorClassIdentifier: 
+  creatureName: Snowtail
+  description: 
+  frontSprite: {fileID: 21300000, guid: 3fe7da4249e45b04bb9fd17387b45ee5, type: 3}
+  type1: 4
+  type2: 0
+  size: 0
+  hp: 32
+  energy: 40
+  strength: 22
+  magic: 40
+  skill: 34
+  speed: 60
+  defense: 28
+  resistance: 44
+  learnableTalents:
+  - talentBase: {fileID: 11400000, guid: bacb1bae6eb20934c9e07ca524883442, type: 2}
+    level: 0
+  - talentBase: {fileID: 11400000, guid: 95637a25990ae97478404f986753db60, type: 2}
+    level: 0
+  - talentBase: {fileID: 11400000, guid: 90371eaf51bbc0340af0488d50e25867, type: 2}
+    level: 0
