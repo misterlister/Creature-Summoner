@@ -26,21 +26,21 @@ public class CreatureBase : ScriptableObject
 
     [SerializeField] List<LearnableTalent> learnableTalents;
 
-    public string CreatureName { get { return creatureName; } }
-    public string Description { get { return description; } }
-    public Sprite FrontSprite { get { return frontSprite; } }
-    public CreatureType Type1 { get { return type1; } }
-    public CreatureType Type2 { get { return type2; } }
-    public CreatureSize Size { get { return size; } }
-    public int HP { get { return hp; } }
-    public int Energy { get { return energy; } }
-    public int Strength { get { return strength; } }
-    public int Magic { get { return magic; } }
-    public int Skill { get { return skill; } }
-    public int Speed { get { return speed; } }
-    public int Defense { get { return defense; } }
-    public int Resistance { get { return resistance; } }
-    public List<LearnableTalent> LearnableTalents { get { return learnableTalents; } }
+    public string CreatureName => creatureName;
+    public string Description => description;
+    public Sprite FrontSprite => frontSprite;
+    public CreatureType Type1 => type1;
+    public CreatureType Type2 => type2;
+    public CreatureSize Size => size;
+    public int HP => hp;
+    public int Energy => energy;
+    public int Strength => strength;
+    public int Magic => magic;
+    public int Skill => skill;
+    public int Speed => speed;
+    public int Defense => defense;
+    public int Resistance => resistance;
+    public List<LearnableTalent> LearnableTalents => learnableTalents;
 }
 
 
