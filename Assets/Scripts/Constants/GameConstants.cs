@@ -23,7 +23,7 @@ public static class GameConstants
     // BATTLEFIELD CONSTANTS
 
     public const int BATTLE_ROWS = 3; // Number of Rows on the battlefield
-    public const int BATTLE_COLS = 4; // Number of Columns on the battlefield
+    public const int BATTLE_COLS = 6; // Number of Columns on the battlefield
 
     public const int ENEMY_COL = BATTLE_COLS / 2;
 
@@ -90,7 +90,8 @@ public static class GameConstants
 public enum ActionRange
 {
     Melee,
-    Ranged,
+    ShortRanged,
+    LongRanged,
     Self
 }
 
@@ -104,4 +105,14 @@ public enum Stat
     Speed,
     Defense,
     Resistance
+}
+
+public enum ClassStatBuffLevel
+{
+    None,
+    Low,
+    MediumLow,
+    Moderate,
+    MediumHigh,
+    High
 }
