@@ -1104,7 +1104,7 @@ public class BattleSystem : MonoBehaviour
             case ActionRange.Melee:
                 SelectableTargets = Field.GetMeleeTargets(selectedCreature);
                 break;
-            case ActionRange.Ranged:
+            case ActionRange.ShortRanged:
                 SelectableTargets = Field.GetRangedTargets(selectedCreature);
                 break;
         }
