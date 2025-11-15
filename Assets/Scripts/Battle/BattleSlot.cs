@@ -77,10 +77,12 @@ public class BattleSlot : MonoBehaviour
         if (!playerSlot)
         {
             ReverseSlotArrangement();
+            PositionStatusWindowForEnemy();
         } 
         else
         {
             ReverseSpriteDirection();
+            PositionStatusWindowForPlayer();
         }
         ClearSlot();
     }
@@ -293,6 +295,34 @@ public void ToggleStatusWindow(bool enabled)
                 horizontalLayoutGroup.childAlignment = TextAnchor.MiddleLeft;
             }
         }
+    }
+
+    private void PositionStatusWindowForPlayer()
+    {
+        // Position statusWindow to the right of the sprite for player units
+        RectTransform statusRect = statusWindow.GetComponent<RectTransform>();
+
+        // Anchor to the right side of the slot
+        statusRect.anchorMin = new Vector2(1f, 0.5f);
+        statusRect.anchorMax = new Vector2(1f, 0.5f);
+        statusRect.pivot = new Vector2(0f, 0.5f); // Left edge of statusWindow aligns with anchor
+
+        // Position it so it extends to the right
+        statusRect.anchoredPosition = new Vector2(0f, 0f);
+    }
+
+    private void PositionStatusWindowForEnemy()
+    {
+        // Position statusWindow to the left of the sprite for enemy units
+        RectTransform statusRect = statusWindow.GetComponent<RectTransform>();
+
+        // Anchor to the left side of the slot
+        statusRect.anchorMin = new Vector2(0f, 0.5f);
+        statusRect.anchorMax = new Vector2(0f, 0.5f);
+        statusRect.pivot = new Vector2(1f, 0.5f); // Right edge of statusWindow aligns with anchor
+
+        // Position it so it extends to the left
+        statusRect.anchoredPosition = new Vector2(0f, 0f);
     }
 
     private void SetupStatusWindow()
