@@ -10,18 +10,11 @@ public class Creature
 
     [SerializeField] CreatureBase species;
     [SerializeField] int level;
+    [SerializeField] CreatureClass creatureClass;
 
-    public CreatureBase Species {
-        get {
-            return species;
-        }
-    }
-
-    public int Level {
-        get {
-            return level;
-        } 
-    }
+    public CreatureBase Species => species;
+    public int Level => level;
+    public CreatureClass CreatureClass => creatureClass;
 
     public int HP { get; set; }
     public int Energy { get; set; }
@@ -90,8 +83,8 @@ public class Creature
         EquippedEmpoweredActions = new CreatureAction[EMPOWERED_SLOTS];
         EquippedMasteryActions = new CreatureAction[MASTERY_SLOTS];
 
-        initTalents();
-        equipTalents();
+        initActions();
+        equipActions();
     }
 
     public int MaxHP { get { return calc_hp(Species.HP); } }
@@ -147,32 +140,29 @@ public class Creature
         return Mathf.FloorToInt(((baseEnergy * 4 + (VitalityTraining / 5)) * Level) / 100f) + 10 + Level;
     }
 
-    private void initTalents()
+    private void initActions()
     {
-        foreach (var talent in Species.LearnableTalents)
+        foreach (var learnableAction in Species.LearnableActions)
         {
-            if (talent.Level <= Level)
+            if (learnableAction.Level <= Level)
             {
-                if (talent.TalentBase is ActionBase actionBase)
-                {
-                    if (actionBase.Category == ActionCategory.Core)
+                    if (learnableAction.Action.Category == ActionCategory.Core)
                     {
-                        KnownCoreActions.Add(new CreatureAction(actionBase));
+                        KnownCoreActions.Add(new CreatureAction(learnableAction.Action));
                     }
-                    else if (actionBase.Category == ActionCategory.Empowered)
+                    else if (learnableAction.Action.Category == ActionCategory.Empowered)
                     {
-                        KnownEmpoweredActions.Add(new CreatureAction(actionBase));
+                        KnownEmpoweredActions.Add(new CreatureAction(learnableAction.Action));
                     }
-                    else if (actionBase.Category == ActionCategory.Mastery)
+                    else if (learnableAction.Action.Category == ActionCategory.Mastery)
                     {
-                        KnownMasteryActions.Add(new CreatureAction(actionBase));
+                        KnownMasteryActions.Add(new CreatureAction(learnableAction.Action));
                     }
-                }
             }
         }
     }
 
-    private void equipTalents()
+    private void equipActions()
     {
         if (KnownCoreActions.Count > 0)
         {
