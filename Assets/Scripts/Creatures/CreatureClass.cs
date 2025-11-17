@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "CreatureClass", menuName = "Classes/Create a new Base Class")]
@@ -26,6 +27,9 @@ public class CreatureClass : ScriptableObject
     public virtual ClassStatBuffLevel SpeedAdjustment => speedAdjustment;
     public virtual ClassStatBuffLevel DefenseAdjustment => defenseAdjustment;
     public virtual ClassStatBuffLevel ResistanceAdjustment => resistanceAdjustment;
+
+    [SerializeField] List<LearnableTrait> learnableTraits;
+    public List<LearnableTrait> LearnableTraits => learnableTraits;
 
 }
 
