@@ -24,7 +24,7 @@ public class CreatureBase : ScriptableObject
     [SerializeField] int defense;
     [SerializeField] int resistance;
 
-    [SerializeField] List<LearnableTalent> learnableTalents;
+    [SerializeField] List<LearnableAction> learnableActions;
 
     public string CreatureName => creatureName;
     public string Description => description;
@@ -40,7 +40,7 @@ public class CreatureBase : ScriptableObject
     public int Speed => speed;
     public int Defense => defense;
     public int Resistance => resistance;
-    public List<LearnableTalent> LearnableTalents => learnableTalents;
+    public List<LearnableAction> LearnableActions => learnableActions;
 }
 
 

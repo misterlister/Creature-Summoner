@@ -209,7 +209,7 @@ public class BattleDialogBox : MonoBehaviour
             }
             else
             {
-                actionText[i].text = actions[i].Action.TalentName;
+                actionText[i].text = actions[i].Action.ActionName;
             }
         }
     }

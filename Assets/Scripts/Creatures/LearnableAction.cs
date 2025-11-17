@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
-public class LearnableTalent
+public class LearnableAction
 {
-    [SerializeField] Talent talentBase;
+    [SerializeField] ActionBase actionBase;
     [SerializeField] int level;
 
-    public Talent TalentBase => talentBase;
+    public ActionBase Action => actionBase;
     public int Level => level;
 
 }

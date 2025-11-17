@@ -368,7 +368,7 @@ public class BattleSystem : MonoBehaviour
 
             List<string> battleMessages = new List<string>();
 
-            string targetMessage = $"{activeCreature.Creature.Nickname} used {action.TalentName}.";
+            string targetMessage = $"{activeCreature.Creature.Nickname} used {action.ActionName}.";
 
             yield return dialogBox.StartTypingDialog(targetMessage);
 

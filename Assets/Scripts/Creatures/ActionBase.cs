@@ -5,9 +5,16 @@ using UnityEngine;
 using static GameConstants;
 using static UnityEditor.UIElements.ToolbarMenu;
 
-[CreateAssetMenu(fileName = "NewAction", menuName = "Talents/Create new Action")]
-public class ActionBase : Talent
+[CreateAssetMenu(fileName = "NewAction", menuName = "Action/Create new Action")]
+public class ActionBase : ScriptableObject
 {
+    [SerializeField] string actionName;
+    [TextArea]
+    [SerializeField] string description;
+
+    public string ActionName => actionName;
+    public string Description => description;
+
     //
     bool DEBUG = false;
     //
