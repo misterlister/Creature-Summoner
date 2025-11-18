@@ -5289,45 +5289,145 @@ MonoBehaviour:
   wildCreaturesFront:
   - species: {fileID: 11400000, guid: 183ab2b800465584596a968b48885256, type: 2}
     level: 20
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
   - species: {fileID: 11400000, guid: d6fe3c87ebf01ee48afa66d2c3ebff5e, type: 2}
     level: 20
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
   - species: {fileID: 11400000, guid: bf22dc02eaee6f84395de22d8550ba3d, type: 2}
     level: 20
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
   - species: {fileID: 11400000, guid: dc6256d4d1b80eb479d59d4e82c79e06, type: 2}
     level: 20
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
   - species: {fileID: 11400000, guid: a4d2cd43081423a46929d842cc7584ae, type: 2}
     level: 20
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
   - species: {fileID: 11400000, guid: 2b3274018f91d1c4c9fd2759e0e73afd, type: 2}
     level: 20
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
   - species: {fileID: 11400000, guid: 51aded4dfc00fc24b866a70e15e433c3, type: 2}
     level: 20
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
   - species: {fileID: 11400000, guid: 9d27590db4041dd4a9e00835d4547142, type: 2}
     level: 20
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
   - species: {fileID: 11400000, guid: 4844810f77bfb0046b0b0e3e9a375701, type: 2}
     level: 20
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
   - species: {fileID: 11400000, guid: 87c22bd8be3375d438ba5021dcbf90e8, type: 2}
     level: 20
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
   wildCreaturesBack:
   - species: {fileID: 11400000, guid: b2941fef59157774e8788c225bd9bbdd, type: 2}
     level: 20
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
   - species: {fileID: 11400000, guid: fb76b50bcf3fa5d41a0fb4995edea302, type: 2}
     level: 20
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
   - species: {fileID: 11400000, guid: bda8fde13f4031c448ddaa8bd9da3250, type: 2}
     level: 20
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
   - species: {fileID: 11400000, guid: e0f1fa553c3ad87408adfd429614afc5, type: 2}
     level: 20
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
   - species: {fileID: 11400000, guid: 548c3a9ac056a1b44b390714d1e4e180, type: 2}
     level: 20
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
   - species: {fileID: 11400000, guid: 9a52917346e35d34fb4466df1e8b36de, type: 2}
     level: 20
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
   - species: {fileID: 11400000, guid: 7bcb9184d7b1f844ea3a75ba5a3931bb, type: 2}
     level: 20
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
   - species: {fileID: 11400000, guid: dcbc2ae060b20f54ab0520dae4215466, type: 2}
     level: 20
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
   - species: {fileID: 11400000, guid: a3bdf46070b6500448c6ad999bb19b0d, type: 2}
     level: 20
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
   - species: {fileID: 11400000, guid: dc3efcd2d3411af4a89d6720f3a80718, type: 2}
     level: 20
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
   frontColMinSize: 3
   frontColMaxSize: 3
   backColMinSize: 3
@@ -17251,16 +17351,46 @@ MonoBehaviour:
   creatures:
   - species: {fileID: 11400000, guid: 183ab2b800465584596a968b48885256, type: 2}
     level: 25
-  - species: {fileID: 11400000, guid: d6fe3c87ebf01ee48afa66d2c3ebff5e, type: 2}
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
+  - species: {fileID: 11400000, guid: 183ab2b800465584596a968b48885256, type: 2}
     level: 25
-  - species: {fileID: 11400000, guid: 87c22bd8be3375d438ba5021dcbf90e8, type: 2}
+    currentClass:
+      creatureClass: {fileID: 11400000, guid: fe9b18bb4ed802f4b9300755ff1c7fca, type: 2}
+      classLevel: 10
+      classXP: 0
+    classList: []
+  - species: {fileID: 11400000, guid: 183ab2b800465584596a968b48885256, type: 2}
     level: 25
+    currentClass:
+      creatureClass: {fileID: 11400000, guid: bcc9a6dd717f391458575d6dd5317912, type: 2}
+      classLevel: 10
+      classXP: 0
+    classList: []
   - species: {fileID: 11400000, guid: 9a52917346e35d34fb4466df1e8b36de, type: 2}
     level: 25
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
   - species: {fileID: 11400000, guid: 2b3274018f91d1c4c9fd2759e0e73afd, type: 2}
     level: 25
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
   - species: {fileID: 11400000, guid: bf22dc02eaee6f84395de22d8550ba3d, type: 2}
     level: 25
+    currentClass:
+      creatureClass: {fileID: 0}
+      classLevel: 0
+      classXP: 0
+    classList: []
 --- !u!1 &1431166914
 GameObject:
   m_ObjectHideFlags: 0
@@ -18266,6 +18396,14 @@ PrefabInstance:
       propertyPath: m_AnchorMax.x
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 386868590601372301, guid: 0bb7a39592db91342bbdc70aa036f857, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 386868590601372301, guid: 0bb7a39592db91342bbdc70aa036f857, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 518535294920206091, guid: 0bb7a39592db91342bbdc70aa036f857, type: 3}
       propertyPath: m_SizeDelta.x
       value: 80
@@ -18296,6 +18434,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1198416693017676407, guid: 0bb7a39592db91342bbdc70aa036f857, type: 3}
       propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1198416693017676407, guid: 0bb7a39592db91342bbdc70aa036f857, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1198416693017676407, guid: 0bb7a39592db91342bbdc70aa036f857, type: 3}
+      propertyPath: m_LocalPosition.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3196187768863292604, guid: 0bb7a39592db91342bbdc70aa036f857, type: 3}
@@ -18628,6 +18774,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9092463777891696494, guid: 0bb7a39592db91342bbdc70aa036f857, type: 3}
       propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9092463777891696494, guid: 0bb7a39592db91342bbdc70aa036f857, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9092463777891696494, guid: 0bb7a39592db91342bbdc70aa036f857, type: 3}
+      propertyPath: m_LocalPosition.y
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
