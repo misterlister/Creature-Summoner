@@ -1,3 +1,4 @@
+using System.Buffers.Text;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,28 +6,37 @@ using static GameConstants;
 
 
 [System.Serializable]
-public class Creature
+public class Creature : ISerializationCallbackReceiver
 {
 
     [SerializeField] CreatureBase species;
     [SerializeField] int level;
-    [SerializeField] CreatureClass creatureClass;
+    [SerializeField] CreatureClassInstance currentClass;
 
     public CreatureBase Species => species;
     public int Level => level;
-    public CreatureClass CreatureClass => creatureClass;
+    public CreatureClassInstance CurrentClass => currentClass;
+
+    public List<CreatureClassInstance> classList;
+
+    public string ClassName
+    {
+        get
+        {
+            if (currentClass != null && currentClass.CreatureClass != null)
+            {
+                return currentClass.CreatureClass.CreatureClassName;
+            }
+            return "No Class";
+        }
+    }
 
     public int HP { get; set; }
     public int Energy { get; set; }
     public int XP { get; set; }
     public int TotalXP { get; set; }
-    public int XPForNextLevel { get; set; }
     public string Nickname { get; set; }
     public bool IsDefeated { get; set; }
-    private int VitalityTraining;
-    private int PowerTraining;
-    private int NimbleTraining; 
-    private int ResilienceTraining;
 
     public float GlancingDamageReduction { get; set; }
 
@@ -46,14 +56,28 @@ public class Creature
     public int Initiative { get; set; }
     public BattleSlot BattleSlot { get; private set; }
 
+    public int XPForNextLevel => XPSystem.GetXPForNextCreatureLevel(Level);
+
+    private Dictionary<StatType, float> statModifiers;
+
+    public void OnBeforeSerialize() { }
+
+    public void OnAfterDeserialize()
+    {
+        // If currentClass exists but has no CreatureClass assigned, nullify it
+        if (currentClass != null && currentClass.CreatureClass == null)
+        {
+            currentClass = null;
+        }
+    }
+
     public void Init()
     {
         HP = MaxHP;
         IsDefeated = false;
         Energy = 0;
         XP = 0;
-        TotalXP = Level * 100; //Temp Simplified Placeholder
-        XPForNextLevel = (Level + 1) * 100; //Temp Simplified Placeholder
+        TotalXP = XPSystem.GetTotalXPForCreatureLevel(Level);
 
         //if (nickname != "")
         //{
@@ -64,17 +88,25 @@ public class Creature
         Nickname = species.CreatureName;
         //}
 
-        VitalityTraining = 0;
-        PowerTraining = 0;
-        NimbleTraining = 0;
-        ResilienceTraining = 0;
-
         GlancingDamageReduction = GLANCE_REDUCTION;
-
         StartingEnergy = DEFAULT_STARTING_ENERGY;
 
         CritBonus = CRIT_BONUS;
         CritResistance = CRIT_RESISTANCE;
+
+        statModifiers = new Dictionary<StatType, float>()
+        {
+            { StatType.HP, 1f },
+            { StatType.Energy, 1f },
+            { StatType.Strength, 1f },
+            { StatType.Magic, 1f },
+            { StatType.Skill, 1f },
+            { StatType.Speed, 1f },
+            { StatType.Defense, 1f },
+            { StatType.Resistance, 1f }
+        };
+
+
 
         KnownCoreActions = new List<CreatureAction>();
         KnownEmpoweredActions = new List<CreatureAction>();
@@ -87,57 +119,141 @@ public class Creature
         equipActions();
     }
 
-    public int MaxHP { get { return calc_hp(Species.HP); } }
-    public int MaxEnergy { get { return calc_energy(Species.Energy); } }
-    public int Strength { get { return calc_stat(Species.Strength, PowerTraining); } }
-    public int Magic { get { return calc_stat(Species.Magic, PowerTraining); } }
-    public int Skill { get { return calc_stat(Species.Skill, NimbleTraining); } }
-    public int Speed { get { return calc_stat(Species.Speed, NimbleTraining); } }
-    public int Defense { get { return calc_stat(Species.Defense, ResilienceTraining); } }
-    public int Resistance { get { return calc_stat(Species.Resistance, ResilienceTraining); } }
-
-
-    private int calc_stat(int baseStat, int trainingVal)
+    public void ResetStatModifiers()
     {
-        return Mathf.FloorToInt(((baseStat * 4 + (trainingVal / 5)) * Level) / 100f) + 5;
+        statModifiers[StatType.HP] = 1f;
+        statModifiers[StatType.Energy] = 1f;
+        statModifiers[StatType.Strength] = 1f;
+        statModifiers[StatType.Magic] = 1f;
+        statModifiers[StatType.Skill] = 1f;
+        statModifiers[StatType.Speed] = 1f;
+        statModifiers[StatType.Defense] = 1f;
+        statModifiers[StatType.Resistance] = 1f;
     }
 
-    public float compare_stat_to_average(Stat stat)
+    // Base Stats
+    public int BaseMaxHP => CalculateBaseStat(StatType.HP);
+    public int BaseMaxEnergy => CalculateBaseStat(StatType.Energy);
+    public int BaseStrength => CalculateBaseStat(StatType.Strength);
+    public int BaseMagic => CalculateBaseStat(StatType.Magic);
+    public int BaseSkill => CalculateBaseStat(StatType.Skill);
+    public int BaseSpeed => CalculateBaseStat(StatType.Speed);
+    public int BaseDefense => CalculateBaseStat(StatType.Defense);
+    public int BaseResistance => CalculateBaseStat(StatType.Resistance);
+
+    // Current Stats
+
+    public int MaxHP => ApplyBattleModifiers(BaseMaxHP, StatType.HP);
+    public int MaxEnergy => ApplyBattleModifiers(BaseMaxEnergy, StatType.Energy);
+    public int Strength => ApplyBattleModifiers(BaseStrength, StatType.Strength);
+    public int Magic => ApplyBattleModifiers(BaseMagic, StatType.Magic);
+    public int Skill => ApplyBattleModifiers(BaseSkill, StatType.Skill);
+    public int Speed => ApplyBattleModifiers(BaseSpeed, StatType.Speed);
+    public int Defense => ApplyBattleModifiers(BaseDefense, StatType.Defense);
+    public int Resistance => ApplyBattleModifiers(BaseResistance, StatType.Resistance);
+
+    private int CalculateBaseStat(StatType statType)
+    {
+        float stat = GetSpeciesBaseStat(statType);
+        stat = ApplyLevelScaling(stat, statType);
+        stat += GetClassModifier(statType);
+        //stat = ApplyFlatTraitModifiers(stat, statType);
+        return Mathf.RoundToInt(Mathf.Max(MIN_STAT_VALUE, stat));
+    }
+
+    private float GetSpeciesBaseStat(StatType statType)
+    {
+        return statType switch
+        {
+            StatType.HP => species.HP,
+            StatType.Energy =>  species.Energy,
+            StatType.Strength => species.Strength,
+            StatType.Magic => species.Magic,
+            StatType.Skill => species.Skill,
+            StatType.Speed => species.Speed,
+            StatType.Defense => species.Defense,
+            StatType.Resistance => species.Resistance,
+            _ => 0f,
+        };
+    }
+
+    private float ApplyLevelScaling(float baseStat, StatType statType)
+    {
+        if (statType == StatType.HP || statType == StatType.Energy)
+        {
+            return Mathf.FloorToInt(((baseStat * 4) * Level) / 100f) + 10 + Level;
+        }
+        return Mathf.FloorToInt(((baseStat * 4) * Level) / 100f) + 5;
+    }
+
+    private int GetClassModifier(StatType statType)
+    {
+        if (currentClass == null)
+        {
+            return 0;
+        }
+        return currentClass.GetStatModifier(statType);
+    }
+
+
+    // TODO: Implement Trait Modifiers
+    /*
+    private float ApplyFlatTraitModifiers(float stat, StatType statType)
+    {
+        
+    }
+    */
+
+    private int ApplyBattleModifiers(int stat, StatType statType)
+    {
+        if (statModifiers == null)
+        {
+            return stat;
+        }
+
+        if (!statModifiers.ContainsKey(statType))
+        {
+            return stat;
+        }
+        float modifiedStat = statModifiers[statType] * stat;
+        return Mathf.RoundToInt(Mathf.Max(MIN_STAT_VALUE, modifiedStat));
+    }
+
+    // TODO IMPLEMENT DYNAMIC STAT MODIFIERS
+    public void ModifyStat(StatType statType, float modifier)
+    {
+        if (statModifiers.ContainsKey(statType))
+        {
+            statModifiers[statType] *= modifier;
+        }
+    }
+
+    public float compare_stat_to_average(StatType stat)
     {
         int statVal = 0;
         switch (stat)
         {
-            case Stat.Strength:
+            case StatType.Strength:
                 statVal = Strength;
                 break;
-            case Stat.Magic:
+            case StatType.Magic:
                 statVal = Magic;
                 break;
-            case Stat.Skill:
+            case StatType.Skill:
                 statVal = Skill;
                 break;
-            case Stat.Speed:
+            case StatType.Speed:
                 statVal = Speed;
                 break;
-            case Stat.Defense:
+            case StatType.Defense:
                 statVal = Defense;
                 break;
-            case Stat.Resistance:
+            case StatType.Resistance:
                 statVal = Resistance;
                 break;
         }
-        int averageStat = Mathf.FloorToInt(((AVERAGE_STAT * 4) * Level) / 100f) + 5;
+        int averageStat = Mathf.FloorToInt(((AVERAGE_BASE_STAT * 4) * Level) / 100f) + 5;
         return (float)statVal / averageStat;
-    }
-
-    private int calc_hp(int baseHp)
-    {
-        return Mathf.FloorToInt(((baseHp * 4 + (VitalityTraining / 5)) * Level) / 100f) + 10 + Level;
-    }
-
-    private int calc_energy(int baseEnergy)
-    {
-        return Mathf.FloorToInt(((baseEnergy * 4 + (VitalityTraining / 5)) * Level) / 100f) + 10 + Level;
     }
 
     private void initActions()
