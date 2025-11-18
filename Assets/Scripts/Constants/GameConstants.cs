@@ -16,9 +16,15 @@ public static class GameConstants
     public const int MAX_VARIANCE = BASE_VARIANCE + VARIANCE_ADJUSTMENT;   // Maximum ceiling for damage variance
     public const int ROLL_CEILING = 101;       // Maximum value that can be rolled for random die rolls
 
+    // ACTION SLOTS CONSTANTS
     public const int CORE_SLOTS = 3;
     public const int EMPOWERED_SLOTS = 3;
     public const int MASTERY_SLOTS = 1;
+
+    // XP CONSTANTS
+    public const int MAX_LEVEL = 100;
+    public const int MAX_CLASS_LEVEL = 10;
+    public const int MAX_XP = 1000000;
 
     // BATTLEFIELD CONSTANTS
 
@@ -31,7 +37,8 @@ public static class GameConstants
 
     // STAT CONSTANTS
 
-    public const int AVERAGE_STAT = 40;
+    public const int MIN_STAT_VALUE = 1;
+    public const int AVERAGE_BASE_STAT = 40;
 
     public const float GLANCE_REDUCTION = 0.25f;
     public const float CRIT_BONUS = 0.4f;
@@ -39,7 +46,7 @@ public static class GameConstants
 
     public const float DEFAULT_STARTING_ENERGY = 0.25f;
 
-    // TYPE CONSTANTS
+    // TYPE EFFECTIVENESS CONSTANTS
 
     public const float V_EFF_SINGLE = 4f;
     public const float V_EFF_DUAL = 2.25f;
@@ -95,7 +102,7 @@ public enum ActionRange
     Self
 }
 
-public enum Stat
+public enum StatType
 {
     HP,
     Energy,
@@ -115,4 +122,29 @@ public enum ClassStatBuffLevel
     Moderate,
     MediumHigh,
     High
+}
+
+public static class XPSystem
+{
+    public static int GetXPForNextCreatureLevel(int level)
+    {
+        // Placeholder XP curve
+        return (level + 1) * (level + 1) * 100;
+    }
+
+    public static int GetXPForNextClassLevel(int classLevel)
+    {
+        // Placeholder XP curve
+        return (classLevel + 1) * (classLevel + 1) * 100;
+    }
+
+    public static int GetTotalXPForCreatureLevel(int level)
+    {
+        int totalXP = 0;
+        for (int i = 1; i < level; i++)
+        {
+            totalXP += GetXPForNextCreatureLevel(i);
+        }
+        return totalXP;
+    }
 }
