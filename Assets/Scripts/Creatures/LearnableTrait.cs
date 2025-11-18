@@ -3,9 +3,9 @@ using UnityEngine;
 [System.Serializable]
 public class LearnableTrait
 {
-    [SerializeField] TraitBase actionBase;
+    [SerializeField] TraitBase trait;
     [SerializeField] int level;
 
-    public ActionBase Action => actionBase;
+    public TraitBase Trait => trait;
     public int Level => level;
 }
