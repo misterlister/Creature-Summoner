@@ -4,7 +4,7 @@ using UnityEngine;
 public static class GameConstantsExtensions
 {
     // Max class buff level
-    private static readonly int MaxValue = System.Enum.GetValues(typeof(GameConstants)).Cast<int>().Max();
+    private static readonly int MaxValue = System.Enum.GetValues(typeof(ClassStatBuffLevel)).Cast<int>().Max();
 
     public static int GetValue(this ClassStatBuffLevel level)
     {
