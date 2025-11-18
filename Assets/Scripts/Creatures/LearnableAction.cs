@@ -5,10 +5,10 @@ using UnityEngine;
 [System.Serializable]
 public class LearnableAction
 {
-    [SerializeField] ActionBase actionBase;
+    [SerializeField] ActionBase action;
     [SerializeField] int level;
 
-    public ActionBase Action => actionBase;
+    public ActionBase Action => action;
     public int Level => level;
 
 }
