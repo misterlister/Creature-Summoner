@@ -112,12 +112,12 @@ public class ActionBase : ScriptableObject
 
         if (source == ActionSource.Physical)
         {
-            creature_power = healer.compare_stat_to_average(Stat.Strength);
+            creature_power = healer.compare_stat_to_average(StatType.Strength);
         }
 
         if (source == ActionSource.Magical)
         {
-            creature_power = healer.compare_stat_to_average(Stat.Magic);
+            creature_power = healer.compare_stat_to_average(StatType.Magic);
         }
         float variance = getHealVariance(healer);
         float healing = ((((healer.Level / 3 + 1) * power * creature_power) / 50 + 1) * critMod * variance);
@@ -143,7 +143,7 @@ public class ActionBase : ScriptableObject
 
     private float getHealVariance(Creature healer)
     {
-        float ratio = healer.compare_stat_to_average(Stat.Skill);
+        float ratio = healer.compare_stat_to_average(StatType.Skill);
         int varianceRange = (int)(BASE_VARIANCE + ((ratio - 1) * VARIANCE_ADJUSTMENT));
         int clampedVarianceRange = Mathf.Clamp(varianceRange, MIN_VARIANCE, MAX_VARIANCE);
         int variance = Random.Range(clampedVarianceRange, ROLL_CEILING);
