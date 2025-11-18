@@ -329,6 +329,8 @@ public void ToggleStatusWindow(bool enabled)
     {
         AddStatRow("Species", singleValue: true);
         AddStatRow("Type", singleValue: false);
+        AddStatRow("Level", singleValue: true);
+        AddStatRow("Class", singleValue: true);
         AddStatRow("HP", singleValue: true);
         AddStatRow("Energy", singleValue: true);
         AddStatRow("XP", singleValue: true);
@@ -347,16 +349,18 @@ public void ToggleStatusWindow(bool enabled)
         {
             statRows[0].GetComponent<StatRow>().UpdateSingleText(Creature.Species.CreatureName, Color.blue);
             statRows[1].GetComponent<StatRow>().UpdateType(Creature.Species.Type1, Creature.Species.Type2);
-            statRows[2].GetComponent<StatRow>().UpdateResource(Creature.MaxHP, Creature.HP, GameConstants.HP_COLOUR);
-            statRows[3].GetComponent<StatRow>().UpdateResource(Creature.MaxEnergy, Creature.Energy, GameConstants.ENERGY_COLOUR);
-            statRows[4].GetComponent<StatRow>().UpdateResource(100, Creature.XP, GameConstants.XP_COLOUR); // PLACEHOLDER XP REQUIREMENT
-            statRows[5].GetComponent<StatRow>().UpdateDoubleText("Base", "Modified");
-            statRows[6].GetComponent<StatRow>().UpdateStats(Creature.Strength, Creature.Strength);
-            statRows[7].GetComponent<StatRow>().UpdateStats(Creature.Magic, Creature.Magic);
-            statRows[8].GetComponent<StatRow>().UpdateStats(Creature.Skill, Creature.Skill);
-            statRows[9].GetComponent<StatRow>().UpdateStats(Creature.Speed, Creature.Speed);
-            statRows[10].GetComponent<StatRow>().UpdateStats(Creature.Defense, Creature.Defense);
-            statRows[11].GetComponent<StatRow>().UpdateStats(Creature.Resistance, Creature.Resistance);
+            statRows[2].GetComponent<StatRow>().UpdateSingleText(Creature.Level.ToString(), Color.black);
+            statRows[3].GetComponent<StatRow>().UpdateSingleText(Creature.ClassName, Color.magenta);
+            statRows[4].GetComponent<StatRow>().UpdateResource(Creature.MaxHP, Creature.HP, GameConstants.HP_COLOUR);
+            statRows[5].GetComponent<StatRow>().UpdateResource(Creature.MaxEnergy, Creature.Energy, GameConstants.ENERGY_COLOUR);
+            statRows[6].GetComponent<StatRow>().UpdateResource(100, Creature.XP, GameConstants.XP_COLOUR); // PLACEHOLDER XP REQUIREMENT
+            statRows[7].GetComponent<StatRow>().UpdateDoubleText("Base", "Modified");
+            statRows[8].GetComponent<StatRow>().UpdateStats(Creature.BaseStrength, Creature.Strength);
+            statRows[9].GetComponent<StatRow>().UpdateStats(Creature.BaseMagic, Creature.Magic);
+            statRows[10].GetComponent<StatRow>().UpdateStats(Creature.BaseSkill, Creature.Skill);
+            statRows[11].GetComponent<StatRow>().UpdateStats(Creature.BaseSpeed, Creature.Speed);
+            statRows[12].GetComponent<StatRow>().UpdateStats(Creature.BaseDefense, Creature.Defense);
+            statRows[13].GetComponent<StatRow>().UpdateStats(Creature.BaseResistance, Creature.Resistance);
         }
     }
 
