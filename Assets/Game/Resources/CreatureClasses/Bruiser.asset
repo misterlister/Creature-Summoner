@@ -12,13 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ecbeea2caaa923b45a746b071b318056, type: 3}
   m_Name: Bruiser
   m_EditorClassIdentifier: 
-  creatureClassName: 
+  creatureClassName: Bruiser
   description: 
-  hpAdjustment: 0
-  energyAdjustment: 0
-  strengthAdjustment: 0
+  hpAdjustment: 3
+  energyAdjustment: 1
+  strengthAdjustment: 3
   magicAdjustment: 0
   skillAdjustment: 0
-  speedAdjustment: 0
-  defenseAdjustment: 0
+  speedAdjustment: 1
+  defenseAdjustment: 2
   resistanceAdjustment: 0
+  learnableTraits: []

@@ -12,13 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ecbeea2caaa923b45a746b071b318056, type: 3}
   m_Name: Scout
   m_EditorClassIdentifier: 
-  creatureClassName: 
+  creatureClassName: Scout
   description: 
   hpAdjustment: 0
-  energyAdjustment: 0
+  energyAdjustment: 2
   strengthAdjustment: 0
   magicAdjustment: 0
-  skillAdjustment: 0
-  speedAdjustment: 0
-  defenseAdjustment: 0
-  resistanceAdjustment: 0
+  skillAdjustment: 3
+  speedAdjustment: 3
+  defenseAdjustment: 1
+  resistanceAdjustment: 1
+  learnableTraits: []

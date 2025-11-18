@@ -12,13 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ecbeea2caaa923b45a746b071b318056, type: 3}
   m_Name: Defender
   m_EditorClassIdentifier: 
-  creatureClassName: 
+  creatureClassName: Defender
   description: 
-  hpAdjustment: 0
+  hpAdjustment: 2
   energyAdjustment: 0
-  strengthAdjustment: 0
-  magicAdjustment: 0
+  strengthAdjustment: 1
+  magicAdjustment: 1
   skillAdjustment: 0
   speedAdjustment: 0
-  defenseAdjustment: 0
-  resistanceAdjustment: 0
+  defenseAdjustment: 3
+  resistanceAdjustment: 3
+  learnableTraits: []

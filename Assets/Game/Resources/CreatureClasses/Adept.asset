@@ -12,13 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ecbeea2caaa923b45a746b071b318056, type: 3}
   m_Name: Adept
   m_EditorClassIdentifier: 
-  creatureClassName: 
+  creatureClassName: Adept
   description: 
   hpAdjustment: 0
-  energyAdjustment: 0
+  energyAdjustment: 3
   strengthAdjustment: 0
-  magicAdjustment: 0
-  skillAdjustment: 0
-  speedAdjustment: 0
+  magicAdjustment: 3
+  skillAdjustment: 1
+  speedAdjustment: 1
   defenseAdjustment: 0
-  resistanceAdjustment: 0
+  resistanceAdjustment: 2
+  learnableTraits: []

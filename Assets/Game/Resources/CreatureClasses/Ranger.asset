@@ -12,13 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ecbeea2caaa923b45a746b071b318056, type: 3}
   m_Name: Ranger
   m_EditorClassIdentifier: 
-  creatureClassName: 
+  creatureClassName: Ranger
   description: 
-  hpAdjustment: 0
-  energyAdjustment: 0
-  strengthAdjustment: 0
-  magicAdjustment: 0
-  skillAdjustment: 0
-  speedAdjustment: 0
+  hpAdjustment: 1
+  energyAdjustment: 1
+  strengthAdjustment: 2
+  magicAdjustment: 2
+  skillAdjustment: 2
+  speedAdjustment: 1
   defenseAdjustment: 0
-  resistanceAdjustment: 0
+  resistanceAdjustment: 1
+  learnableTraits: []
