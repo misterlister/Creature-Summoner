@@ -80,17 +80,21 @@ public static class GameConstants
     public static readonly Color ENERGY_COLOUR = new Color(1f, 0f, 1f);
     public static readonly Color XP_COLOUR = new Color(1f, 0.85f, 0f);
 
+    // Keeps track of how many options each AOE type has for targeting
     public static readonly Dictionary<AOE, (int y, int x)> AOEOptions = new Dictionary<AOE, (int y, int x)>
     {
         { AOE.Single, (1,1)},
         { AOE.SmallArc, (2,1)},
         { AOE.WideArc, (1,1)},
-        { AOE.Line, (1,1)},
+        { AOE.FullArc, (1,1)},
+        { AOE.SmallLine, (1,1)},
+        { AOE.LargeLine, (1,1)},
+        { AOE.FullLine, (1,1)},
         { AOE.SmallCone, (2,1)},
+        { AOE.MediumCone, (1,1)},
         { AOE.LargeCone, (1,1)},
-        { AOE.Square, (2,1)},
-        { AOE.Field, (1,1)},
-        { AOE.Burst, (1,1)},
+        { AOE.SmallBurst, (1,1)},
+        { AOE.LargeBurst, (1,1)}
     };
 }
 

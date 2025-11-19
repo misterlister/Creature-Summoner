@@ -25,12 +25,15 @@ public enum AOE
     Single,
     SmallArc,
     WideArc,
-    Line,
+    FullArc,
+    SmallLine,
+    LargeLine,
+    FullLine,
     SmallCone,
+    MediumCone,
     LargeCone,
-    Square,
-    Field,
-    Burst
+    SmallBurst,
+    LargeBurst
 }
 
 public enum ActionTag
