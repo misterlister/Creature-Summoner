@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static GameConstants;
@@ -321,8 +322,14 @@ public class BattleField : MonoBehaviour
         {
             case AOE.Single:
                 break;
-            case AOE.Line:
-                targets.AddRange(AddLineAOETargets(targetRow, targetCol, isPlayer));
+            case AOE.SmallLine:
+                targets.AddRange(AddLineAOETargets(targetRow, targetCol, length: 2, isPlayer));
+                break;
+            case AOE.LargeLine:
+                targets.AddRange(AddLineAOETargets(targetRow, targetCol, length: 3, isPlayer));
+                break;
+            case AOE.FullLine:
+                targets.AddRange(AddLineAOETargets(targetRow, targetCol, length: BATTLE_COLS, isPlayer));
                 break;
             case AOE.SmallArc:
                 targets.AddRange(AddArcAOETargets(targetRow, targetCol, width: 2, yChoice));
@@ -330,20 +337,23 @@ public class BattleField : MonoBehaviour
             case AOE.WideArc:
                 targets.AddRange(AddArcAOETargets(targetRow, targetCol, width: 3, yChoice));
                 break;
+            case AOE.FullArc:
+                targets.AddRange(AddArcAOETargets(targetRow, targetCol, width: BATTLE_ROWS, yChoice));
+                break;
             case AOE.SmallCone:
-                targets.AddRange(AddConeAOETargets(targetRow, targetCol, width: 2, yChoice, isPlayer));
+                targets.AddRange(AddConeAOETargets(targetRow, targetCol, width: 2, depth: 1, yChoice, isPlayer));
+                break;
+            case AOE.MediumCone:
+                targets.AddRange(AddConeAOETargets(targetRow, targetCol, width: 3, depth: 1, yChoice, isPlayer));
                 break;
             case AOE.LargeCone:
-                targets.AddRange(AddConeAOETargets(targetRow, targetCol, width: 3, yChoice, isPlayer));
+                targets.AddRange(AddConeAOETargets(targetRow, targetCol, width: 5, depth: 2, yChoice, isPlayer));
                 break;
-            case AOE.Square:
-                targets.AddRange(AddRectAOETargets(targetRow, targetCol, width: 2, yChoice, isPlayer));
+            case AOE.SmallBurst:
+                targets.AddRange(AddBurstAOETargets(targetRow, targetCol, size: 1));
                 break;
-            case AOE.Field:
-                targets.AddRange(AddRectAOETargets(targetRow, targetCol, width: 3, yChoice, isPlayer));
-                break;
-            case AOE.Burst:
-                targets.AddRange(AddBurstAOETargets(targetRow, targetCol));
+            case AOE.LargeBurst:
+                targets.AddRange(AddBurstAOETargets(targetRow, targetCol, size: 2));
                 break;
             default:
                 break;
@@ -352,14 +362,17 @@ public class BattleField : MonoBehaviour
     }
 
 
-    private List<BattleSlot> AddLineAOETargets(int row, int col, bool isPlayer)
+    private List<BattleSlot> AddLineAOETargets(int row, int col, int length, bool isPlayer)
     {
         List<BattleSlot> targets = new List<BattleSlot>();
-        int newCol = isPlayer ? col + 1 : col - 1;
-        if (newCol >= 0 && newCol < BATTLE_COLS)
+        for (int i = 1; i < length; i++)
         {
-            BattleSlot slot = BattleGrid[row, newCol];
-            targets.Add(slot);
+            int newCol = isPlayer ? col + i : col - i;
+            if (newCol >= 0 && newCol < BATTLE_COLS)
+            {
+                BattleSlot slot = BattleGrid[row, newCol];
+                targets.Add(slot);
+            }
         }
         return targets;
     }
@@ -367,146 +380,103 @@ public class BattleField : MonoBehaviour
     private List<BattleSlot> AddArcAOETargets(int row, int col, int width, int yChoice)
     {
         List<BattleSlot> targets = new List<BattleSlot>();
-        // Select the row above (if within bounds)
-        if (width == 3 || yChoice == 0)
+
+        int halfWidth = width / 2;
+        int startOffset = (width % 2 == 0 && yChoice == 1) ? -halfWidth + 1 : -halfWidth;
+
+        for (int i = 0; i < width; i++)
         {
-            if (row - 1 >= 0) // Ensure row above is within bounds
-            {
-                BattleSlot slot = BattleGrid[row - 1, col];
-                targets.Add(slot);
-            }
+            int offset = startOffset + i;
+            if (offset == 0) continue; // Skip target row
+
+            int targetRow = row + offset;
+            if (targetRow >= 0 && targetRow < BATTLE_ROWS)
+                targets.Add(BattleGrid[targetRow, col]);
         }
-        if (width == 3 || yChoice == 1)
-        {
-            // Select the row below (if within bounds)
-            if (row + 1 < BATTLE_ROWS) // Ensure row below is within bounds
-            {
-                BattleSlot slot = BattleGrid[row + 1, col];
-                targets.Add(slot);
-            }
-        }
+
         return targets;
     }
 
-    private List<BattleSlot> AddConeAOETargets(int row, int col, int width, int yChoice, bool isPlayer)
+    private List<BattleSlot> AddConeAOETargets(int row, int col, int width, int depth, int yChoice, bool isPlayer)
     {
         List<BattleSlot> targets = new List<BattleSlot>();
-        // Calculate the column offset based on whether it's the player or the enemy
-        int colOffset = isPlayer ? 1 : -1;
-        // Ensure the column is within bounds
-        if (col + colOffset >= 0 && col + colOffset < BATTLE_COLS) 
-        {
-            // Select the space behind the target (same row, 1 column over)
-            BattleSlot slotBehind = BattleGrid[row, col + colOffset];
-            targets.Add(slotBehind);
+        int colDirection = isPlayer ? 1 : -1;
 
-            // Select the space above (if within bounds)
-            if (row - 1 >= 0) // Ensure row below is within bounds
+        // Start at 1 to skip the original target position
+        for (int d = 1; d <= depth; d++)
+        {
+            int targetCol = col + (colDirection * d);
+            if (targetCol < 0 || targetCol >= BATTLE_COLS)
+                continue;
+
+            // Calculate width at this depth
+            int widthAtDepth;
+            if (depth == 0)
             {
-                if (width == 3 || yChoice == 0)
+                widthAtDepth = 1;
+            }
+            else
+            {
+                widthAtDepth = 1 + (d * (width - 1)) / depth;
+            }
+
+            // Calculate row alignment based on width
+            if (widthAtDepth % 2 == 0)
+            {
+                // Even width: use yChoice to offset
+                int halfWidth = widthAtDepth / 2;
+                int startOffset = (yChoice == 0) ? -halfWidth : -halfWidth + 1;
+
+                for (int i = 0; i < widthAtDepth; i++)
                 {
-                    BattleSlot slotAbove = BattleGrid[row - 1, col + colOffset];
-                    targets.Add(slotAbove);
+                    int targetRow = row + startOffset + i;
+                    if (targetRow >= 0 && targetRow < BATTLE_ROWS)
+                        targets.Add(BattleGrid[targetRow, targetCol]);
                 }
             }
-            // Select the space below (if within bounds)
-            if (row + 1 < BATTLE_ROWS) // Ensure row below is within bounds
+            else
             {
-                if (width == 3 || yChoice == 1)
+                // Odd width: centered around target row
+                int halfWidth = widthAtDepth / 2;
+                for (int offset = -halfWidth; offset <= halfWidth; offset++)
                 {
-                    BattleSlot slotBelow = BattleGrid[row + 1, col + colOffset];
-                    targets.Add(slotBelow);
+                    int targetRow = row + offset;
+                    if (targetRow >= 0 && targetRow < BATTLE_ROWS)
+                        targets.Add(BattleGrid[targetRow, targetCol]);
                 }
             }
         }
+
         return targets;
     }
 
-    private List<BattleSlot> AddRectAOETargets(int row, int col, int width, int yChoice, bool isPlayer)
+    private List<BattleSlot> AddBurstAOETargets(int row, int col, int size)
     {
         List<BattleSlot> targets = new List<BattleSlot>();
-        // Calculate the column offset based on whether it's the player or the enemy
-        int colOffset = isPlayer ? 1 : -1;
-        if (row - 1 >= 0) // Ensure row above is within bounds
-        {
-            if (width == 3 || yChoice == 0)
-            {
-                // Select the space above the target (same column, 1 row above)
-                BattleSlot slotAbove = BattleGrid[row - 1, col];
-                targets.Add(slotAbove);
-            }
-        }
 
-        if (row + 1 < BATTLE_ROWS) // Ensure row below is within bounds
+        // Iterate through all positions within the burst radius
+        for (int dRow = -size; dRow <= size; dRow++)
         {
-            if (width == 3 || yChoice == 1)
+            for (int dCol = -size; dCol <= size; dCol++)
             {
-                // Select the space below the target (same column, 1 row below)
-                BattleSlot slotBelow = BattleGrid[row + 1, col];
-                targets.Add(slotBelow);
-            }
-        }
-        // Ensure the column behind is within bounds
-        if (col + colOffset >= 0 && col + colOffset < BATTLE_COLS)
-        {
-            // Select the space behind the target (same row, 1 column over)
-            BattleSlot slotBehind = BattleGrid[row, col + colOffset];
-            targets.Add(slotBehind);
+                // Skip the original target position
+                if (dRow == 0 && dCol == 0) continue;
 
-            // Select the space above (if within bounds)
-            if (row - 1 >= 0) // Ensure row below is within bounds
-            {
-                if (width == 3 || yChoice == 0)
+                // Manhattan distance check to make diamond pattern
+                if (Math.Abs(dRow) + Math.Abs(dCol) <= size)
                 {
-                    BattleSlot slotAbove = BattleGrid[row - 1, col + colOffset];
-                    targets.Add(slotAbove);
-                }
-            }
+                    int newRow = row + dRow;
+                    int newCol = col + dCol;
 
-            // Select the space below (if within bounds)
-            if (row + 1 < BATTLE_ROWS) // Ensure row below is within bounds
-            {
-                if (width == 3 || yChoice == 1)
-                {
-                    BattleSlot slotBelow = BattleGrid[row + 1, col + colOffset];
-                    targets.Add(slotBelow);
+                    if (newRow >= 0 && newRow < BATTLE_ROWS &&
+                        newCol >= 0 && newCol < BATTLE_COLS)
+                    {
+                        targets.Add(BattleGrid[newRow, newCol]);
+                    }
                 }
             }
         }
-        return targets;
-    }
 
-    private List<BattleSlot> AddBurstAOETargets(int row, int col)
-    {
-        List<BattleSlot> targets = new List<BattleSlot>();
-        // Ensure row below is within bounds
-        if (row - 1 >= 0)
-        {
-            // Select the space above the target (same column, 1 row above)
-            BattleSlot slotAbove = BattleGrid[row - 1, col];
-            targets.Add(slotAbove);
-        }
-        // Ensure row below is within bounds
-        if (row + 1 < BATTLE_ROWS) 
-        {
-            // Select the space below the target (same column, 1 row below)
-            BattleSlot slotBelow = BattleGrid[row + 1, col];
-            targets.Add(slotBelow);
-        }
-        // Ensure the column behind is within bounds
-        if (col - 1 >= 0)
-        {
-            // Select the space behind the target (same row, 1 column back)
-            BattleSlot slotBehind = BattleGrid[row, col - 1];
-            targets.Add(slotBehind);
-        }
-        // Ensure the column in front is within bounds
-        if (col + 1 < BATTLE_COLS)
-        {
-            // Select the space in front of the target (same row, 1 column in front)
-            BattleSlot slotAhead = BattleGrid[row, col + 1];
-            targets.Add(slotAhead);
-        }
         return targets;
     }
 
