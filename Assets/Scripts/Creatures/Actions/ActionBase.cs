@@ -368,6 +368,42 @@ public class ActionBase : ScriptableObject
             attacker.AdjustEnergy(CalculateEnergyGain(attacker.Creature));
         }
     }
+
+    public bool IsMelee()
+    {
+        if (Tags.Contains(ActionTag.NoContact))
+        {
+            return false;
+        }
+        return range == ActionRange.Melee;
+    }
+
+    public bool IsRanged()
+    {
+        switch (range)
+        {
+            case ActionRange.ShortRanged:
+            case ActionRange.LongRanged:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public bool IsMagic()
+    {
+        return source == ActionSource.Magical;
+    }
+
+    public bool IsPhysical()
+    {
+        return source == ActionSource.Physical;
+    }
+
+    public bool IsType(CreatureType checkType)
+    {
+        return type == checkType;
+    }
 }
 
 [System.Serializable]
