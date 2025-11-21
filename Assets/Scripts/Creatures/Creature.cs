@@ -451,5 +451,19 @@ public class Creature : ISerializationCallbackReceiver
     {
         BattleSlot = slot;
     }
+
+    public bool IsType(CreatureType type)
+    {
+        return (Species.Type1 == type || Species.Type2 == type);
+    }
+
+    public int GetHPAsPercentage()
+    {
+        if (MaxHP == 0)
+        {
+            return 0;
+        }
+        return Mathf.RoundToInt(((float)HP / (float)MaxHP) * 100f);
+    }
 }
 
