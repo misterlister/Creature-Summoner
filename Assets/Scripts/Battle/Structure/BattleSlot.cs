@@ -404,7 +404,7 @@ public void ToggleStatusWindow(bool enabled)
             Creature.RemoveHP(-amount);
         }
         
-        HPUpdates.Enqueue(NormalizeInt(Creature.HP, Creature.MaxHP));
+        HPUpdates.Enqueue(MathUtils.NormalizeInt(Creature.HP, Creature.MaxHP));
         if (!HPUpdating)
         {
             StartCoroutine(ProcessSliderUpdates(HPUpdates, hpBar, nameof(HPUpdating)));
@@ -426,7 +426,7 @@ public void ToggleStatusWindow(bool enabled)
             Creature.RemoveEnergy(-amount);
         }
         
-        EnergyUpdates.Enqueue(NormalizeInt(Creature.Energy, Creature.MaxEnergy));
+        EnergyUpdates.Enqueue(MathUtils.NormalizeInt(Creature.Energy, Creature.MaxEnergy));
         if (!EnergyUpdating)
         {
             StartCoroutine(ProcessSliderUpdates(EnergyUpdates, energyBar, nameof(EnergyUpdating)));
@@ -436,7 +436,7 @@ public void ToggleStatusWindow(bool enabled)
     public void AddXP(int amount)
     {
         Creature.AddXP(amount);
-        XPUpdates.Enqueue(NormalizeInt(Creature.XP, 100));
+        XPUpdates.Enqueue(MathUtils.NormalizeInt(Creature.XP, 100));
         if (!XPUpdating)
         {
             StartCoroutine(ProcessSliderUpdates(XPUpdates, xpBar, nameof(XPUpdating)));
@@ -561,9 +561,11 @@ public void ToggleStatusWindow(bool enabled)
         return false;
     }
 
-    private float NormalizeInt(int value, int max)
+    public List<BattleSlot> GetAdjacentSlots()
     {
-        return (float)value / max;
+        List<BattleSlot> adjacentSlots = new List<BattleSlot>();
+        // TODO : Implement logic to get adjacent slots based on the battle grid
+        return adjacentSlots;
     }
 }
 
