@@ -128,6 +128,57 @@ public enum ClassStatBuffLevel
     High
 }
 
+public enum ActionSource
+{
+    None,
+    Physical,
+    Magical
+}
+
+public enum ActionClass
+{
+    Attack,
+    Support
+}
+
+public enum ActionCategory
+{
+    Core,
+    Empowered,
+    Mastery
+}
+
+public enum AOE
+{
+    Single,
+    SmallArc,
+    WideArc,
+    FullArc,
+    SmallLine,
+    LargeLine,
+    FullLine,
+    SmallCone,
+    MediumCone,
+    LargeCone,
+    SmallBurst,
+    LargeBurst
+}
+
+public enum ActionTag
+{
+    Healing,
+    NoContact,
+}
+
+public enum ComparisonType
+{
+    LessThan,
+    LessThanOrEqual,
+    Equal,
+    GreaterThanOrEqual,
+    GreaterThan
+}
+
 public static class XPSystem
 {
     public static int GetXPForNextCreatureLevel(int level)
