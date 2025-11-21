@@ -369,3 +369,14 @@ public class ActionBase : ScriptableObject
         }
     }
 }
+
+[System.Serializable]
+public class LearnableAction
+{
+    [SerializeField] ActionBase action;
+    [SerializeField] int level;
+
+    public ActionBase Action => action;
+    public int Level => level;
+
+}
