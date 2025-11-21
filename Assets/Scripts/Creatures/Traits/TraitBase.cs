@@ -9,33 +9,21 @@ public class TraitBase : ScriptableObject
     [SerializeField] string traitName;
     [TextArea]
     [SerializeField] string description;
+    //[SerializeField] Sprite icon;
 
-    [Header("Trait Effects")]
-    [SerializeField] List<TraitEffect> effects;
+    [Header("Passive Effects (Always Active)")]
+    [SerializeReference]
+    [SerializeField] List<PassiveTraitEffect> passiveEffects = new List<PassiveTraitEffect>();
+
+    [Header("Triggered Effects (Event-Driven)")]
+    [SerializeReference]
+    [SerializeField] List<TriggeredTraitEffect> triggeredEffects = new List<TriggeredTraitEffect>();
+
     public string TraitName => traitName;
     public string Description => description;
-    public List<TraitEffect> Effects => effects;
-
-    public Dictionary<StatType, StatModification> GetStatModifications(Creature creature, BattleContext context = null)
-    {
-        var modifications = new Dictionary<StatType, StatModification>();
-        foreach (var effect in effects)
-        {
-            if (effect.IsActive(creature, context))
-            {
-                var effectMods = effect.GetModifications(creature, context);
-                foreach (var keyValPair in effectMods)
-                {
-                    if (!modifications.ContainsKey(keyValPair.Key))
-                    {
-                        modifications[keyValPair.Key] = new StatModification();
-                    }
-                    modifications[keyValPair.Key].Combine(keyValPair.Value);
-                }
-            }
-        }
-        return modifications;
-    }
+    //public Sprite Icon => icon;
+    public List<PassiveTraitEffect> PassiveEffects => passiveEffects;
+    public List<TriggeredTraitEffect> TriggeredEffects => triggeredEffects;
 
 }
 
