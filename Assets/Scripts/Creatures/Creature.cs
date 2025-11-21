@@ -465,5 +465,23 @@ public class Creature : ISerializationCallbackReceiver
         }
         return Mathf.RoundToInt(((float)HP / (float)MaxHP) * 100f);
     }
+
+    public bool IsAlly(Creature other)
+    {
+        if (BattleSlot == null || other.BattleSlot == null)
+        {
+            return false;
+        }
+        return BattleSlot.IsPlayerSlot == other.BattleSlot.IsPlayerSlot;
+    }
+
+    public bool IsEnemy(Creature other)
+    {
+        if (BattleSlot == null || other.BattleSlot == null)
+        {
+            return false;
+        }
+        return BattleSlot.IsPlayerSlot != other.BattleSlot.IsPlayerSlot;
+    }
 }
 
