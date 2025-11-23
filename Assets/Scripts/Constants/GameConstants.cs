@@ -106,6 +106,14 @@ public enum ActionRange
     Self
 }
 
+public enum TargetType {
+    Any,
+    Ally,
+    Enemy,
+    Self,
+    AllyOnly
+}
+
 public enum StatType
 {
     HP,
