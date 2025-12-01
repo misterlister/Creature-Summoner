@@ -2,12 +2,12 @@ using UnityEngine;
 using System;
 
 [Serializable]
-public class HPThresholdCondition : TraitCondition
+public class HPThresholdCondition : TraitConditional
 {
     [SerializeField] [Range(0, 100)] private int thresholdPercent = 50;
     [SerializeField] private bool belowThreshold = true;
 
-    public override bool CheckCondition(BattleEventData eventData)
+    public override bool CheckConditional(BattleEventData eventData)
     {
         if (eventData.SourceCreature == null)
         {

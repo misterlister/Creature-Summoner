@@ -2,18 +2,18 @@ using UnityEngine;
 using System;
 
 [Serializable]
-public class AdjacentEnemyNumberCondition : TraitCondition
+public class AdjacentAllyNumberCondition : TraitConditional
 {
-    [SerializeField][Range(0, 3)] private int requiredNum;
+    [SerializeField] [Range(0, 9)] private int requiredNum;
     [SerializeField] private ComparisonType comparisonType;
 
 
-    public override bool CheckCondition(BattleEventData eventData)
+    public override bool CheckConditional(BattleEventData eventData)
     {
         Creature thisCreature = eventData.SourceCreature;
         if (thisCreature == null || thisCreature.BattleSlot == null)
         {
-            Debug.LogWarning("AdjacentEnemyNumberCondition: SourceCreature or BattleSlot is null in event data.");
+            Debug.LogWarning("AdjacentAllyNumberCondition: SourceCreature or BattleSlot is null in event data.");
             return false;
         }
         var adjacentSlots = thisCreature.BattleSlot.GetAdjacentSlots();
@@ -21,7 +21,7 @@ public class AdjacentEnemyNumberCondition : TraitCondition
         foreach (var slot in adjacentSlots)
         {
             var creature = slot.Creature;
-            if (creature != null && creature != thisCreature && thisCreature.IsEnemy(creature))
+            if (creature != null && creature != thisCreature && thisCreature.IsAlly(creature))
             {
                 allyCount++;
             }
@@ -41,6 +41,6 @@ public class AdjacentEnemyNumberCondition : TraitCondition
             ComparisonType.LessThanOrEqual => "at most ",
             _ => ""
         };
-        return $"when {comparisonText}{numText} enemies are adjacent";
+        return $"when {comparisonText}{numText} allies are adjacent";
     }
 }

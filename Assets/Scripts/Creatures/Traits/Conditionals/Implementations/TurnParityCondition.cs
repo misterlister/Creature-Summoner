@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public class TurnParityCondition : TraitCondition
+public class TurnParityCondition : TraitConditional
 {
     [SerializeField] private TurnParity requiredParity = TurnParity.Even;
 
@@ -12,7 +12,7 @@ public class TurnParityCondition : TraitCondition
         Odd
     }
 
-    public override bool CheckCondition(BattleEventData eventData)
+    public override bool CheckConditional(BattleEventData eventData)
     {
         int currentTurn = eventData.BattleContext.TurnNumber;
 

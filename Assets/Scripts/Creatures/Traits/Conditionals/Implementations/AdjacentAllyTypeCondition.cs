@@ -2,11 +2,11 @@ using UnityEngine;
 using System;
 
 [Serializable]
-public class AdjacentAllyTypeCondition : TraitCondition
+public class AdjacentAllyTypeCondition : TraitConditional
 {
     [SerializeField] private CreatureType requiredType;
 
-    public override bool CheckCondition(BattleEventData eventData)
+    public override bool CheckConditional(BattleEventData eventData)
     {
         if (eventData.SourceCreature == null || eventData.SourceCreature.BattleSlot == null)
         {
