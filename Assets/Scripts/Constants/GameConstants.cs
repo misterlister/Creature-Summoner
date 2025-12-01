@@ -106,12 +106,21 @@ public enum ActionRange
     Self
 }
 
-public enum TargetType {
-    Any,
+public enum Perspective
+{
+    Self,
     Ally,
     Enemy,
+    Team,
+}
+
+public enum Target
+{
+    Any,
     Self,
-    AllyOnly
+    Team,
+    Enemy,
+    Ally
 }
 
 public enum StatType

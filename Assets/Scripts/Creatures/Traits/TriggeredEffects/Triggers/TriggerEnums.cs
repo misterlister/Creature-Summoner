@@ -1,6 +1,3 @@
-using Unity.VisualScripting;
-using UnityEngine;
-
 public enum AttackTriggerCategory {
     Any,
     Melee,
@@ -21,10 +18,14 @@ public enum AttackTriggerCategory {
     Plant
 }
 
-public enum TurnOwner
+public enum ActionTiming
 {
-    Any,
-    Own,
-    Ally,
-    Enemy
+    Before,
+    After
+}
+
+public enum TurnTiming
+{
+    Start,
+    End
 }
