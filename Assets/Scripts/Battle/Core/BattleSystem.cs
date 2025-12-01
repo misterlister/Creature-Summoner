@@ -56,6 +56,9 @@ public class BattleSystem : MonoBehaviour
     private bool movementChosen = false;
     private BattleSlot previousMovementSpace = null;
 
+    private BattleEventManager eventManager;
+    private BattleContext battleContext;
+
     Stack<BattleState> stateStack = new Stack<BattleState>();
     Stack<(int y, int x)> positionStack = new Stack<(int y, int x)>();
 
@@ -90,8 +93,21 @@ public class BattleSystem : MonoBehaviour
 
     public void StartBattle(CreatureTeam playerTeam, CreatureTeam enemyTeam)
     {
+        eventManager = new BattleEventManager();
+
+        foreach (var creature in playerTeam.Creatures)
+        {
+            creature.InitializeBattle(eventManager);
+        }
+
+        foreach (var creature in enemyTeam.Creatures)
+        {
+            creature.InitializeBattle(eventManager);
+        }
+
         this.playerTeam = playerTeam;
         this.enemyTeam = enemyTeam;
+        
         StartCoroutine(SetupBattle());
     }
 
@@ -1150,7 +1166,7 @@ public class BattleSystem : MonoBehaviour
         ResetSelectedAction();
         if (Field.EnemyCount() == 0)
         {
-            OnBattleOver(true);
+            EndBattle();
         }
         ToDetermineTurn();
     }
@@ -1158,6 +1174,23 @@ public class BattleSystem : MonoBehaviour
     private void ResetSelectableTargets()
     {
         SelectableTargets.Clear();
+    }
+
+    public void EndBattle()
+    {
+        OnBattleOver(true);
+
+        foreach (var creature in playerTeam.Creatures)
+        {
+            creature.CleanupBattle();
+        }
+
+        foreach (var creature in enemyTeam.Creatures)
+        {
+            creature.CleanupBattle();
+        }
+
+        eventManager.ClearAllSubscriptions();
     }
 }
 
