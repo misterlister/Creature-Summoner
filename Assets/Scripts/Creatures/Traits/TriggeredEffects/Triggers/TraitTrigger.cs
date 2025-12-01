@@ -4,8 +4,7 @@ using System;
 [Serializable]
 public abstract class TraitTrigger
 {
-    [SerializeField] protected string triggerName;
-
-    public abstract bool CheckTrigger(TraitEventData eventData);
+    public abstract BattleEventType GetEventType();
+    public abstract bool CheckTrigger(BattleEventData eventData);
     public abstract string GetDescription();
 }
