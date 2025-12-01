@@ -12,12 +12,18 @@ public class Creature : ISerializationCallbackReceiver
     [SerializeField] CreatureBase species;
     [SerializeField] int level;
     [SerializeField] CreatureClassInstance currentClass;
+    [SerializeField] private List<TraitBase> traits;
 
     public CreatureBase Species => species;
     public int Level => level;
     public CreatureClassInstance CurrentClass => currentClass;
 
     public List<CreatureClassInstance> classList;
+
+    public List<TraitBase> Traits => traits;
+
+    private List<RuntimeTrait> runtimeTraits = new();
+    public CreatureEventProxy EventProxy { get; private set; }
 
     public string ClassName
     {
@@ -117,6 +123,61 @@ public class Creature : ISerializationCallbackReceiver
 
         initActions();
         equipActions();
+    }
+
+    public void InitializeBattle(BattleEventManager eventManager)
+    {
+        EventProxy = new CreatureEventProxy(this, eventManager);
+
+        foreach (var trait in Traits)
+        {
+            RuntimeTrait runtimeTrait = new RuntimeTrait(trait, this);
+            runtimeTrait.Subscribe(EventProxy);
+            runtimeTraits.Add(runtimeTrait);
+        }
+    }
+
+    public void CleanupBattle()
+    {
+        foreach (var runtimeTrait in runtimeTraits)
+        {
+            runtimeTrait.Unsubscribe(EventProxy);
+        }
+
+        runtimeTraits.Clear();
+
+        EventProxy?.Cleanup();
+        EventProxy = null;
+    }
+
+    public void AddTrait(TraitBase trait)
+    {
+        if (!Traits.Contains(trait))
+        {
+            Traits.Add(trait);
+        }
+
+        if (EventProxy != null)
+        {
+            RuntimeTrait runtimeTrait = new RuntimeTrait(trait, this);
+            runtimeTrait.Subscribe(EventProxy);
+            runtimeTraits.Add(runtimeTrait);
+        }
+    }
+
+    public void RemoveTrait(TraitBase trait)
+    {
+        if (Traits.Contains(trait))
+        {
+            Traits.Remove(trait);
+        }
+
+        RuntimeTrait toRemove = runtimeTraits.Find(rt => rt.TraitData == trait);
+        if (toRemove != null)
+        {
+            toRemove.Unsubscribe(EventProxy);
+            runtimeTraits.Remove(toRemove);
+        }
     }
 
     public void ResetStatModifiers()
@@ -468,10 +529,17 @@ public class Creature : ISerializationCallbackReceiver
 
     public bool IsAlly(Creature other)
     {
+        // Ally doesn't include this creature itself
+        if (other == this)
+        {
+            return false;
+        }
+
         if (BattleSlot == null || other.BattleSlot == null)
         {
             return false;
         }
+
         return BattleSlot.IsPlayerSlot == other.BattleSlot.IsPlayerSlot;
     }
 
