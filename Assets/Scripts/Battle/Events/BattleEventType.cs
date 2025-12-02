@@ -70,6 +70,8 @@ public enum BattleEventType
     AfterIMove,
     BeforeIAmForciblyMoved,
     AfterIAmForciblyMoved,
+    BeforeIForciblyMoveAnother,
+    AfterIForciblyMoveAnother,
     BeforeAllyMoves,
     AfterAllyMoves,
     BeforeTeamMoves,
@@ -93,4 +95,7 @@ public enum BattleEventType
     AllyIsDefeated,
     OpponentIsDefeated,
     TeamIsDefeated,
+
+    // Used to indicate errors
+    Invalid
 }

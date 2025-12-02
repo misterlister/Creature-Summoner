@@ -64,6 +64,8 @@ public class CreatureEventProxy
     public event Action<MoveEventData> OnAfterIMove;
     public event Action<MoveEventData> OnBeforeIAmForciblyMoved;
     public event Action<MoveEventData> OnAfterIAmForciblyMoved;
+    public event Action<MoveEventData> OnBeforeIForciblyMoveAnother;
+    public event Action<MoveEventData> OnAfterIForciblyMoveAnother;
     public event Action<MoveEventData> OnBeforeAllyMoves;
     public event Action<MoveEventData> OnAfterAllyMoves;
     public event Action<MoveEventData> OnBeforeOpponentMoves;
@@ -344,44 +346,60 @@ public class CreatureEventProxy
     private void FilterBeforeMove(MoveEventData eventData)
     {
         Creature movingCreature = eventData.MovingCreature;
+        Creature forcibleMover = eventData.ForcibleMover;
 
         if (movingCreature == owner)
         {
-            if (eventData.MoveSource != null)
+            if (forcibleMover != null)
                 OnBeforeIAmForciblyMoved?.Invoke(eventData);
             else
                 OnBeforeIMove?.Invoke(eventData);
         }
+        else
+        {
+            if (forcibleMover == owner)
+            {
+                OnBeforeIForciblyMoveAnother?.Invoke(eventData);
+            }
 
-        if (movingCreature.IsAlly(owner))
-        {
-            OnBeforeAllyMoves?.Invoke(eventData);
-        }
-        else if (movingCreature.IsEnemy(owner))
-        {
-            OnBeforeOpponentMoves?.Invoke(eventData);
+            if (movingCreature.IsAlly(owner))
+            {
+                OnBeforeAllyMoves?.Invoke(eventData);
+            }
+            else if (movingCreature.IsEnemy(owner))
+            {
+                OnBeforeOpponentMoves?.Invoke(eventData);
+            }
         }
     }
 
     private void FilterAfterMove(MoveEventData eventData)
     {
         Creature movingCreature = eventData.MovingCreature;
+        Creature forcibleMover = eventData.ForcibleMover;
 
         if (movingCreature == owner)
         {
-            if (eventData.MoveSource != null)
+            if (forcibleMover != null)
                 OnAfterIAmForciblyMoved?.Invoke(eventData);
             else
                 OnAfterIMove?.Invoke(eventData);
         }
+        else
+        {
+            if (forcibleMover == owner)
+            {
+                OnAfterIForciblyMoveAnother?.Invoke(eventData);
+            }
 
-        if (movingCreature.IsAlly(owner))
-        {
-            OnAfterAllyMoves?.Invoke(eventData);
-        }
-        else if (movingCreature.IsEnemy(owner))
-        {
-            OnAfterOpponentMoves?.Invoke(eventData);
+            if (movingCreature.IsAlly(owner))
+            {
+                OnAfterAllyMoves?.Invoke(eventData);
+            }
+            else if (movingCreature.IsEnemy(owner))
+            {
+                OnAfterOpponentMoves?.Invoke(eventData);
+            }
         }
     }
 
