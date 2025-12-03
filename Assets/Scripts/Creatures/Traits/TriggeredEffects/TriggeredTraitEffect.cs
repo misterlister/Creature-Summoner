@@ -22,12 +22,12 @@ public class TriggeredTraitEffect
             return false;
         }
 
-        if (conditional != null && !conditional.CheckConditional(eventData))
+        if (conditional == null)
         {
-            return false;
+            return true;
         }
 
-        return true;
+        return conditional.CheckConditional(eventData);
     }
 
     public void Execute(BattleEventData eventData)
