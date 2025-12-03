@@ -4,8 +4,8 @@ using System;
 [Serializable]
 public class OnBeingTargetedTrigger : TraitTrigger
 {
-    [SerializeField] private AttackTriggerCategory attackCategory = AttackTriggerCategory.Any;
-    [SerializeField] private ActionTiming timing = ActionTiming.After;
+    [SerializeField] private ActionTiming timing;
+    [SerializeField] private AttackTriggerCategory attackCategory;
 
     public override BattleEventType GetEventType()
     {
@@ -53,7 +53,7 @@ public class OnBeingTargetedTrigger : TraitTrigger
 
     public override string GetDescription()
     {
-        string timingString = timing.ToString();
+        string timingString = StringUtils.GetTimingString(timing);
         string categoryString = attackCategory.ToString();
         string article = StringUtils.GetIndefiniteArticle(categoryString);
 

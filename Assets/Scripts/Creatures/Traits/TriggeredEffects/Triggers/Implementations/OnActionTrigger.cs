@@ -4,12 +4,9 @@ using System;
 [Serializable]
 public class OnActionTrigger : TraitTrigger
 {
-    [SerializeField] private Perspective actionOwner = Perspective.Self;
-    [SerializeField] private AttackTriggerCategory attackCategory = AttackTriggerCategory.Any;
-    [SerializeField] private ActionTiming timing = ActionTiming.After;
-
-
-
+    [SerializeField] private Perspective actionOwner;
+    [SerializeField] private AttackTriggerCategory attackCategory;
+    [SerializeField] private ActionTiming timing;
 
     public override BattleEventType GetEventType()
     {
@@ -19,8 +16,8 @@ public class OnActionTrigger : TraitTrigger
             (Perspective.Self, ActionTiming.After) => BattleEventType.AfterIAct,
             (Perspective.Ally, ActionTiming.Before) => BattleEventType.BeforeAllyActs,
             (Perspective.Ally, ActionTiming.After) => BattleEventType.AfterAllyActs,
-            (Perspective.Enemy, ActionTiming.Before) => BattleEventType.BeforeOpponentActs,
-            (Perspective.Enemy, ActionTiming.After) => BattleEventType.AfterOpponentActs,
+            (Perspective.Opponent, ActionTiming.Before) => BattleEventType.BeforeOpponentActs,
+            (Perspective.Opponent, ActionTiming.After) => BattleEventType.AfterOpponentActs,
             (Perspective.Team, ActionTiming.Before) => BattleEventType.BeforeTeamActs,
             (Perspective.Team, ActionTiming.After) => BattleEventType.AfterTeamActs,
             _ => BattleEventType.AfterIAct,
@@ -65,16 +62,8 @@ public class OnActionTrigger : TraitTrigger
 
     public override string GetDescription()
     {
-        string actor = (actionOwner) switch
-        {
-            Perspective.Self => "this creature",
-            Perspective.Ally => "an allied creature",
-            Perspective.Enemy => "an enemy",
-            Perspective.Team => "a member of this team",
-            _ => "this creature",
-        };
-
-        string timingString = timing.ToString();
+        string timingString = StringUtils.GetTimingString(timing);
+        string actor = StringUtils.GetPerspectiveString(actionOwner);
         string categoryString = attackCategory.ToString();
         string article = StringUtils.GetIndefiniteArticle(categoryString);
 

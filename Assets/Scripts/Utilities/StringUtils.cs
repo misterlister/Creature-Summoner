@@ -14,4 +14,27 @@ public static class StringUtils
             ? "a"
             : "an";
     }
+
+    public static string GetPerspectiveString(Perspective? perspective)
+    {
+        return (perspective) switch
+        {
+            null => "",
+            Perspective.Self => "this creature",
+            Perspective.Ally => "an allied creature",
+            Perspective.Opponent => "an enemy",
+            Perspective.Team => "a member of this team",
+            _ => "unknown perspective",
+        };
+    }
+
+    public static string GetTimingString(ActionTiming timing)
+    {
+        return (timing) switch
+        {
+            ActionTiming.Before => "When",
+            ActionTiming.After => "After",
+            _ => "unknown timing"
+        };
+    }
 }
