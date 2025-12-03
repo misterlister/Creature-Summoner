@@ -248,6 +248,12 @@ public class RuntimeTrait
             case BattleEventType.AfterIMove:
                 proxy.OnAfterIMove += handler;
                 break;
+            case BattleEventType.BeforeIForciblyMoveAnother:
+                proxy.OnBeforeIForciblyMoveAnother += handler;
+                break;
+            case BattleEventType.AfterIForciblyMoveAnother:
+                proxy.OnAfterIForciblyMoveAnother += handler;
+                break;
             case BattleEventType.BeforeIAmForciblyMoved:
                 proxy.OnBeforeIAmForciblyMoved += handler;
                 break;
@@ -316,7 +322,7 @@ public class RuntimeTrait
             case BattleEventType.OpponentIsDefeated:
                 proxy.OnOpponentIsDefeated += handler;
                 break;
-            case BattleEventType.TeamIsDefeated:
+            case BattleEventType.TeamMemberIsDefeated:
                 proxy.OnIAmDefeated += handler;
                 proxy.OnAllyIsDefeated += handler;
                 break;
@@ -377,6 +383,14 @@ public class RuntimeTrait
             case BattleEventType.AfterOpponentActs:
                 proxy.OnAfterOpponentActs -= handler;
                 break;
+            case BattleEventType.BeforeTeamActs:
+                proxy.OnBeforeIAct -= handler;
+                proxy.OnBeforeAllyActs -= handler;
+                break;
+            case BattleEventType.AfterTeamActs:
+                proxy.OnAfterIAct -= handler;
+                proxy.OnAfterAllyActs -= handler;
+                break;
 
             // Damage Events
             case BattleEventType.BeforeIReceiveDamage:
@@ -402,6 +416,14 @@ public class RuntimeTrait
                 break;
             case BattleEventType.AfterOpponentReceivesDamage:
                 proxy.OnAfterOpponentReceivesDamage -= handler;
+                break;
+            case BattleEventType.BeforeTeamReceivesDamage:
+                proxy.OnBeforeIReceiveDamage -= handler;
+                proxy.OnBeforeAllyReceivesDamage -= handler;
+                break;
+            case BattleEventType.AfterTeamReceivesDamage:
+                proxy.OnAfterIReceiveDamage -= handler;
+                proxy.OnAfterAllyReceivesDamage -= handler;
                 break;
 
             // Healing Events
@@ -440,6 +462,22 @@ public class RuntimeTrait
                 break;
             case BattleEventType.AfterOpponentIsHealed:
                 proxy.OnAfterOpponentIsHealed -= handler;
+                break;
+            case BattleEventType.BeforeTeamHeals:
+                proxy.OnBeforeIHeal -= handler;
+                proxy.OnBeforeAllyHeals -= handler;
+                break;
+            case BattleEventType.AfterTeamHeals:
+                proxy.OnAfterIHeal -= handler;
+                proxy.OnAfterAllyHeals -= handler;
+                break;
+            case BattleEventType.BeforeTeamIsHealed:
+                proxy.OnBeforeIAmHealed -= handler;
+                proxy.OnBeforeAllyIsHealed -= handler;
+                break;
+            case BattleEventType.AfterTeamIsHealed:
+                proxy.OnAfterIAmHealed -= handler;
+                proxy.OnAfterAllyIsHealed -= handler;
                 break;
 
             // Condition Events
@@ -482,6 +520,22 @@ public class RuntimeTrait
             case BattleEventType.ConditionRemovedFromMe:
                 proxy.OnConditionRemovedFromMe -= handler;
                 break;
+            case BattleEventType.BeforeTeamAppliesCondition:
+                proxy.OnBeforeIApplyCondition -= handler;
+                proxy.OnBeforeAllyAppliesCondition -= handler;
+                break;
+            case BattleEventType.AfterTeamAppliesCondition:
+                proxy.OnAfterIApplyCondition -= handler;
+                proxy.OnAfterAllyAppliesCondition -= handler;
+                break;
+            case BattleEventType.BeforeTeamReceivesCondition:
+                proxy.OnBeforeIReceiveCondition -= handler;
+                proxy.OnBeforeAllyReceivesCondition -= handler;
+                break;
+            case BattleEventType.AfterTeamReceivesCondition:
+                proxy.OnAfterIReceiveCondition -= handler;
+                proxy.OnAfterAllyReceivesCondition -= handler;
+                break;
 
             // Movement Events
             case BattleEventType.BeforeIMove:
@@ -489,6 +543,12 @@ public class RuntimeTrait
                 break;
             case BattleEventType.AfterIMove:
                 proxy.OnAfterIMove -= handler;
+                break;
+            case BattleEventType.BeforeIForciblyMoveAnother:
+                proxy.OnBeforeIForciblyMoveAnother -= handler;
+                break;
+            case BattleEventType.AfterIForciblyMoveAnother:
+                proxy.OnAfterIForciblyMoveAnother -= handler;
                 break;
             case BattleEventType.BeforeIAmForciblyMoved:
                 proxy.OnBeforeIAmForciblyMoved -= handler;
@@ -507,6 +567,14 @@ public class RuntimeTrait
                 break;
             case BattleEventType.AfterOpponentMoves:
                 proxy.OnAfterOpponentMoves -= handler;
+                break;
+            case BattleEventType.BeforeTeamMoves:
+                proxy.OnBeforeIMove -= handler;
+                proxy.OnBeforeAllyMoves -= handler;
+                break;
+            case BattleEventType.AfterTeamMoves:
+                proxy.OnAfterIMove -= handler;
+                proxy.OnAfterAllyMoves -= handler;
                 break;
 
             // Turn Events
@@ -528,6 +596,14 @@ public class RuntimeTrait
             case BattleEventType.OpponentTurnEnd:
                 proxy.OnOpponentTurnEnd -= handler;
                 break;
+            case BattleEventType.TeamTurnStart:
+                proxy.OnMyTurnStart -= handler;
+                proxy.OnAllyTurnStart -= handler;
+                break;
+            case BattleEventType.TeamTurnEnd:
+                proxy.OnMyTurnEnd -= handler;
+                proxy.OnAllyTurnEnd -= handler;
+                break;
 
             // Defeat Events
             case BattleEventType.IAmDefeated:
@@ -541,6 +617,10 @@ public class RuntimeTrait
                 break;
             case BattleEventType.OpponentIsDefeated:
                 proxy.OnOpponentIsDefeated -= handler;
+                break;
+            case BattleEventType.TeamMemberIsDefeated:
+                proxy.OnIAmDefeated -= handler;
+                proxy.OnAllyIsDefeated -= handler;
                 break;
         }
     }
