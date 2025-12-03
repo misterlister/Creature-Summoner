@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public class TurnParityCondition : TraitConditional
+public class TurnParityConditional : TraitConditional
 {
     [SerializeField] private TurnParity requiredParity = TurnParity.Even;
 
