@@ -110,7 +110,7 @@ public enum Perspective
 {
     Self,
     Ally,
-    Enemy,
+    Opponent,
     Team,
 }
 
@@ -119,7 +119,7 @@ public enum Target
     Any,
     Self,
     Team,
-    Enemy,
+    Opponent,
     Ally
 }
 
