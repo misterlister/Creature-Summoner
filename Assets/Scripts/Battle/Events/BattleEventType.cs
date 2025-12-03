@@ -94,7 +94,7 @@ public enum BattleEventType
     IDefeatAnother,
     AllyIsDefeated,
     OpponentIsDefeated,
-    TeamIsDefeated,
+    TeamMemberIsDefeated,
 
     // Used to indicate errors
     Invalid
