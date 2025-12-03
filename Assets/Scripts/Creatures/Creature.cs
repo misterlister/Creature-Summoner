@@ -520,11 +520,39 @@ public class Creature : ISerializationCallbackReceiver
 
     public int GetHPAsPercentage()
     {
-        if (MaxHP == 0)
+        if (MaxHP <= 0 || HP <= 0)
         {
             return 0;
         }
-        return Mathf.RoundToInt(((float)HP / (float)MaxHP) * 100f);
+        return Mathf.CeilToInt(((float)HP / MaxHP) * 100f);
+    }
+
+    public int GetEnergyAsPercentage()
+    {
+        if (MaxEnergy <= 0 || Energy <= 0)
+        {
+            return 0;
+        }
+        return Mathf.CeilToInt(((float)Energy / MaxEnergy) * 100f);
+    }
+
+    public bool IsWounded()
+    { 
+        return (GetHPAsPercentage() < HEALTHY_THRESHOLD); 
+    }
+    public bool IsHealthy()
+    {
+        return (GetHPAsPercentage() >= HEALTHY_THRESHOLD);
+    }
+
+    public bool IsEnergized()
+    {
+        return (GetEnergyAsPercentage() >= ENERGIZED_THRESHOLD);
+    }
+
+    public bool IsTired()
+    {
+        return (GetEnergyAsPercentage() < TIRED_THRESHOLD);
     }
 
     public bool IsAlly(Creature other)

@@ -26,6 +26,11 @@ public static class GameConstants
     public const int MAX_CLASS_LEVEL = 10;
     public const int MAX_XP = 1000000;
 
+    // CREATURE STATUS CONSTANTS
+    public const int HEALTHY_THRESHOLD = 50;
+    public const int ENERGIZED_THRESHOLD = 75;
+    public const int TIRED_THRESHOLD = 25;
+
     // BATTLEFIELD CONSTANTS
 
     public const int BATTLE_ROWS = 3; // Number of Rows on the battlefield
