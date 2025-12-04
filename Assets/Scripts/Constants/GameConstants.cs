@@ -46,8 +46,8 @@ public static class GameConstants
     public const int AVERAGE_BASE_STAT = 40;
 
     public const float GLANCE_REDUCTION = 0.25f;
-    public const float CRIT_BONUS = 0.4f;
-    public const float CRIT_RESISTANCE = 0.0f;
+    public const float CRIT_DAMAGE_BONUS = 0.4f;
+    public const float CRIT_DAMAGE_RESISTANCE = 0.0f;
 
     public const float DEFAULT_STARTING_ENERGY = 0.25f;
 
@@ -138,6 +138,57 @@ public enum StatType
     Speed,
     Defense,
     Resistance
+}
+
+public enum CombatModifierType
+{
+    // Damage dealt modifiers
+    PhysicalDamageMod,
+    MagicalDamageMod,
+    MeleeDamageMod,
+    RangedDamageMod,
+    AOEDamageMod,
+    CriticalDamageMod,
+    GlancingDamageMod,
+    EffectiveDamageMod,
+    IneffectiveDamageMod,
+    ShieldBreakerDamageMod,
+
+    // Damage taken modifiers
+    PhysicalDamageResist,
+    MagicalDamageResist,
+    MeleeDamageResist,
+    RangedDamageResist,
+    AOEDamageResist,
+    CriticalDamageResist,
+    GlancingDamageResist,
+    EffectiveDamageResist,
+    IneffectiveDamageResist,
+
+    // Special mechanics
+    PhysicalVamp,
+    MagicalVamp,
+    CriticalChanceMod,
+    EvasionMod,
+    AccuracyMod,
+    BaneResist,
+    ShieldStrengthMod,
+    HealingGivenMod,
+    HealingReceivedMod,
+
+    // Type Resistances
+    FireResist,
+    RadiantResist,
+    WaterResist,
+    ColdResist,
+    EarthResist,
+    MetalResist,
+    AirResist,
+    ElectricResist,
+    BeastResist,
+    PlantResist,
+    NecroticResist,
+    ArcaneResist,
 }
 
 public enum ClassStatBuffLevel
