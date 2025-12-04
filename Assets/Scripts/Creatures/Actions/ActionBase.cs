@@ -337,8 +337,8 @@ public class ActionBase : ScriptableObject
     private float CalculateCritBonus(Creature attacker, Creature defender)
     {
         float critBonus = 1f;
-        critBonus += attacker.CritBonus;
-        critBonus -= defender.CritResistance;
+        critBonus += attacker.CritDamageBonus;
+        critBonus -= defender.CritDamageResistance;
         float clampedCrit = Mathf.Clamp(critBonus, 1f, 2f);
         if (DEBUG)
         {
