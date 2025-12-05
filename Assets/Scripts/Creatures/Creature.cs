@@ -1,5 +1,3 @@
-using System.Buffers.Text;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using static GameConstants;
@@ -48,8 +46,8 @@ public class Creature : ISerializationCallbackReceiver
 
     public float StartingEnergy { get; private set; }
 
-    public float CritBonus { get; set; }
-    public float CritResistance { get; set; }
+    public float CritDamageBonus { get; set; }
+    public float CritDamageResistance { get; set; }
 
     public List<CreatureAction> KnownCoreActions { get; set; }
     public List<CreatureAction> KnownEmpoweredActions { get; set; }
@@ -97,22 +95,8 @@ public class Creature : ISerializationCallbackReceiver
         GlancingDamageReduction = GLANCE_REDUCTION;
         StartingEnergy = DEFAULT_STARTING_ENERGY;
 
-        CritBonus = CRIT_BONUS;
-        CritResistance = CRIT_RESISTANCE;
-
-        statModifiers = new Dictionary<StatType, float>()
-        {
-            { StatType.HP, 1f },
-            { StatType.Energy, 1f },
-            { StatType.Strength, 1f },
-            { StatType.Magic, 1f },
-            { StatType.Skill, 1f },
-            { StatType.Speed, 1f },
-            { StatType.Defense, 1f },
-            { StatType.Resistance, 1f }
-        };
-
-
+        CritDamageBonus = CRIT_DAMAGE_BONUS;
+        CritDamageResistance = CRIT_DAMAGE_RESISTANCE;
 
         KnownCoreActions = new List<CreatureAction>();
         KnownEmpoweredActions = new List<CreatureAction>();
@@ -180,16 +164,26 @@ public class Creature : ISerializationCallbackReceiver
         }
     }
 
-    public void ResetStatModifiers()
+    // Get all modifiers from all sources
+    public void GetAllModifiers(
+        BattleContext context,
+        List<FlatStatModifier> flatMods,
+        List<PercentStatModifier> percentMods,
+        List<CombatModifier> combatMods)
     {
-        statModifiers[StatType.HP] = 1f;
-        statModifiers[StatType.Energy] = 1f;
-        statModifiers[StatType.Strength] = 1f;
-        statModifiers[StatType.Magic] = 1f;
-        statModifiers[StatType.Skill] = 1f;
-        statModifiers[StatType.Speed] = 1f;
-        statModifiers[StatType.Defense] = 1f;
-        statModifiers[StatType.Resistance] = 1f;
+        flatMods.Clear();
+        percentMods.Clear();
+        combatMods.Clear();
+
+        // From traits
+        foreach (var trait in traits)
+        {
+            trait.CollectModifiers(this, context, flatMods, percentMods, combatMods);
+        }
+
+        // Add other sources here:
+        // CollectStatusEffectModifiers(context, flatMods, percentMods, combatMods);
+        // CollectTerrainModifiers(context, flatMods, percentMods, combatMods);
     }
 
     // Base Stats
@@ -218,7 +212,6 @@ public class Creature : ISerializationCallbackReceiver
         float stat = GetSpeciesBaseStat(statType);
         stat = ApplyLevelScaling(stat, statType);
         stat += GetClassModifier(statType);
-        //stat = ApplyFlatTraitModifiers(stat, statType);
         return Mathf.RoundToInt(Mathf.Max(MIN_STAT_VALUE, stat));
     }
 
@@ -256,37 +249,62 @@ public class Creature : ISerializationCallbackReceiver
         return currentClass.GetStatModifier(statType);
     }
 
-
-    // TODO: Implement Trait Modifiers
-    /*
-    private float ApplyFlatTraitModifiers(float stat, StatType statType)
+    private int ApplyBattleModifiers(int stat, StatType statType, BattleContext context = null)
     {
-        
-    }
-    */
-
-    private int ApplyBattleModifiers(int stat, StatType statType)
-    {
-        if (statModifiers == null)
+        if (context == null)
         {
             return stat;
         }
 
-        if (!statModifiers.ContainsKey(statType))
+        var flatMods = new List<FlatStatModifier>();
+        var percentMods = new List<PercentStatModifier>();
+        var combatMods = new List<CombatModifier>();
+
+        GetAllModifiers(context, flatMods, percentMods, combatMods);
+
+        int totalFlat = 0;
+        float totalPercent = 0f;
+
+        foreach (var mod in flatMods)
         {
-            return stat;
+            if (mod.statType == statType)
+            {
+                totalFlat += mod.value;
+            }
         }
-        float modifiedStat = statModifiers[statType] * stat;
+
+        foreach (var mod in percentMods)
+        {
+            if (mod.statType == statType)
+            {
+                totalPercent += mod.value;
+            }
+        }
+
+        float modifiedStat = (stat + totalFlat) * (1f + totalPercent);
+
         return Mathf.RoundToInt(Mathf.Max(MIN_STAT_VALUE, modifiedStat));
     }
 
-    // TODO IMPLEMENT DYNAMIC STAT MODIFIERS
-    public void ModifyStat(StatType statType, float modifier)
+    // Get combat multiplier
+    public float GetCombatMultiplier(CombatModifierType modType, BattleContext context)
     {
-        if (statModifiers.ContainsKey(statType))
+        var flatMods = new List<FlatStatModifier>();
+        var percentMods = new List<PercentStatModifier>();
+        var combatMods = new List<CombatModifier>();
+        
+        GetAllModifiers(context, flatMods, percentMods, combatMods);
+        
+        float totalPercent = 0f;
+        foreach (var mod in combatMods)
         {
-            statModifiers[statType] *= modifier;
+            if (mod.modifierType == modType)
+            {
+                totalPercent += mod.value;
+            }
         }
+
+        return 1f + totalPercent;
     }
 
     public float compare_stat_to_average(StatType stat)
@@ -484,20 +502,17 @@ public class Creature : ISerializationCallbackReceiver
 
     public void AddXP(int amount)
     {
-        /*
         if (amount < 0)
         {
-            amount = -amount;
+            return;
         }
-        if (amount + XP > 100)
+
+        XP += amount;
+
+        if (amount + XP > XPForNextLevel)
         {
-            Energy = MaxEnergy;
+            LevelUp();
         }
-        else
-        {
-            Energy += amount;
-        }
-        */
     }
     public bool IsSingleType()
     {
@@ -578,6 +593,11 @@ public class Creature : ISerializationCallbackReceiver
             return false;
         }
         return BattleSlot.IsPlayerSlot != other.BattleSlot.IsPlayerSlot;
+    }
+
+    private void LevelUp()
+    {
+        // TODO
     }
 }
 
