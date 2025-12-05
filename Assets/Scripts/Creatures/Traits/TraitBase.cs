@@ -1,5 +1,3 @@
-using JetBrains.Annotations;
-using NUnit.Framework;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -22,9 +20,23 @@ public class TraitBase : ScriptableObject
     public string TraitName => traitName;
     public string Description => description;
     //public Sprite Icon => icon;
-    public List<PassiveTraitEffect> PassiveEffects => passiveEffects;
-    public List<TriggeredTraitEffect> TriggeredEffects => triggeredEffects;
 
+    // For passive effects - called during stat calculations
+    public void CollectModifiers(
+        Creature creature,
+        BattleContext context,
+        List<FlatStatModifier> flatMods,
+        List<PercentStatModifier> percentMods,
+        List<CombatModifier> combatMods)
+    {
+        foreach (var effect in passiveEffects)
+        {
+            effect.CollectModifier(creature, context, flatMods, percentMods, combatMods);
+        }
+    }
+
+    // For triggered effects - accessed by RuntimeTrait during setup
+    public IReadOnlyList<TriggeredTraitEffect> TriggeredEffects => triggeredEffects;
 }
 
 
