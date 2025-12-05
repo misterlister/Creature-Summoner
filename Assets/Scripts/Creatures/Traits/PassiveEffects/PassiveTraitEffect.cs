@@ -7,24 +7,24 @@ public abstract class PassiveTraitEffect
 {
     [SerializeField] protected string effectName;
     [SerializeReference] public TraitConditional conditional;
-
-    private static readonly Dictionary<StatType, StatModification> EmptyModifications = new();
-
-    public Dictionary<StatType, StatModification> GetStatModifications(Creature creature, BattleContext context)
+    public void CollectModifier(
+        Creature creature,
+        BattleContext context,
+        List<FlatStatModifier> flatMods,
+        List<PercentStatModifier> percentMods,
+        List<CombatModifier> combatMods)
     {
-        BattleEventData eventData = new BattleEventData(creature, context);
-
-        if (conditional == null || conditional.CheckConditional(eventData))
+        if (conditional == null || conditional.CheckConditional(new BattleEventData(creature, context)))
         {
-            return GetStatModificationsInternal(creature, context);
-        }
-        else
-        {
-            return EmptyModifications;
+            AddModifier(flatMods, percentMods, combatMods);
         }
     }
 
-    public abstract Dictionary<StatType, StatModification> GetStatModificationsInternal(Creature creature, BattleContext context);
+    protected abstract void AddModifier(
+        List<FlatStatModifier> flatMods,
+        List<PercentStatModifier> percentMods,
+        List<CombatModifier> combatMods);
+
     public abstract string GetDescription();
 }
 
