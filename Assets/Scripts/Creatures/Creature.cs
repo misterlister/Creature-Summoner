@@ -105,8 +105,8 @@ public class Creature : ISerializationCallbackReceiver
         EquippedEmpoweredActions = new CreatureAction[EMPOWERED_SLOTS];
         EquippedMasteryActions = new CreatureAction[MASTERY_SLOTS];
 
-        initActions();
-        equipActions();
+        InitActions();
+        EquipActions();
     }
 
     public void InitializeBattle(BattleEventManager eventManager)
@@ -307,7 +307,7 @@ public class Creature : ISerializationCallbackReceiver
         return 1f + totalPercent;
     }
 
-    public float compare_stat_to_average(StatType stat)
+    public float Compare_stat_to_average(StatType stat)
     {
         int statVal = 0;
         switch (stat)
@@ -335,7 +335,7 @@ public class Creature : ISerializationCallbackReceiver
         return (float)statVal / averageStat;
     }
 
-    private void initActions()
+    private void InitActions()
     {
         foreach (var learnableAction in Species.LearnableActions)
         {
@@ -357,7 +357,7 @@ public class Creature : ISerializationCallbackReceiver
         }
     }
 
-    private void equipActions()
+    private void EquipActions()
     {
         if (KnownCoreActions.Count > 0)
         {

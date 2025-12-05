@@ -148,11 +148,11 @@ public class BattleDialogBox : MonoBehaviour
             {
                 if (action.Source == ActionSource.Physical)
                 {
-                    powerRatio = attacker.compare_stat_to_average(StatType.Strength);
+                    powerRatio = attacker.Compare_stat_to_average(StatType.Strength);
                 }
                 else if (action.Source == ActionSource.Magical)
                 {
-                    powerRatio = attacker.compare_stat_to_average(StatType.Magic);
+                    powerRatio = attacker.Compare_stat_to_average(StatType.Magic);
                 }
             }
             int adjPower = ((int)(powerRatio * action.Power));
