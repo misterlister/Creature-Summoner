@@ -1,7 +1,10 @@
+using Game.Battle.Modifiers;
+using Game.Statuses;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using static GameConstants;
-
+using Game.Traits;
 
 [System.Serializable]
 public class Creature : ISerializationCallbackReceiver
@@ -34,13 +37,67 @@ public class Creature : ISerializationCallbackReceiver
             return "No Class";
         }
     }
+    public CreatureStatusManager Statuses { get; private set; }
+    public CreatureStats Stats { get; private set; }
+    public CreatureCombatModifiers CombatModifiers { get; private set; }
 
-    public int HP { get; set; }
-    public int Energy { get; set; }
+    private int currentHP;
+    private int currentEnergy;
+    private bool isDefeated;
+
+    // Base Stats
+    public int MaxHP => Stats.GetBaseStat(StatType.HP);
+    public int MaxEnergy => Stats.GetBaseStat(StatType.Energy);
+    public int BaseStrength => Stats.GetBaseStat(StatType.Strength);
+    public int BaseMagic => Stats.GetBaseStat(StatType.Magic);
+    public int BaseSkill => Stats.GetBaseStat(StatType.Skill);
+    public int BaseSpeed => Stats.GetBaseStat(StatType.Speed);
+    public int BaseDefense => Stats.GetBaseStat(StatType.Defense);
+    public int BaseResistance => Stats.GetBaseStat(StatType.Resistance);
+
+    // Current Stats
+    public int HP
+    {
+        get => currentHP;
+        private set
+        {
+            int oldHP = currentHP;
+            currentHP = Mathf.Clamp(value, 0, MaxHP);
+            if (currentHP != oldHP)
+            {
+                OnHPChanged?.Invoke(currentHP, MaxHP);
+
+                if (currentHP <= 0 && !isDefeated)
+                {
+                    Defeated();
+                }
+            }
+        }
+    }
+    public int Energy
+    {
+        get => currentEnergy;
+        private set
+        {
+            int oldEnergy = currentEnergy;
+            currentEnergy = Mathf.Clamp(value, 0, MaxEnergy);
+            if (currentEnergy != oldEnergy)
+            {
+                OnEnergyChanged?.Invoke(currentEnergy, MaxEnergy);
+            }
+        }
+    }
+    public int Strength => Stats.GetCurrentStat(StatType.Strength);
+    public int Magic => Stats.GetCurrentStat(StatType.Magic);
+    public int Skill => Stats.GetCurrentStat(StatType.Skill);
+    public int Speed => Stats.GetCurrentStat(StatType.Speed);
+    public int Defense => Stats.GetCurrentStat(StatType.Defense);
+    public int Resistance => Stats.GetCurrentStat(StatType.Resistance);
+
     public int XP { get; set; }
     public int TotalXP { get; set; }
     public string Nickname { get; set; }
-    public bool IsDefeated { get; set; }
+    public bool IsDefeated => isDefeated;
 
     public float GlancingDamageReduction { get; set; }
 
@@ -62,7 +119,20 @@ public class Creature : ISerializationCallbackReceiver
 
     public int XPForNextLevel => XPSystem.GetXPForNextCreatureLevel(Level);
 
-    private Dictionary<StatType, float> statModifiers;
+    public event Action<int, int> OnHPChanged;
+    public event Action<int> OnDamageTaken;
+    public event Action<int> OnHealed;
+    public event Action<int, int> OnEnergyChanged;
+    public event Action<int> OnEnergySpent;
+    public event Action<int> OnEnergyGained;
+    public event Action OnClassChanged;
+    public event Action OnLevelUp;
+    public event Action OnDefeated;
+    public event Action OnRevived;
+
+    // Events allow your UI or VFX systems to react when statuses change
+    public event Action<StatusEffect> OnStatusAdded;
+    public event Action<StatusEffect> OnStatusRemoved;
 
     public void OnBeforeSerialize() { }
 
@@ -77,9 +147,12 @@ public class Creature : ISerializationCallbackReceiver
 
     public void Init()
     {
-        HP = MaxHP;
-        IsDefeated = false;
-        Energy = 0;
+        Stats = new CreatureStats(this);
+        Statuses = new CreatureStatusManager(this);
+        CombatModifiers = new CreatureCombatModifiers(this);
+        currentHP = MaxHP;
+        currentEnergy = 0;
+        isDefeated = false;
         XP = 0;
         TotalXP = XPSystem.GetTotalXPForCreatureLevel(Level);
 
@@ -119,6 +192,43 @@ public class Creature : ISerializationCallbackReceiver
             runtimeTrait.Subscribe(EventProxy);
             runtimeTraits.Add(runtimeTrait);
         }
+    }
+
+    public void ChangeClass(CreatureClassInstance newClass)
+    {
+        if (newClass == currentClass)
+        {
+            return;
+        }
+
+        int oldMaxHP = MaxHP;
+        int oldMaxEnergy = MaxEnergy;
+
+        bool wasDefeated = IsDefeated;
+
+        currentClass = newClass;
+        Stats.MarkBaseStatsDirty();
+
+        int hpChange = MaxHP - oldMaxHP;
+        int energyChange = MaxEnergy - oldMaxEnergy;
+
+        if ((HP - hpChange <= 0)) 
+        {
+            HP = 1;
+        }
+        else
+        {
+            HP += hpChange;
+        }
+
+        Energy += energyChange;
+
+        OnClassChanged?.Invoke();
+
+        string hpChangeStr = hpChange >= 0 ? $"+{hpChange}" : hpChange.ToString();
+        string energyChangeStr = energyChange >= 0 ? $"+{energyChange}" : energyChange.ToString();
+        Debug.Log($"{Nickname} changed class to {currentClass.CreatureClass.CreatureClassName}! " +
+                  $"HP {hpChangeStr}, Energy {energyChangeStr}");
     }
 
     public void CleanupBattle()
@@ -164,147 +274,36 @@ public class Creature : ISerializationCallbackReceiver
         }
     }
 
-    // Get all modifiers from all sources
-    public void GetAllModifiers(
-        BattleContext context,
-        List<FlatStatModifier> flatMods,
-        List<PercentStatModifier> percentMods,
-        List<CombatModifier> combatMods)
+    // Get all stat modifiers from all sources
+    public void GetAllStatModifiers(BattleContext context, List<StatModifier> mods)
     {
-        flatMods.Clear();
-        percentMods.Clear();
-        combatMods.Clear();
+        mods.Clear();
 
         // From traits
         foreach (var trait in traits)
         {
-            trait.CollectModifiers(this, context, flatMods, percentMods, combatMods);
+            trait.CollectStatModifiers(this, context, mods);
         }
 
-        // Add other sources here:
-        // CollectStatusEffectModifiers(context, flatMods, percentMods, combatMods);
-        // CollectTerrainModifiers(context, flatMods, percentMods, combatMods);
+        // From statuses
+        // Statuses.CollectStatModifiers(this, context, mods);
+
+        // From terrain
     }
 
-    // Base Stats
-    public int BaseMaxHP => CalculateBaseStat(StatType.HP);
-    public int BaseMaxEnergy => CalculateBaseStat(StatType.Energy);
-    public int BaseStrength => CalculateBaseStat(StatType.Strength);
-    public int BaseMagic => CalculateBaseStat(StatType.Magic);
-    public int BaseSkill => CalculateBaseStat(StatType.Skill);
-    public int BaseSpeed => CalculateBaseStat(StatType.Speed);
-    public int BaseDefense => CalculateBaseStat(StatType.Defense);
-    public int BaseResistance => CalculateBaseStat(StatType.Resistance);
-
-    // Current Stats
-
-    public int MaxHP => ApplyBattleModifiers(BaseMaxHP, StatType.HP);
-    public int MaxEnergy => ApplyBattleModifiers(BaseMaxEnergy, StatType.Energy);
-    public int Strength => ApplyBattleModifiers(BaseStrength, StatType.Strength);
-    public int Magic => ApplyBattleModifiers(BaseMagic, StatType.Magic);
-    public int Skill => ApplyBattleModifiers(BaseSkill, StatType.Skill);
-    public int Speed => ApplyBattleModifiers(BaseSpeed, StatType.Speed);
-    public int Defense => ApplyBattleModifiers(BaseDefense, StatType.Defense);
-    public int Resistance => ApplyBattleModifiers(BaseResistance, StatType.Resistance);
-
-    private int CalculateBaseStat(StatType statType)
+    // Get all combat modifiers from all sources
+    public void GetAllCombatModifiers(BattleContext context, List<CombatModifier> mods)
     {
-        float stat = GetSpeciesBaseStat(statType);
-        stat = ApplyLevelScaling(stat, statType);
-        stat += GetClassModifier(statType);
-        return Mathf.RoundToInt(Mathf.Max(MIN_STAT_VALUE, stat));
-    }
+        mods.Clear();
 
-    private float GetSpeciesBaseStat(StatType statType)
-    {
-        return statType switch
+        // From traits
+        foreach (var trait in traits)
         {
-            StatType.HP => species.HP,
-            StatType.Energy =>  species.Energy,
-            StatType.Strength => species.Strength,
-            StatType.Magic => species.Magic,
-            StatType.Skill => species.Skill,
-            StatType.Speed => species.Speed,
-            StatType.Defense => species.Defense,
-            StatType.Resistance => species.Resistance,
-            _ => 0f,
-        };
-    }
-
-    private float ApplyLevelScaling(float baseStat, StatType statType)
-    {
-        if (statType == StatType.HP || statType == StatType.Energy)
-        {
-            return Mathf.FloorToInt(((baseStat * 4) * Level) / 100f) + 10 + Level;
-        }
-        return Mathf.FloorToInt(((baseStat * 4) * Level) / 100f) + 5;
-    }
-
-    private int GetClassModifier(StatType statType)
-    {
-        if (currentClass == null)
-        {
-            return 0;
-        }
-        return currentClass.GetStatModifier(statType);
-    }
-
-    private int ApplyBattleModifiers(int stat, StatType statType, BattleContext context = null)
-    {
-        if (context == null)
-        {
-            return stat;
+            trait.CollectCombatModifiers(this, context, mods);
         }
 
-        var flatMods = new List<FlatStatModifier>();
-        var percentMods = new List<PercentStatModifier>();
-        var combatMods = new List<CombatModifier>();
-
-        GetAllModifiers(context, flatMods, percentMods, combatMods);
-
-        int totalFlat = 0;
-        float totalPercent = 0f;
-
-        foreach (var mod in flatMods)
-        {
-            if (mod.statType == statType)
-            {
-                totalFlat += mod.value;
-            }
-        }
-
-        foreach (var mod in percentMods)
-        {
-            if (mod.statType == statType)
-            {
-                totalPercent += mod.value;
-            }
-        }
-
-        float modifiedStat = (stat + totalFlat) * (1f + totalPercent);
-
-        return Mathf.RoundToInt(Mathf.Max(MIN_STAT_VALUE, modifiedStat));
-    }
-
-    // Get combat multiplier
-    public float GetCombatMultiplier(CombatModifierType modType, BattleContext context)
-    {
-        var flatMods = new List<FlatStatModifier>();
-        var percentMods = new List<PercentStatModifier>();
-        var combatMods = new List<CombatModifier>();
-        
-        GetAllModifiers(context, flatMods, percentMods, combatMods);
-        
-        float totalPercent = 0f;
-        foreach (var mod in combatMods)
-        {
-            if (mod.modifierType == modType)
-            {
-                totalPercent += mod.value;
-            }
-        }
-
-        return 1f + totalPercent;
+        // From statuses (if you add them later)
+        // Statuses.CollectCombatModifiers(this, context, mods);
     }
 
     public float Compare_stat_to_average(StatType stat)
@@ -341,18 +340,18 @@ public class Creature : ISerializationCallbackReceiver
         {
             if (learnableAction.Level <= Level)
             {
-                    if (learnableAction.Action.Category == ActionCategory.Core)
-                    {
-                        KnownCoreActions.Add(new CreatureAction(learnableAction.Action));
-                    }
-                    else if (learnableAction.Action.Category == ActionCategory.Empowered)
-                    {
-                        KnownEmpoweredActions.Add(new CreatureAction(learnableAction.Action));
-                    }
-                    else if (learnableAction.Action.Category == ActionCategory.Mastery)
-                    {
-                        KnownMasteryActions.Add(new CreatureAction(learnableAction.Action));
-                    }
+                if (learnableAction.Action.Category == ActionCategory.Core)
+                {
+                    KnownCoreActions.Add(new CreatureAction(learnableAction.Action));
+                }
+                else if (learnableAction.Action.Category == ActionCategory.Empowered)
+                {
+                    KnownEmpoweredActions.Add(new CreatureAction(learnableAction.Action));
+                }
+                else if (learnableAction.Action.Category == ActionCategory.Mastery)
+                {
+                    KnownMasteryActions.Add(new CreatureAction(learnableAction.Action));
+                }
             }
         }
     }
@@ -372,14 +371,14 @@ public class Creature : ISerializationCallbackReceiver
                     {
                         EquippedCoreActions[0] = currentAction; // Equip last learned Physical Attack Core Action
                     }
-                } 
+                }
                 else if (currentAction.Action.Source == ActionSource.Magical && currentAction.Action.ActionClass == ActionClass.Attack)
                 {
                     if (EquippedCoreActions[1] == null)
                     {
                         EquippedCoreActions[1] = currentAction; // Equip last learned Magical Attack Core Action
                     }
-                } 
+                }
                 else if (currentAction.Action.ActionClass == ActionClass.Support)
                 {
                     if (EquippedCoreActions[2] == null)
@@ -404,7 +403,7 @@ public class Creature : ISerializationCallbackReceiver
             }
         }
 
-        if (KnownMasteryActions.Count > 0) 
+        if (KnownMasteryActions.Count > 0)
         {
             int i = KnownMasteryActions.Count - 1;
             int slot = 0;
@@ -420,40 +419,36 @@ public class Creature : ISerializationCallbackReceiver
 
     private void Defeated()
     {
-        IsDefeated = true;
+        isDefeated = true;
+        OnDefeated?.Invoke();
     }
 
     private void Revive()
     {
-        IsDefeated = false;
+        isDefeated = false;
     }
 
     public void RollInitiative()
     {
-        Initiative = Random.Range(Speed / 2, Speed);
+        Initiative = UnityEngine.Random.Range(Speed / 2, Speed);
     }
 
-    public void RemoveHP(int amount)
+    public void TakeDamage(int amount)
     {
-        if (amount < 0)
-        {
-            amount = -amount;
-        }
-        if (amount > HP)
-        {
-            HP = 0;
-        }
-        else
-        {
-            HP -= amount;
-        }
-        if (HP <= 0)
+        if (amount < 0) amount = -amount;
+
+        int previousHP = HP;
+        currentHP = Mathf.Max(0, HP - amount);
+
+        OnHPChanged?.Invoke(HP, MaxHP);
+
+        if (HP <= 0 && !IsDefeated)
         {
             Defeated();
         }
     }
 
-    public void AddHP(int amount)
+    public void Heal(int amount)
     {
         if (amount < 0)
         {
@@ -461,11 +456,11 @@ public class Creature : ISerializationCallbackReceiver
         }
         if (amount + HP > MaxHP)
         {
-            HP = MaxHP;
-        } 
+           currentHP = MaxHP;
+        }
         else
         {
-            HP += amount;
+            currentHP += amount;
         }
     }
     public void RemoveEnergy(int amount)
@@ -476,11 +471,11 @@ public class Creature : ISerializationCallbackReceiver
         }
         if (amount > Energy)
         {
-            Energy = 0;
+            currentEnergy = 0;
         }
         else
         {
-            Energy -= amount;
+            currentEnergy -= amount;
         }
     }
 
@@ -492,11 +487,11 @@ public class Creature : ISerializationCallbackReceiver
         }
         if (amount + Energy > MaxEnergy)
         {
-            Energy = MaxEnergy;
+            currentEnergy = MaxEnergy;
         }
         else
         {
-            Energy += amount;
+            currentEnergy += amount;
         }
     }
 
@@ -552,8 +547,8 @@ public class Creature : ISerializationCallbackReceiver
     }
 
     public bool IsWounded()
-    { 
-        return (GetHPAsPercentage() < HEALTHY_THRESHOLD); 
+    {
+        return (GetHPAsPercentage() < HEALTHY_THRESHOLD);
     }
     public bool IsHealthy()
     {
@@ -597,7 +592,27 @@ public class Creature : ISerializationCallbackReceiver
 
     private void LevelUp()
     {
-        // TODO
+        int oldMaxHP = MaxHP;
+        int oldMaxEnergy = MaxEnergy;
+
+        level++;
+        Stats.MarkBaseStatsDirty();
+
+        // Increase HP and Energy based on new max values
+        int hpIncrease = MaxHP - oldMaxHP;
+        int energyIncrease = Mathf.CeilToInt((MaxEnergy - oldMaxEnergy) * StartingEnergy);
+
+        HP += hpIncrease;
+        Energy += energyIncrease;
+
+        OnLevelUp?.Invoke();
+
+        Debug.Log($"{Nickname} leveled up to {level}! HP +{hpIncrease}, Energy +{energyIncrease}");
+
+    }
+
+    public bool IsTurnActive()
+    {
+        return true;
     }
 }
-
