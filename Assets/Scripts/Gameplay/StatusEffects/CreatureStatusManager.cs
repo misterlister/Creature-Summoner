@@ -1,18 +1,17 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
 namespace Game.Statuses
 {
-    public class CreatureStatusManager : MonoBehaviour
+    public class CreatureStatusManager
     {
-        private Creature creature;
+        private readonly Creature creature;
         private Dictionary<StatusType, StatusEffect> activeStatuses;
 
-        void Awake()
+        public CreatureStatusManager(Creature owner)
         {
-            creature = GetComponent<Creature>();
+            creature = owner;
             activeStatuses = new Dictionary<StatusType, StatusEffect>();
         }
 
