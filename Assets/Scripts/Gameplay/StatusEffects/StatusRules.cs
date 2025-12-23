@@ -59,5 +59,40 @@ namespace Game.Statuses
 
             return category;
         }
+
+        private static readonly Dictionary<StatusType, StatType> statusToStat =
+            new()
+            {
+                { StatusType.Empowered, StatType.Strength },
+                { StatusType.Weakened, StatType.Strength },
+
+                { StatusType.Enchanted, StatType.Magic },
+                { StatusType.Hexed, StatType.Magic },
+
+                { StatusType.Honed, StatType.Skill },
+                { StatusType.Hindered, StatType.Skill },
+
+                { StatusType.Hastened, StatType.Speed },
+                { StatusType.Slowed, StatType.Speed },
+
+                { StatusType.Fortified, StatType.Defense },
+                { StatusType.Sundered, StatType.Defense },
+
+                { StatusType.Warded, StatType.Resistance },
+                { StatusType.Cursed, StatType.Resistance },
+            };
+
+        public static StatType GetAffectedStat(StatusType type)
+        {
+            if (!statusToStat.TryGetValue(type, out var stat))
+            {
+                throw new ArgumentException(
+                    $"Status '{type}' is not a stat modifier.",
+                    nameof(type)
+                );
+            }
+
+            return stat;
+        }
     }
 }
