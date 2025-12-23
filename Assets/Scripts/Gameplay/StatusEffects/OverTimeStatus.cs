@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace Game.Statuses
 {
     public class OverTimeStatus : StatusEffect
@@ -10,6 +12,12 @@ namespace Game.Statuses
             Schedule = new int[StatusConstants.MaxDuration];
 
             int duration = isCrit ? StatusConstants.MaxDuration : StatusConstants.StatusDuration;
+
+            if (amount < 1)
+            {
+                Debug.LogError($"Attempted to create {type} with {amount} damage/healing. Clamping to 1.");
+                amount = 1;
+            }
 
             for (int i = 0; i < Schedule.Length; i++)
             {
@@ -41,12 +49,14 @@ namespace Game.Statuses
         {
             int value = Schedule[0];
 
+            /*
             // Double damage if burning creature moved or bleeding creature was hit
             if ((Type == StatusType.Burning && !target.MovedThisTurn)
                 || Type == StatusType.Bleeding && target.WasHitThisTurn)
             {
                 value *= 2;
             }
+            */
 
             switch (Type)
             {
@@ -56,10 +66,10 @@ namespace Game.Statuses
                     target.TakeDamage(value);
                     break;
                 case StatusType.Energized:
-                    target.RestoreEnergy(value);
+                    target.AddEnergy(value);
                     break;
                 case StatusType.Regenerating:
-                    target.RestoreHealth(value);
+                    target.TakeDamage(value);
                     break;
             }
 
