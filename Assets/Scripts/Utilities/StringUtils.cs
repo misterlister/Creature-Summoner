@@ -1,4 +1,4 @@
-using UnityEngine;
+using Game.Traits.Triggers;
 
 public static class StringUtils
 {
