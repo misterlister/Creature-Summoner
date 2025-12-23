@@ -150,9 +150,6 @@ public class BattleSlot : MonoBehaviour
             originalPos = image.transform.localPosition;
 
             nameField.text = Creature.Nickname;
-
-            Creature.Energy = (int)(Creature.StartingEnergy * Creature.MaxEnergy);
-
             energyBar.gameObject.SetActive(IsPlayerSlot);
             xpBar.gameObject.SetActive(IsPlayerSlot);
 
@@ -397,11 +394,11 @@ public void ToggleStatusWindow(bool enabled)
     {
         if (amount > 0)
         {
-            Creature.AddHP(amount);
+            Creature.Heal(amount);
         }
         else
         {
-            Creature.RemoveHP(-amount);
+            Creature.TakeDamage(-amount);
         }
         
         HPUpdates.Enqueue(MathUtils.NormalizeInt(Creature.HP, Creature.MaxHP));
