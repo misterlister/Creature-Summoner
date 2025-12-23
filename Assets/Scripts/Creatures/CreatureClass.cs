@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Game.Traits;
 
 [CreateAssetMenu(fileName = "NewCreatureClass", menuName = "Classes/Create a new Base Class")]
 public class CreatureClass : ScriptableObject
