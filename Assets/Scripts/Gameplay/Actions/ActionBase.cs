@@ -50,7 +50,7 @@ public class ActionBase : ScriptableObject
     public int CalculateAccuracy(Creature attacker, Creature defender)
     {
         float ratio = ((attacker.Skill - (float)defender.Speed) / defender.Speed);
-        float hitChance = accuracy * (1 + AccuracyAdjustmentFactor * ratio);
+        float hitChance = accuracy * (1 + ACCURACY_ADJUSTMENT_FACTOR * ratio);
         float clampedHitChance = Mathf.Clamp(hitChance, MIN_HIT, MAX_HIT);
         if (DEBUG)
         {
@@ -66,7 +66,7 @@ public class ActionBase : ScriptableObject
         int defenseStat = (Source == ActionSource.Magical)? defender.Defense : defender.Resistance;
         int statusResist = defenseStat + defender.Energy;
         float ratio = ((attacker.Skill - (float)statusResist) / statusResist);
-        float statusChance = accuracy * (1 + StatusResistAdjustmentFactor * ratio);
+        float statusChance = accuracy * (1 + STATUS_RESIST_ADJUSTMENT_FACTOR * ratio);
         float clampedStatusChance = Mathf.Clamp(statusChance, MIN_HIT, MAX_HIT);
         if (DEBUG)
         {
