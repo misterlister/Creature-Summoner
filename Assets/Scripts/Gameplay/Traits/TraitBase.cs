@@ -37,6 +37,7 @@ namespace Game.Traits
                 mods.Add(new CombatModifier(
                     passiveMod.combatModifierType,
                     passiveMod.value,
+                    passiveMod.mode,
                     traitName,
                     this
                 ));

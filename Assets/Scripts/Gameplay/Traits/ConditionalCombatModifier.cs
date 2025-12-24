@@ -12,6 +12,7 @@ namespace Game.Traits
         [Space]
         [SerializeField] private CombatModifierType combatModifierType;
         [SerializeField] private int value;
+        [SerializeField] private CombatModifierMode mode;
         [Space]
         [SerializeReference] private TraitConditional conditional;
 
@@ -21,7 +22,7 @@ namespace Game.Traits
         {
             if (conditional == null || conditional.CheckConditional(new BattleEventData(creature, context)))
             {
-                modifier = new CombatModifier(combatModifierType, value, sourceName, sourceObject);
+                modifier = new CombatModifier(combatModifierType, value, mode, sourceName, sourceObject);
                 return true;
             }
             modifier = null;

@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Game.Battle.Modifiers;
 
 namespace Game.Traits
 {
@@ -9,6 +10,7 @@ namespace Game.Traits
         [TextArea]
         public string description;
         public CombatModifierType combatModifierType;
+        public CombatModifierMode mode;
         public int value;
     }
 }
