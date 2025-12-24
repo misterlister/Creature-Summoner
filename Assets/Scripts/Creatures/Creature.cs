@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using static GameConstants;
 using Game.Traits;
+using Game.Creatures.Managers;
 
 [System.Serializable]
 public class Creature : ISerializationCallbackReceiver
@@ -38,7 +39,7 @@ public class Creature : ISerializationCallbackReceiver
         }
     }
     public CreatureStatusManager Statuses { get; private set; }
-    public CreatureStats Stats { get; private set; }
+    public StatManager Stats { get; private set; }
     public CreatureCombatModifiers CombatModifiers { get; private set; }
 
     private int currentHP;
@@ -147,7 +148,7 @@ public class Creature : ISerializationCallbackReceiver
 
     public void Init()
     {
-        Stats = new CreatureStats(this);
+        Stats = new StatManager(this);
         Statuses = new CreatureStatusManager(this);
         CombatModifiers = new CreatureCombatModifiers(this);
         currentHP = MaxHP;
