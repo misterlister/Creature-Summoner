@@ -366,21 +366,21 @@ public class Creature : ISerializationCallbackReceiver
             while (i >= 0 && (EquippedCoreActions[0] == null || EquippedCoreActions[1] == null || EquippedCoreActions[2] == null))
             {
                 CreatureAction currentAction = KnownCoreActions[i];
-                if (currentAction.Action.Source == ActionSource.Physical && currentAction.Action.ActionRole != ActionRole.Defensive)
+                if (currentAction.Action.Source == ActionSource.Physical && currentAction.Action.Role != ActionRole.Defensive)
                 {
                     if (EquippedCoreActions[0] == null)
                     {
                         EquippedCoreActions[0] = currentAction; // Equip last learned Physical non-Defensive Core Action
                     }
                 }
-                else if (currentAction.Action.Source == ActionSource.Magical && currentAction.Action.ActionRole != ActionRole.Defensive)
+                else if (currentAction.Action.Source == ActionSource.Magical && currentAction.Action.Role != ActionRole.Defensive)
                 {
                     if (EquippedCoreActions[1] == null)
                     {
                         EquippedCoreActions[1] = currentAction; // Equip last learned Magical non-Defensive Core Action
                     }
                 }
-                else if (currentAction.Action.ActionRole == ActionRole.Defensive)
+                else if (currentAction.Action.Role == ActionRole.Defensive)
                 {
                     if (EquippedCoreActions[2] == null)
                     {

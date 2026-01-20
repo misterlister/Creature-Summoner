@@ -22,7 +22,7 @@ public class ActionBase : ScriptableObject
     [SerializeField] CreatureElement element;
     [SerializeField] ActionSlotType slotType;
     [SerializeField] ActionSource source;
-    [SerializeField] ActionRole actionRole;
+    [SerializeField] ActionRole role;
     [SerializeField] ActionRange range;
     [SerializeField] int energyCost = 0;
     [SerializeField] int energyGain = 0;
@@ -36,7 +36,7 @@ public class ActionBase : ScriptableObject
     public CreatureElement Element => element;
     public ActionSlotType SlotType => slotType;
     public ActionSource Source => source;
-    public ActionRole ActionRole => actionRole;
+    public ActionRole Role => role;
     public int Power => power;
     public int Accuracy => accuracy;
     public ActionRange Range => range;
@@ -179,7 +179,7 @@ public class ActionBase : ScriptableObject
             Debug.Log($"-------attacker: {attacker.Creature.Nickname}-------");
         }
 
-        if (actionRole == ActionRole.Attack)
+        if (role == ActionRole.Attack)
         {
             return UseOffensiveAction(attacker, defender);
         }
