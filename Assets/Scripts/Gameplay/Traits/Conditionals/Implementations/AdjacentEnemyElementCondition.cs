@@ -4,22 +4,22 @@ using System;
 namespace Game.Traits.Conditionals
 {
     [Serializable]
-    public class AdjacentEnemyTypeCondition : TraitConditional
+    public class AdjacentEnemyElementCondition : TraitConditional
     {
-        [SerializeField] private CreatureType requiredType;
+        [SerializeField] private CreatureElement requiredElement;
 
         public override bool CheckConditional(BattleEventData eventData)
         {
             if (eventData.SourceCreature == null || eventData.SourceCreature.BattleSlot == null)
             {
-                Debug.LogWarning("AdjacentTypeEnemyCondition: SourceCreature or BattleSlot is null in event data.");
+                Debug.LogWarning("AdjacentElementEnemyCondition: SourceCreature or BattleSlot is null in event data.");
                 return false;
             }
             var adjacentSlots = eventData.SourceCreature.BattleSlot.GetAdjacentSlots();
             foreach (var slot in adjacentSlots)
             {
                 var creature = slot.Creature;
-                if (creature != null && creature != eventData.SourceCreature && creature.IsType(requiredType) && creature.IsEnemy(eventData.SourceCreature))
+                if (creature != null && creature != eventData.SourceCreature && creature.IsElement(requiredElement) && creature.IsEnemy(eventData.SourceCreature))
                 {
                     return true;
                 }
@@ -29,7 +29,7 @@ namespace Game.Traits.Conditionals
 
         public override string GetDescription()
         {
-            return $"when adjacent to {requiredType}-type enemy";
+            return $"when adjacent to {requiredElement}-element enemy";
         }
     }
 }

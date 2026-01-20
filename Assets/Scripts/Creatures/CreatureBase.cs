@@ -10,8 +10,8 @@ public class CreatureBase : ScriptableObject
     [TextArea]
     [SerializeField] string description;
     [SerializeField] Sprite frontSprite;
-    [SerializeField] CreatureType type1;
-    [SerializeField] CreatureType type2;
+    [SerializeField] CreatureElement element1;
+    [SerializeField] CreatureElement element2;
     [SerializeField] CreatureSize size;
 
     // Base Stats
@@ -29,8 +29,8 @@ public class CreatureBase : ScriptableObject
     public string CreatureName => creatureName;
     public string Description => description;
     public Sprite FrontSprite => frontSprite;
-    public CreatureType Type1 => type1;
-    public CreatureType Type2 => type2;
+    public CreatureElement Element1 => element1;
+    public CreatureElement Element2 => element2;
     public CreatureSize Size => size;
     public int HP => hp;
     public int Energy => energy;

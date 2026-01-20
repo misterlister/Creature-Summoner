@@ -60,20 +60,20 @@ public class StatRow : MonoBehaviour
         }
     }
 
-    public void UpdateType(CreatureType type1, CreatureType type2)
+    public void UpdateElement(CreatureElement element1, CreatureElement element2)
     {
-        firstValue.text = type1.ToString();
-        firstValue.color = GameConstants.TypeColours[type1];
+        firstValue.text = element1.ToString();
+        firstValue.color = GameConstants.ElementColours[element1];
 
-        if (type1 == type2 || type2 == CreatureType.None)
+        if (element1 == element2 || element2 == CreatureElement.None)
         {
             secondValue.gameObject.SetActive(false);
         }
         else
         {
             secondValue.gameObject.SetActive(true);
-            secondValue.text = type2.ToString();
-            secondValue.color = GameConstants.TypeColours[type2];
+            secondValue.text = element2.ToString();
+            secondValue.color = GameConstants.ElementColours[element2];
         }
     }
 

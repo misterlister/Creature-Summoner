@@ -345,7 +345,7 @@ public void ToggleStatusWindow(bool enabled)
         if (Creature != null)
         {
             statRows[0].GetComponent<StatRow>().UpdateSingleText(Creature.Species.CreatureName, Color.blue);
-            statRows[1].GetComponent<StatRow>().UpdateType(Creature.Species.Type1, Creature.Species.Type2);
+            statRows[1].GetComponent<StatRow>().UpdateElement(Creature.Species.Element1, Creature.Species.Element2);
             statRows[2].GetComponent<StatRow>().UpdateSingleText(Creature.Level.ToString(), Color.black);
             statRows[3].GetComponent<StatRow>().UpdateSingleText(Creature.ClassName, Color.magenta);
             statRows[4].GetComponent<StatRow>().UpdateResource(Creature.MaxHP, Creature.HP, GameConstants.HP_COLOUR);

@@ -19,10 +19,10 @@ public class ActionBase : ScriptableObject
     bool DEBUG = false;
     //
 
-    [SerializeField] CreatureType type;
-    [SerializeField] ActionCategory category;
+    [SerializeField] CreatureElement element;
+    [SerializeField] ActionSlotType slotType;
     [SerializeField] ActionSource source;
-    [SerializeField] ActionClass actionClass;
+    [SerializeField] ActionRole actionRole;
     [SerializeField] ActionRange range;
     [SerializeField] int energyCost = 0;
     [SerializeField] int energyGain = 0;
@@ -33,10 +33,10 @@ public class ActionBase : ScriptableObject
     [SerializeField] bool preparation = false;
     [SerializeField] List<ActionTag> tags;
 
-    public CreatureType Type => type;
-    public ActionCategory Category => category;
+    public CreatureElement Element => element;
+    public ActionSlotType SlotType => slotType;
     public ActionSource Source => source;
-    public ActionClass ActionClass => actionClass;
+    public ActionRole ActionRole => actionRole;
     public int Power => power;
     public int Accuracy => accuracy;
     public ActionRange Range => range;
@@ -179,7 +179,7 @@ public class ActionBase : ScriptableObject
             Debug.Log($"-------attacker: {attacker.Creature.Nickname}-------");
         }
 
-        if (actionClass == ActionClass.Attack)
+        if (actionRole == ActionRole.Attack)
         {
             return UseOffensiveAction(attacker, defender);
         }
@@ -207,17 +207,17 @@ public class ActionBase : ScriptableObject
         int damage = 0;
 
         // Get the effectiveness category
-        Effectiveness effectRating = TypeChart.GetEffectiveness(
-            type, 
-            attacker.Creature.IsSingleType(), 
-            defender.Creature.Species.Type1, 
-            defender.Creature.Species.Type2
+        Effectiveness effectRating = ElementalEffectivenessChart.GetEffectiveness(
+            element, 
+            attacker.Creature.IsSingleElement(), 
+            defender.Creature.Species.Element1, 
+            defender.Creature.Species.Element2
             );
 
         actionDetails.EffectRating = effectRating;
 
         // Get the effectiveness modifier based on the category
-        float effectMod = TypeChart.EffectiveMod[effectRating];
+        float effectMod = ElementalEffectivenessChart.EffectiveMod[effectRating];
 
         // Check if the attack was a hit or glancing blow
         if (hit)
@@ -400,9 +400,9 @@ public class ActionBase : ScriptableObject
         return source == ActionSource.Physical;
     }
 
-    public bool IsType(CreatureType checkType)
+    public bool IsElement(CreatureElement checkType)
     {
-        return type == checkType;
+        return element == checkType;
     }
 }
 

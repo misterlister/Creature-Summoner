@@ -51,7 +51,7 @@ public static class GameConstants
 
     public const float DEFAULT_STARTING_ENERGY = 0.25f;
 
-    // TYPE EFFECTIVENESS CONSTANTS
+    // ELEMENTAL EFFECTIVENESS CONSTANTS
 
     public const float V_EFF_SINGLE = 4f;
     public const float V_EFF_DUAL = 2.25f;
@@ -64,21 +64,21 @@ public static class GameConstants
     public const float V_INEFF_SINGLE = 0.25f;
 
 
-    public static readonly Dictionary<CreatureType, Color> TypeColours = new Dictionary<CreatureType, Color>()
+    public static readonly Dictionary<CreatureElement, Color> ElementColours = new Dictionary<CreatureElement, Color>()
     {
-        { CreatureType.Fire, new Color(1f, 0.3f, 0.3f) },           // Red
-        { CreatureType.Water, new Color(0.3f, 0.5f, 1f) },          // Blue
-        { CreatureType.Earth, new Color(0.6f, 0.4f, 0.2f) },        // Brown
-        { CreatureType.Air, new Color(0.7f, 0.9f, 1f) },            // Light Blue
-        { CreatureType.Beast, new Color(0.8f, 0.6f, 0.4f) },        // Tan
-        { CreatureType.Plant, new Color(0.3f, 0.8f, 0.3f) },        // Green
-        { CreatureType.Electric, new Color(1f, 1f, 0.3f) },         // Yellow
-        { CreatureType.Radiant, new Color(1f, 0.9f, 0.6f) },        // Light Yellow
-        { CreatureType.Necrotic, new Color(0.25f, 0.05f, 0.25f) },  // Dark Purple
-        { CreatureType.Arcane, new Color(0.6f, 0.4f, 0.8f) },       // Violet
-        { CreatureType.Metal, new Color(0.7f, 0.7f, 0.7f) },        // Grey
-        { CreatureType.Cold, new Color(0.4f, 1f, 0.8f) },           // Cyan
-        { CreatureType.None, new Color(0f, 0f, 0f) }                // Black
+        { CreatureElement.Fire, new Color(1f, 0.3f, 0.3f) },           // Red
+        { CreatureElement.Water, new Color(0.3f, 0.5f, 1f) },          // Blue
+        { CreatureElement.Earth, new Color(0.6f, 0.4f, 0.2f) },        // Brown
+        { CreatureElement.Air, new Color(0.7f, 0.9f, 1f) },            // Light Blue
+        { CreatureElement.Beast, new Color(0.8f, 0.6f, 0.4f) },        // Tan
+        { CreatureElement.Plant, new Color(0.3f, 0.8f, 0.3f) },        // Green
+        { CreatureElement.Electric, new Color(1f, 1f, 0.3f) },         // Yellow
+        { CreatureElement.Radiant, new Color(1f, 0.9f, 0.6f) },        // Light Yellow
+        { CreatureElement.Necrotic, new Color(0.25f, 0.05f, 0.25f) },  // Dark Purple
+        { CreatureElement.Arcane, new Color(0.6f, 0.4f, 0.8f) },       // Violet
+        { CreatureElement.Metal, new Color(0.7f, 0.7f, 0.7f) },        // Grey
+        { CreatureElement.Cold, new Color(0.4f, 1f, 0.8f) },           // Cyan
+        { CreatureElement.None, new Color(0f, 0f, 0f) }                // Black
     };
 
     public static readonly Color HP_COLOUR = new Color(0.5f, 1f, 0.5f);
@@ -180,7 +180,7 @@ public enum CombatModifierType
     HealingGivenMod,
     HealingReceivedMod,
 
-    // Type Resistances
+    // Elemental Resistances
     FireResist,
     RadiantResist,
     WaterResist,
@@ -207,18 +207,18 @@ public enum ClassStatBuffLevel
 
 public enum ActionSource
 {
-    None,
     Physical,
     Magical
 }
 
-public enum ActionClass
+public enum ActionRole
 {
     Attack,
-    Support
+    Support,
+    Defensive
 }
 
-public enum ActionCategory
+public enum ActionSlotType
 {
     Core,
     Empowered,

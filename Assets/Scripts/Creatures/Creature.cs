@@ -341,15 +341,15 @@ public class Creature : ISerializationCallbackReceiver
         {
             if (learnableAction.Level <= Level)
             {
-                if (learnableAction.Action.Category == ActionCategory.Core)
+                if (learnableAction.Action.SlotType == ActionSlotType.Core)
                 {
                     KnownCoreActions.Add(new CreatureAction(learnableAction.Action));
                 }
-                else if (learnableAction.Action.Category == ActionCategory.Empowered)
+                else if (learnableAction.Action.SlotType == ActionSlotType.Empowered)
                 {
                     KnownEmpoweredActions.Add(new CreatureAction(learnableAction.Action));
                 }
-                else if (learnableAction.Action.Category == ActionCategory.Mastery)
+                else if (learnableAction.Action.SlotType == ActionSlotType.Mastery)
                 {
                     KnownMasteryActions.Add(new CreatureAction(learnableAction.Action));
                 }
@@ -366,25 +366,25 @@ public class Creature : ISerializationCallbackReceiver
             while (i >= 0 && (EquippedCoreActions[0] == null || EquippedCoreActions[1] == null || EquippedCoreActions[2] == null))
             {
                 CreatureAction currentAction = KnownCoreActions[i];
-                if (currentAction.Action.Source == ActionSource.Physical && currentAction.Action.ActionClass == ActionClass.Attack)
+                if (currentAction.Action.Source == ActionSource.Physical && currentAction.Action.ActionRole != ActionRole.Defensive)
                 {
                     if (EquippedCoreActions[0] == null)
                     {
-                        EquippedCoreActions[0] = currentAction; // Equip last learned Physical Attack Core Action
+                        EquippedCoreActions[0] = currentAction; // Equip last learned Physical non-Defensive Core Action
                     }
                 }
-                else if (currentAction.Action.Source == ActionSource.Magical && currentAction.Action.ActionClass == ActionClass.Attack)
+                else if (currentAction.Action.Source == ActionSource.Magical && currentAction.Action.ActionRole != ActionRole.Defensive)
                 {
                     if (EquippedCoreActions[1] == null)
                     {
-                        EquippedCoreActions[1] = currentAction; // Equip last learned Magical Attack Core Action
+                        EquippedCoreActions[1] = currentAction; // Equip last learned Magical non-Defensive Core Action
                     }
                 }
-                else if (currentAction.Action.ActionClass == ActionClass.Support)
+                else if (currentAction.Action.ActionRole == ActionRole.Defensive)
                 {
                     if (EquippedCoreActions[2] == null)
                     {
-                        EquippedCoreActions[2] = currentAction; // Equip last learned Supoort Core Action
+                        EquippedCoreActions[2] = currentAction; // Equip last learned Defensive Core Action
                     }
                 }
                 i--;
@@ -510,9 +510,9 @@ public class Creature : ISerializationCallbackReceiver
             LevelUp();
         }
     }
-    public bool IsSingleType()
+    public bool IsSingleElement()
     {
-        if (Species.Type2 == CreatureType.None || Species.Type1 == Species.Type2)
+        if (Species.Element2 == CreatureElement.None || Species.Element1 == Species.Element2)
         {
             return true;
         }
@@ -524,9 +524,9 @@ public class Creature : ISerializationCallbackReceiver
         BattleSlot = slot;
     }
 
-    public bool IsType(CreatureType type)
+    public bool IsElement(CreatureElement type)
     {
-        return (Species.Type1 == type || Species.Type2 == type);
+        return (Species.Element1 == type || Species.Element2 == type);
     }
 
     public int GetHPAsPercentage()

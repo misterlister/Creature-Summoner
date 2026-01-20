@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using static GameConstants;
 
-public enum CreatureType
+public enum CreatureElement
 {
     None,
     Air,
@@ -31,7 +31,7 @@ public enum Effectiveness
     VeryIneffectiveSingle,
 }
 
-public class TypeChart
+public class ElementalEffectivenessChart
 {
     public static Dictionary<Effectiveness, float> EffectiveMod = new Dictionary<Effectiveness, float>
     {
@@ -70,21 +70,21 @@ public class TypeChart
     };
 
     public static Effectiveness GetEffectiveness(
-        CreatureType attackType, 
-        bool singleTypeAttacker,
-        CreatureType defenseType1 = CreatureType.None, 
-        CreatureType defenseType2 = CreatureType.None
+        CreatureElement attackElement, 
+        bool singleElementAttacker,
+        CreatureElement defenseElement1 = CreatureElement.None, 
+        CreatureElement defenseElement2 = CreatureElement.None
         )
     {
-        bool singleTypeDefender = (defenseType1 == defenseType2 || defenseType2 == CreatureType.None);
-        int type1Effect = chart[(int)attackType][(int)defenseType1];
-        int type2Effect = chart[(int)attackType][(int)defenseType2];
-        int combinedEffect = type1Effect + type2Effect;
+        bool singleElementDefender = (defenseElement1 == defenseElement2 || defenseElement2 == CreatureElement.None);
+        int element1Effect = chart[(int)attackElement][(int)defenseElement1];
+        int element2Effect = chart[(int)attackElement][(int)defenseElement2];
+        int combinedEffect = element1Effect + element2Effect;
 
         switch (combinedEffect)
         {
             case -2:
-                if (singleTypeDefender)
+                if (singleElementDefender)
                 {
                     return Effectiveness.VeryIneffectiveSingle;
                 }
@@ -93,7 +93,7 @@ public class TypeChart
                     return Effectiveness.VeryIneffectiveDual;
                 }
             case -1:
-                if (singleTypeDefender)
+                if (singleElementDefender)
                 {
                     return Effectiveness.IneffectiveSingle;
                 }
@@ -102,7 +102,7 @@ public class TypeChart
                     return Effectiveness.IneffectiveDual;
                 }
             case 1:
-                if (singleTypeAttacker)
+                if (singleElementAttacker)
                 {
                     return Effectiveness.EffectiveSingle;
                 }
@@ -111,7 +111,7 @@ public class TypeChart
                     return Effectiveness.EffectiveDual;
                 }
             case 2:
-                if (singleTypeAttacker)
+                if (singleElementAttacker)
                 {
                     return Effectiveness.VeryEffectiveSingle;
                 }

@@ -9,8 +9,8 @@ public class BattleContext
     public int TurnNumber { get; private set; }
     public bool IsPlayerTurn { get; private set; }
 
-    public List<Creature> GetAlliesOfType(Creature creature, CreatureType type)
+    public List<Creature> GetAlliesOfElement(Creature creature, CreatureElement type)
     {
-        return AllCreatures.Where(c => c != creature && c.IsType(type)).ToList();
+        return AllCreatures.Where(c => c != creature && c.IsElement(type)).ToList();
     }
 }

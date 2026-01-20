@@ -17,7 +17,7 @@ public class BattleDialogBox : MonoBehaviour
     [SerializeField] List<TextMeshProUGUI> actionCategoryText;
     [SerializeField] List<TextMeshProUGUI> actionText;
 
-    [SerializeField] TextMeshProUGUI actionType;
+    [SerializeField] TextMeshProUGUI actionElement;
     [SerializeField] TextMeshProUGUI actionSource;
     [SerializeField] TextMeshProUGUI actionRange;
     [SerializeField] TextMeshProUGUI actionPower;
@@ -139,7 +139,7 @@ public class BattleDialogBox : MonoBehaviour
         {
             EnableDialogText(false);
             actionDetails.SetActive(true);
-            actionType.text = $"Type: {action.Type}";
+            actionElement.text = $"Element: {action.Element}";
             actionSource.text = $"{action.Source}";
             actionRange.text = action.Range.ToString();
             actionPower.text = $"Power: {action.Power}";
@@ -161,15 +161,15 @@ public class BattleDialogBox : MonoBehaviour
             int accuracy = (attacker == null || defender == null) ? action.Accuracy : action.CalculateAccuracy(attacker, defender);
             actionAccuracy.text = $"Accuracy: {accuracy}%";
 
-            if (action.Category == ActionCategory.Core)
+            if (action.SlotType == ActionSlotType.Core)
             {
                 actionEnergy.text = $"Energy Gain: {action.EnergyGain}";
             }
-            else if (action.Category == ActionCategory.Empowered)
+            else if (action.SlotType == ActionSlotType.Empowered)
             {
                 actionEnergy.text = $"Energy Cost: {action.EnergyCost}";
             }
-            else if (action.Category == ActionCategory.Mastery)
+            else if (action.SlotType == ActionSlotType.Mastery)
             {
                 actionEnergy.text = $"Mastery Cost: {action.EnergyCost}";
             }
