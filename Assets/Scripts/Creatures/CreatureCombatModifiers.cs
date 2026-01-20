@@ -30,6 +30,34 @@ public class CreatureCombatModifiers
         } 
     }
 
+    public float GetCombatModifier(CombatModifierType type, BattleContext context)
+    {
+        if (modsDirty)
+        {
+            RecachePassiveModifiers();
+        }
+
+        float additiveMods = 0f;
+        float multiplicativeMods = 1f;
+
+        foreach (var mod in cachedPassiveMods)
+        {
+            if (mod.Type == type)
+            {
+                if (mod.Mode == CombatModifierMode.Additive)
+                {
+                    additiveMods += mod.Value;
+                }
+                else if (mod.Mode == CombatModifierMode.Multiplicative)
+                {
+                    multiplicativeMods *= (1 + (mod.Value / 100f));
+                }
+            }
+        }
+
+        return (1 + (additiveMods / 100f)) * multiplicativeMods;
+    }
+
     public void MarkDirty()
     {
         modsDirty = true;
