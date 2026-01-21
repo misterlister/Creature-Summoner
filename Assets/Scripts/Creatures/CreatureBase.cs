@@ -1,6 +1,6 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Game.Traits;
 
 [CreateAssetMenu(fileName = "Creatures", menuName = "Creatures/Create new creature")]
 
@@ -25,6 +25,7 @@ public class CreatureBase : ScriptableObject
     [SerializeField] int resistance;
 
     [SerializeField] List<LearnableAction> learnableActions;
+    [SerializeField] List<LearnableTrait> learnableTraits;
 
     public string CreatureName => creatureName;
     public string Description => description;
@@ -41,6 +42,7 @@ public class CreatureBase : ScriptableObject
     public int Defense => defense;
     public int Resistance => resistance;
     public List<LearnableAction> LearnableActions => learnableActions;
+    public List<LearnableTrait> LearnableTraits => learnableTraits;
 }
 
 
