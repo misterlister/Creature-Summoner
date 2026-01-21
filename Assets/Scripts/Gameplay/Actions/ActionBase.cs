@@ -24,8 +24,7 @@ public class ActionBase : ScriptableObject
     [SerializeField] ActionSource source;
     [SerializeField] ActionRole role;
     [SerializeField] ActionRange range;
-    [SerializeField] int energyCost = 0;
-    [SerializeField] int energyGain = 0;
+    [SerializeField] int energyValue = 0;
     [SerializeField] int power = 40;
     [SerializeField] int accuracy = 90;
     [SerializeField] int baseCrit = 5;
@@ -44,8 +43,7 @@ public class ActionBase : ScriptableObject
     public AOE AreaOfEffect => areaOfEffect;
     public int BaseCrit => baseCrit;
     public List<ActionTag> Tags => tags;
-    public int EnergyCost => energyCost;
-    public int EnergyGain => energyGain;
+    public int EnergyValue => energyValue;
 
     public int CalculateAccuracy(Creature attacker, Creature defender)
     {
@@ -350,20 +348,35 @@ public class ActionBase : ScriptableObject
 
     private int CalculateEnergyGain(Creature attacker)
     {
-        return (int)(attacker.MaxEnergy * (energyGain / 100f));
+        if (slotType != ActionSlotType.Core)
+        {
+            return 0;
+        }
+
+        return (int)(attacker.MaxEnergy * (energyValue / 100f));
     }
 
     public void PayEnergyCost(BattleSlot attacker)
     {
-        if (EnergyCost != 0)
+        if (slotType != ActionSlotType.Empowered)
         {
-            attacker.AdjustEnergy(-EnergyCost);
+            return;
+        }
+
+        if (energyValue >= 0)
+        {
+            attacker.AdjustEnergy(-energyValue);
         }
     }
 
     public void GenerateEnergy(BattleSlot attacker)
     {
-        if (EnergyGain != 0)
+        if (slotType != ActionSlotType.Core)
+        {
+            return;
+        }
+
+        if (energyValue >= 0)
         {
             attacker.AdjustEnergy(CalculateEnergyGain(attacker.Creature));
         }

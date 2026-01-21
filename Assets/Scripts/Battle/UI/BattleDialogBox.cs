@@ -163,15 +163,15 @@ public class BattleDialogBox : MonoBehaviour
 
             if (action.SlotType == ActionSlotType.Core)
             {
-                actionEnergy.text = $"Energy Gain: {action.EnergyGain}";
+                actionEnergy.text = $"Energy Gain: {action.EnergyValue}";
             }
             else if (action.SlotType == ActionSlotType.Empowered)
             {
-                actionEnergy.text = $"Energy Cost: {action.EnergyCost}";
+                actionEnergy.text = $"Energy Cost: {action.EnergyValue}";
             }
             else if (action.SlotType == ActionSlotType.Mastery)
             {
-                actionEnergy.text = $"Mastery Cost: {action.EnergyCost}";
+                actionEnergy.text = $"Mastery Cost: {action.EnergyValue}";
             }
             else
             {
@@ -199,11 +199,11 @@ public class BattleDialogBox : MonoBehaviour
         }
     }
 
-    public void SetActionNames(CreatureAction[] actions)
+    public void SetActionNames(IReadOnlyList<CreatureAction> actions)
     {
         for (int i = 0; i < actionText.Count - 1; i++)
         {
-            if (i >= actions.Length || actions[i] == null)
+            if (i >= actions.Count || actions[i] == null)
             {
                 actionText[i].text = "-";
             }
