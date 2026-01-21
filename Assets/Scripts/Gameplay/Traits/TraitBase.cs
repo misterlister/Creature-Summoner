@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Game.Traits
 {
 
-    [CreateAssetMenu(fileName = "NewTrait", menuName = "Traits/Trait")]
+    [CreateAssetMenu(fileName = "NewTrait", menuName = "Traits/Create new Trait")]
     public class TraitBase : ScriptableObject
     {
         [SerializeField] string traitName;
