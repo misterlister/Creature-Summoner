@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Game.Traits;
 
-[CreateAssetMenu(fileName = "NewCreatureClass", menuName = "Classes/Create a new Base Class")]
+[CreateAssetMenu(fileName = "NewCreatureClass", menuName = "Classes/Create new Base Class")]
 public class CreatureClass : ScriptableObject
 {
     [SerializeField] string creatureClassName;
@@ -34,7 +34,7 @@ public class CreatureClass : ScriptableObject
 
 }
 
-[CreateAssetMenu(fileName = "CreatureClass", menuName = "Classes/Create a new Specialized Class")]
+[CreateAssetMenu(fileName = "CreatureClass", menuName = "Classes/Create new Specialized Class")]
 public class SpecializedClass : CreatureClass
 {
     [SerializeField] CreatureClass baseClass;
