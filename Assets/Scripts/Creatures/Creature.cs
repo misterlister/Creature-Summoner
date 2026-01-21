@@ -7,22 +7,18 @@ using static GameConstants;
 using Game.Traits;
 using Game.Creatures.Managers;
 
-[System.Serializable]
-public class Creature : ISerializationCallbackReceiver
+public class Creature
 {
-
-    [SerializeField] CreatureBase species;
-    [SerializeField] int level;
-    [SerializeField] CreatureClassInstance currentClass;
-    [SerializeField] private List<TraitBase> traits;
+    private CreatureBase species;
+    private int level;
+    private CreatureClassInstance currentClass;
+    private List<TraitBase> traits;
 
     public CreatureBase Species => species;
     public int Level => level;
     public CreatureClassInstance CurrentClass => currentClass;
-
-    public List<CreatureClassInstance> classList;
-
     public List<TraitBase> Traits => traits;
+    public List<CreatureClassInstance> ClassList { get; private set; }
 
     private List<RuntimeTrait> runtimeTraits = new();
     public CreatureEventProxy EventProxy { get; private set; }
@@ -38,8 +34,11 @@ public class Creature : ISerializationCallbackReceiver
             return "No Class";
         }
     }
-    public CreatureStatusManager Statuses { get; private set; }
+
+    // Managers
     public StatManager Stats { get; private set; }
+    public ActionManager Actions { get; private set; }
+    public CreatureStatusManager Statuses { get; private set; }
     public CreatureCombatModifiers CombatModifiers { get; private set; }
 
     private int currentHP;
@@ -95,30 +94,25 @@ public class Creature : ISerializationCallbackReceiver
     public int Defense => Stats.GetCurrentStat(StatType.Defense);
     public int Resistance => Stats.GetCurrentStat(StatType.Resistance);
 
+    // Progression
     public int XP { get; set; }
     public int TotalXP { get; set; }
+    public int XPForNextLevel => XPSystem.GetXPForNextCreatureLevel(Level);
+
+
     public string Nickname { get; set; }
     public bool IsDefeated => isDefeated;
 
+    // REMOVE ONCE IMPLEMENTATION OF BATTLECONTEXT IS COMPLETE
     public float GlancingDamageReduction { get; set; }
-
     public float StartingEnergy { get; private set; }
-
     public float CritDamageBonus { get; set; }
     public float CritDamageResistance { get; set; }
-
-    public List<CreatureAction> KnownCoreActions { get; set; }
-    public List<CreatureAction> KnownEmpoweredActions { get; set; }
-    public List<CreatureAction> KnownMasteryActions { get; set; }
-
-    public CreatureAction[] EquippedCoreActions { get; set; }
-    public CreatureAction[] EquippedEmpoweredActions { get; set; }
-    public CreatureAction[] EquippedMasteryActions { get; set; }
+    //
 
     public int Initiative { get; set; }
     public BattleSlot BattleSlot { get; private set; }
 
-    public int XPForNextLevel => XPSystem.GetXPForNextCreatureLevel(Level);
 
     public event Action<int, int> OnHPChanged;
     public event Action<int> OnDamageTaken;
@@ -130,57 +124,76 @@ public class Creature : ISerializationCallbackReceiver
     public event Action OnLevelUp;
     public event Action OnDefeated;
     public event Action OnRevived;
-
-    // Events allow your UI or VFX systems to react when statuses change
     public event Action<StatusEffect> OnStatusAdded;
     public event Action<StatusEffect> OnStatusRemoved;
 
-    public void OnBeforeSerialize() { }
-
-    public void OnAfterDeserialize()
+    /*
+    public static Creature FromConfig(CreatureConfig config)
     {
-        // If currentClass exists but has no CreatureClass assigned, nullify it
-        if (currentClass != null && currentClass.CreatureClass == null)
+        if (config == null || config.Species == null)
         {
-            currentClass = null;
+            Debug.LogError("Invalid CreatureConfig provided");
+            return null;
         }
-    }
 
-    public void Init()
+        Creature creature = new Creature
+        {
+            species = config.Species,
+            level = Mathf.Clamp(config.Level, 1, MAX_LEVEL),
+            currentClass = config.StartingClass,
+            traits = new List<TraitBase>(config.Traits),
+            ClassList = new List<CreatureClassInstance>(config.ClassList)
+        };
+
+        creature.Nickname = string.IsNullOrEmpty(config.Nickname) 
+            ? creature.Species.CreatureName 
+            : config.Nickname;
+
+        bool hasLoadout = config.Loadout != null;
+        creature.Init(autoEquipActions: !hasLoadout);
+
+        if (hasLoadout)
+        {
+            creature.Actions.LoadActionLoadout(config.Loadout, fillEmptySlots: true);
+        }
+
+        return creature;
+    }
+    */
+
+    public void Init(bool autoEquipActions = true)
     {
+        // Initialize Managers
         Stats = new StatManager(this);
+        Actions = new ActionManager(this);
         Statuses = new CreatureStatusManager(this);
         CombatModifiers = new CreatureCombatModifiers(this);
+
+        // Set starting resources
         currentHP = MaxHP;
         currentEnergy = 0;
         isDefeated = false;
+
+        // Set XP
         XP = 0;
         TotalXP = XPSystem.GetTotalXPForCreatureLevel(Level);
 
-        //if (nickname != "")
-        //{
-        //    Nickname = nickname;
-        //} 
-        //else
-        //{
-        Nickname = species.CreatureName;
-        //}
+        if (Nickname == "")
+        { 
+            Nickname = species.CreatureName;
+        }
 
         GlancingDamageReduction = GLANCE_REDUCTION;
         StartingEnergy = DEFAULT_STARTING_ENERGY;
-
         CritDamageBonus = CRIT_DAMAGE_BONUS;
         CritDamageResistance = CRIT_DAMAGE_RESISTANCE;
 
-        KnownCoreActions = new List<CreatureAction>();
-        KnownEmpoweredActions = new List<CreatureAction>();
-        KnownMasteryActions = new List<CreatureAction>();
-        EquippedCoreActions = new CreatureAction[CORE_SLOTS];
-        EquippedEmpoweredActions = new CreatureAction[EMPOWERED_SLOTS];
-        EquippedMasteryActions = new CreatureAction[MASTERY_SLOTS];
+        Actions.InitializeKnownActions();
 
-        InitActions();
-        EquipActions();
+        if (autoEquipActions)
+        {
+            Actions.SetupDefaultEquippedActions();
+        }
     }
 
     public void InitializeBattle(BattleEventManager eventManager)
@@ -193,6 +206,19 @@ public class Creature : ISerializationCallbackReceiver
             runtimeTrait.Subscribe(EventProxy);
             runtimeTraits.Add(runtimeTrait);
         }
+    }
+
+    public void CleanupBattle()
+    {
+        foreach (var runtimeTrait in runtimeTraits)
+        {
+            runtimeTrait.Unsubscribe(EventProxy);
+        }
+
+        runtimeTraits.Clear();
+
+        EventProxy?.Cleanup();
+        EventProxy = null;
     }
 
     public void ChangeClass(CreatureClassInstance newClass)
@@ -230,19 +256,6 @@ public class Creature : ISerializationCallbackReceiver
         string energyChangeStr = energyChange >= 0 ? $"+{energyChange}" : energyChange.ToString();
         Debug.Log($"{Nickname} changed class to {currentClass.CreatureClass.CreatureClassName}! " +
                   $"HP {hpChangeStr}, Energy {energyChangeStr}");
-    }
-
-    public void CleanupBattle()
-    {
-        foreach (var runtimeTrait in runtimeTraits)
-        {
-            runtimeTrait.Unsubscribe(EventProxy);
-        }
-
-        runtimeTraits.Clear();
-
-        EventProxy?.Cleanup();
-        EventProxy = null;
     }
 
     public void AddTrait(TraitBase trait)
@@ -333,89 +346,6 @@ public class Creature : ISerializationCallbackReceiver
         }
         int averageStat = Mathf.FloorToInt(((AVERAGE_BASE_STAT * 4) * Level) / 100f) + 5;
         return (float)statVal / averageStat;
-    }
-
-    private void InitActions()
-    {
-        foreach (var learnableAction in Species.LearnableActions)
-        {
-            if (learnableAction.Level <= Level)
-            {
-                if (learnableAction.Action.SlotType == ActionSlotType.Core)
-                {
-                    KnownCoreActions.Add(new CreatureAction(learnableAction.Action));
-                }
-                else if (learnableAction.Action.SlotType == ActionSlotType.Empowered)
-                {
-                    KnownEmpoweredActions.Add(new CreatureAction(learnableAction.Action));
-                }
-                else if (learnableAction.Action.SlotType == ActionSlotType.Mastery)
-                {
-                    KnownMasteryActions.Add(new CreatureAction(learnableAction.Action));
-                }
-            }
-        }
-    }
-
-    private void EquipActions()
-    {
-        if (KnownCoreActions.Count > 0)
-        {
-            int i = KnownCoreActions.Count - 1;
-
-            while (i >= 0 && (EquippedCoreActions[0] == null || EquippedCoreActions[1] == null || EquippedCoreActions[2] == null))
-            {
-                CreatureAction currentAction = KnownCoreActions[i];
-                if (currentAction.Action.Source == ActionSource.Physical && currentAction.Action.Role != ActionRole.Defensive)
-                {
-                    if (EquippedCoreActions[0] == null)
-                    {
-                        EquippedCoreActions[0] = currentAction; // Equip last learned Physical non-Defensive Core Action
-                    }
-                }
-                else if (currentAction.Action.Source == ActionSource.Magical && currentAction.Action.Role != ActionRole.Defensive)
-                {
-                    if (EquippedCoreActions[1] == null)
-                    {
-                        EquippedCoreActions[1] = currentAction; // Equip last learned Magical non-Defensive Core Action
-                    }
-                }
-                else if (currentAction.Action.Role == ActionRole.Defensive)
-                {
-                    if (EquippedCoreActions[2] == null)
-                    {
-                        EquippedCoreActions[2] = currentAction; // Equip last learned Defensive Core Action
-                    }
-                }
-                i--;
-            }
-        }
-
-        if (KnownEmpoweredActions.Count > 0)
-        {
-            int i = KnownEmpoweredActions.Count - 1;
-            int slot = 0;
-
-            while (i >= 0 && slot < EMPOWERED_SLOTS)
-            {
-                EquippedEmpoweredActions[slot] = KnownEmpoweredActions[i];
-                slot++;
-                i--;
-            }
-        }
-
-        if (KnownMasteryActions.Count > 0)
-        {
-            int i = KnownMasteryActions.Count - 1;
-            int slot = 0;
-
-            while (i >= 0 && slot < MASTERY_SLOTS)
-            {
-                EquippedMasteryActions[slot] = KnownMasteryActions[i];
-                slot++;
-                i--;
-            }
-        }
     }
 
     private void Defeated()
@@ -510,6 +440,27 @@ public class Creature : ISerializationCallbackReceiver
             LevelUp();
         }
     }
+    private void LevelUp()
+    {
+        int oldMaxHP = MaxHP;
+        int oldMaxEnergy = MaxEnergy;
+
+        level++;
+        Stats.MarkBaseStatsDirty();
+
+        // Increase HP and Energy based on new max values
+        int hpIncrease = MaxHP - oldMaxHP;
+        int energyIncrease = Mathf.CeilToInt((MaxEnergy - oldMaxEnergy) * StartingEnergy);
+
+        HP += hpIncrease;
+        Energy += energyIncrease;
+
+        OnLevelUp?.Invoke();
+
+        Debug.Log($"{Nickname} leveled up to {level}! HP +{hpIncrease}, Energy +{energyIncrease}");
+
+    }
+
     public bool IsSingleElement()
     {
         if (Species.Element2 == CreatureElement.None || Species.Element1 == Species.Element2)
@@ -547,24 +498,10 @@ public class Creature : ISerializationCallbackReceiver
         return Mathf.CeilToInt(((float)Energy / MaxEnergy) * 100f);
     }
 
-    public bool IsWounded()
-    {
-        return (GetHPAsPercentage() < HEALTHY_THRESHOLD);
-    }
-    public bool IsHealthy()
-    {
-        return (GetHPAsPercentage() >= HEALTHY_THRESHOLD);
-    }
-
-    public bool IsEnergized()
-    {
-        return (GetEnergyAsPercentage() >= ENERGIZED_THRESHOLD);
-    }
-
-    public bool IsTired()
-    {
-        return (GetEnergyAsPercentage() < TIRED_THRESHOLD);
-    }
+    public bool IsWounded() => GetHPAsPercentage() < HEALTHY_THRESHOLD;
+    public bool IsHealthy() => GetHPAsPercentage() >= HEALTHY_THRESHOLD;
+    public bool IsEnergized() => GetEnergyAsPercentage() >= ENERGIZED_THRESHOLD;
+    public bool IsTired() => GetEnergyAsPercentage() < TIRED_THRESHOLD;
 
     public bool IsAlly(Creature other)
     {
@@ -589,27 +526,6 @@ public class Creature : ISerializationCallbackReceiver
             return false;
         }
         return BattleSlot.IsPlayerSlot != other.BattleSlot.IsPlayerSlot;
-    }
-
-    private void LevelUp()
-    {
-        int oldMaxHP = MaxHP;
-        int oldMaxEnergy = MaxEnergy;
-
-        level++;
-        Stats.MarkBaseStatsDirty();
-
-        // Increase HP and Energy based on new max values
-        int hpIncrease = MaxHP - oldMaxHP;
-        int energyIncrease = Mathf.CeilToInt((MaxEnergy - oldMaxEnergy) * StartingEnergy);
-
-        HP += hpIncrease;
-        Energy += energyIncrease;
-
-        OnLevelUp?.Invoke();
-
-        Debug.Log($"{Nickname} leveled up to {level}! HP +{hpIncrease}, Energy +{energyIncrease}");
-
     }
 
     public bool IsTurnActive()

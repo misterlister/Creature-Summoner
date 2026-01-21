@@ -2,10 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEngine;
 using static GameConstants;
-using static UnityEngine.GraphicsBuffer;
 
 public enum BattleState
 {
@@ -272,15 +270,15 @@ public class BattleSystem : MonoBehaviour
         dialogBox.EnableActionOptions();
         if (battleState == BattleState.PlayerCoreActionSelect)
         {
-            dialogBox.SetActionNames(activeCreature.Creature.EquippedCoreActions);
+            dialogBox.SetActionNames(activeCreature.Creature.Actions.EquippedCoreActions);
         }
         else if (battleState == BattleState.PlayerEmpoweredActionSelect)
         {
-            dialogBox.SetActionNames(activeCreature.Creature.EquippedEmpoweredActions);
+            dialogBox.SetActionNames(activeCreature.Creature.Actions.EquippedEmpoweredActions);
         }
         else if (battleState == BattleState.PlayerMasteryActionSelect)
         {
-            dialogBox.SetActionNames(activeCreature.Creature.EquippedMasteryActions);
+            dialogBox.SetActionNames(activeCreature.Creature.Actions.EquippedMasteryActions);
             dialogBox.DisableActionOptions(1, 2);
         }
         ResetSelectionPositions();
@@ -563,7 +561,7 @@ public class BattleSystem : MonoBehaviour
         }
         else
         {
-            UpdateActionSelection(activeCreature.Creature.EquippedCoreActions);
+            UpdateActionSelection(activeCreature.Creature.Actions.EquippedCoreActions);
         }
     }
 
@@ -581,7 +579,7 @@ public class BattleSystem : MonoBehaviour
         }
         else
         {
-            UpdateActionSelection(activeCreature.Creature.EquippedEmpoweredActions);
+            UpdateActionSelection(activeCreature.Creature.Actions.EquippedEmpoweredActions);
         }
     }
 
@@ -600,7 +598,7 @@ public class BattleSystem : MonoBehaviour
         }
         else
         {
-            UpdateActionSelection(activeCreature.Creature.EquippedMasteryActions);
+            UpdateActionSelection(activeCreature.Creature.Actions.EquippedMasteryActions);
             // Highlight 'Back' option if last option is selected
             if (selectionPositionX == StateChoices[state].rows - 1
             && selectionPositionY == StateChoices[state].cols - 1)
@@ -849,7 +847,7 @@ public class BattleSystem : MonoBehaviour
         int selection = LinearSelectionPosition();
         if (selection < dialogBox.ActionText.Count && dialogBox.ActionText[selection].text != "-")
         {
-            ActionBase selected = activeCreature.Creature.EquippedCoreActions[selection].Action;
+            ActionBase selected = activeCreature.Creature.Actions.EquippedCoreActions[selection].Action;
             if (selected != null)
             {
                 selectedAction = selected;
@@ -879,10 +877,10 @@ public class BattleSystem : MonoBehaviour
         int selection = LinearSelectionPosition();
         if (selection < dialogBox.ActionText.Count && dialogBox.ActionText[selection].text != "-")
         {
-            ActionBase selected = activeCreature.Creature.EquippedEmpoweredActions[selection].Action;
+            ActionBase selected = activeCreature.Creature.Actions.EquippedEmpoweredActions[selection].Action;
             if (selected != null)
             {
-                if (selected.EnergyCost <= activeCreature.Creature.Energy) 
+                if (selected.EnergyValue <= activeCreature.Creature.Energy) 
                 {
                     selectedAction = selected;
                     ToTargetSelectState();
@@ -908,11 +906,11 @@ public class BattleSystem : MonoBehaviour
         }
     }
 
-    void UpdateActionSelection(CreatureAction[] actions)
+    void UpdateActionSelection(IReadOnlyList<CreatureAction> actions)
     {
         int selection = LinearSelectionPosition();
         ActionBase highlightedAction = null;
-        if (selection >= 0 && selection < actions.Length)
+        if (selection >= 0 && selection < actions.Count)
         {
             highlightedAction = actions[selection]?.Action;
         }
