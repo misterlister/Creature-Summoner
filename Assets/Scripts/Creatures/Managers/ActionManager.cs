@@ -137,8 +137,8 @@ namespace Game.Creatures.Managers
 
             return slotIndex switch
             {
-                0 => source == ActionSource.Physical && (role == ActionRole.Attack || role == ActionRole.Support),
-                1 => source == ActionSource.Magical && (role == ActionRole.Attack || role == ActionRole.Support),
+                0 => source == ActionSource.Physical && (role == ActionRole.Offensive || role == ActionRole.Support),
+                1 => source == ActionSource.Magical && (role == ActionRole.Offensive || role == ActionRole.Support),
                 2 => role == ActionRole.Defensive,
                 _ => false,
             };
@@ -157,7 +157,7 @@ namespace Game.Creatures.Managers
             AutoEquipSlotType(ActionSlotType.Empowered);
             AutoEquipSlotType(ActionSlotType.Mastery);
         }
-        /*
+
         public bool LoadActionLoadout(CreatureActionLoadout loadout, bool fillEmptySlots = true)
         {
             if (loadout == null)
@@ -193,7 +193,7 @@ namespace Game.Creatures.Managers
             }
             return failedSlots == 0;
         }
-        */
+
         // Fill any empty slots with the most recently learned actions
         private void FillEmptySlots()
         {

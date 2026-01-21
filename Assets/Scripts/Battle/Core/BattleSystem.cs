@@ -341,7 +341,7 @@ public class BattleSystem : MonoBehaviour
         dialogBox.ResetActionSelection();
         SetAOEStateChoices(selectedAction);
         Field.ResetTargetHighlights(activeCreature);
-        HighlightAuraState highlightAura = (selectedAction.Role == ActionRole.Attack) ? HighlightAuraState.Negative : HighlightAuraState.Positive;
+        HighlightAuraState highlightAura = (selectedAction.Role == ActionRole.Offensive) ? HighlightAuraState.Negative : HighlightAuraState.Positive;
         CreatureTargets = Field.GetAOETargets(TargetedCreature, selectedAction, selectionPositionY, isPlayer: activeCreature.IsPlayerSlot);
         HighlightUnitList(CreatureTargets, highlightAura);
         ResetSelectionPositions();
@@ -784,7 +784,7 @@ public class BattleSystem : MonoBehaviour
             {
                 // Reset highlighted Back button to black
                 dialogBox.ResetActionSelection();
-                HighlightAuraState highlightAura = (selectedAction.Role == ActionRole.Attack) ? HighlightAuraState.Negative : HighlightAuraState.Positive;
+                HighlightAuraState highlightAura = (selectedAction.Role == ActionRole.Offensive) ? HighlightAuraState.Negative : HighlightAuraState.Positive;
                 CreatureTargets = Field.GetAOETargets(TargetedCreature, selectedAction, selectionPositionY, isPlayer: activeCreature.IsPlayerSlot);
                 HighlightUnitList(CreatureTargets, highlightAura);
 
@@ -1063,7 +1063,7 @@ public class BattleSystem : MonoBehaviour
     {
         if (selectedAction != null)
         {
-            HighlightAuraState highlightAura = (selectedAction.Role == ActionRole.Attack) ? HighlightAuraState.Negative : HighlightAuraState.Positive;
+            HighlightAuraState highlightAura = (selectedAction.Role == ActionRole.Offensive) ? HighlightAuraState.Negative : HighlightAuraState.Positive;
             foreach (var target in CreatureTargets)
             {
                 target.UpdateHighlightAura(highlightAura);
@@ -1091,7 +1091,7 @@ public class BattleSystem : MonoBehaviour
         }
         // If this is a support action by the player, or an attack action by an enemy, target the player side
         if (activeCreature.IsPlayerSlot && selectedAction.Role == ActionRole.Support 
-            || !activeCreature.IsPlayerSlot && selectedAction.Role == ActionRole.Attack)
+            || !activeCreature.IsPlayerSlot && selectedAction.Role == ActionRole.Offensive)
         {
             playerTarget = true;
         }
@@ -1108,7 +1108,7 @@ public class BattleSystem : MonoBehaviour
 
     public void UpdateSelectableTargets(BattleSlot selectedCreature, ActionBase selectedAction)
     {
-        HighlightAuraState highlightAuraState = (selectedAction.Role == ActionRole.Attack) ? HighlightAuraState.Negative : HighlightAuraState.Positive;
+        HighlightAuraState highlightAuraState = (selectedAction.Role == ActionRole.Offensive) ? HighlightAuraState.Negative : HighlightAuraState.Positive;
         switch (selectedAction.Range)
         {
             case ActionRange.Self:

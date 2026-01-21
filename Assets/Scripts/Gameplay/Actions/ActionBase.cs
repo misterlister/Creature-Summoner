@@ -177,7 +177,7 @@ public class ActionBase : ScriptableObject
             Debug.Log($"-------attacker: {attacker.Creature.Nickname}-------");
         }
 
-        if (role == ActionRole.Attack)
+        if (role == ActionRole.Offensive)
         {
             return UseOffensiveAction(attacker, defender);
         }

@@ -214,7 +214,7 @@ public enum ActionSource
 
 public enum ActionRole
 {
-    Attack,
+    Offensive,
     Support,
     Defensive
 }
