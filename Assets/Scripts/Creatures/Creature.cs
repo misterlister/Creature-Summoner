@@ -111,7 +111,42 @@ public class Creature
     //
 
     public int Initiative { get; set; }
+
+    // REMOVE LATER WHEN REWORKING
     public BattleSlot BattleSlot { get; private set; }
+    //
+
+    public BattleTile CurrentTile { get; private set; }
+    public GridPosition Position => CurrentTile?.Position ?? new GridPosition(-1, -1);
+    public TeamSide TeamSide => CurrentTile?.TeamOwner ?? TeamSide.Player;
+
+    public void SetBattlePosition(BattleTile tile)
+    {
+        if (CurrentTile != null && CurrentTile.OccupyingCreature == this)
+        {
+            CurrentTile.RemoveCreature();
+        }
+
+        CurrentTile = tile;
+    }
+
+    public void MoveToTile(BattleTile newTile)
+    {
+        if (newTile.TeamOwner != this.TeamSide)
+        {
+            throw new System.InvalidOperationException(
+                "Cannot move creature to opposing team's grid");
+        }
+
+        if (newTile.IsOccupied)
+        {
+            throw new System.InvalidOperationException("Target tile occupied");
+        }
+
+        CurrentTile?.RemoveCreature();
+        newTile.PlaceCreature(this);
+        CurrentTile = newTile;
+    }
 
 
     public event Action<int, int> OnHPChanged;
@@ -127,7 +162,7 @@ public class Creature
     public event Action<StatusEffect> OnStatusAdded;
     public event Action<StatusEffect> OnStatusRemoved;
 
-    /*
+
     public static Creature FromConfig(CreatureConfig config)
     {
         if (config == null || config.Species == null)
@@ -140,9 +175,8 @@ public class Creature
         {
             species = config.Species,
             level = Mathf.Clamp(config.Level, 1, MAX_LEVEL),
-            currentClass = config.StartingClass,
-            traits = new List<TraitBase>(config.Traits),
-            ClassList = new List<CreatureClassInstance>(config.ClassList)
+            traits = new List<TraitBase>(),
+            ClassList = new List<CreatureClassInstance>()
         };
 
         creature.Nickname = string.IsNullOrEmpty(config.Nickname) 
@@ -159,7 +193,6 @@ public class Creature
 
         return creature;
     }
-    */
 
     public void Init(bool autoEquipActions = true)
     {
