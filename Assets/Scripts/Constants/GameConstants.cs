@@ -103,6 +103,19 @@ public static class GameConstants
     };
 }
 
+public enum TeamSide
+{
+    Player,
+    Enemy
+}
+
+public enum PositionRole
+{
+    Frontline,
+    Midline,
+    Backline
+}
+
 public enum ActionRange
 {
     Melee,
