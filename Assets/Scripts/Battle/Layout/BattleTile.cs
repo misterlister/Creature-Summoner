@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 /// <summary>
@@ -31,6 +33,10 @@ public class BattleTile
     public event Action OnSurfaceRemoved;
     public event Action<TerrainType, TerrainType, TerrainVisuals> OnTerrainChanged;
 
+    // Forwarded creature events (tile forwards these)
+    public event Action<int, int> OnCreatureHPChanged;
+    public event Action<int> OnCreatureDamaged;
+    public event Action<int> OnCreatureHealed;
 
     public BattleTile(GridPosition position, TeamSide owner, BattleGrid parentGrid)
     {
@@ -68,16 +74,67 @@ public class BattleTile
         return true;
     }
 
+    /// <summary>
+    /// Get adjacent creatures (non-null occupants)
+    /// </summary>
+    public List<Creature> GetAdjacentCreatures()
+    {
+        List<BattleTile> adjacentTiles = ParentGrid.GetAdjacentTiles(this);
+        if (adjacentTiles == null) return new List<Creature>();
+        return adjacentTiles
+            .Where(t => t.OccupyingCreature != null)
+            .Select(t => t.OccupyingCreature)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Get adjacent enemies relative to the provided reference creature.
+    /// If reference is null, uses the occupying creature of this tile.
+    /// </summary>
+    public List<Creature> GetAdjacentEnemies(Creature reference = null)
+    {
+        reference ??= OccupyingCreature;
+        if (reference == null) return new List<Creature>();
+
+        return GetAdjacentCreatures()
+            .Where(c => reference.IsEnemy(c))
+            .ToList();
+    }
+
+    /// <summary>
+    /// Get adjacent allies relative to the provided reference creature.
+    /// If reference is null, uses the occupying creature of this tile.
+    /// </summary>
+    public List<Creature> GetAdjacentAllies(Creature reference = null)
+    {
+        reference ??= OccupyingCreature;
+        if (reference == null) return new List<Creature>();
+
+        return GetAdjacentCreatures()
+            .Where(c => !reference.IsEnemy(c) && c != reference)
+            .ToList();
+    }
+
+
     // Creature management
     public void PlaceCreature(Creature creature)
     {
         if (IsOccupied)
-            throw new InvalidOperationException($"Tile {Position} already occupied by {OccupyingCreature.Nickname}");
+            throw new InvalidOperationException($"Tile {Position} already occupied by {OccupyingCreature?.Nickname}");
 
         if (Terrain != null && !Terrain.CanBeEnteredBy(creature))
             throw new InvalidOperationException($"Tile {Position} is blocked by {Terrain.TerrainName}");
 
         OccupyingCreature = creature;
+
+        // Subscribe to creature events and forward them
+        if (OccupyingCreature != null)
+        {
+            OccupyingCreature.OnHPChanged += HandleOccupantHPChanged;
+            OccupyingCreature.OnTakeDamage += HandleOccupantDamaged;
+            OccupyingCreature.OnHealed += HandleOccupantHealed;
+        }
+
         OnCreaturePlaced?.Invoke(creature);
     }
 
@@ -86,6 +143,15 @@ public class BattleTile
         if (IsEmpty) return;
 
         var creature = OccupyingCreature;
+
+        // Unsubscribe forwarded handlers
+        if (OccupyingCreature != null)
+        {
+            OccupyingCreature.OnHPChanged -= HandleOccupantHPChanged;
+            OccupyingCreature.OnTakeDamage -= HandleOccupantDamaged;
+            OccupyingCreature.OnHealed -= HandleOccupantHealed;
+        }
+
         OccupyingCreature = null;
         OnCreatureRemoved?.Invoke(creature);
     }
@@ -126,6 +192,22 @@ public class BattleTile
         }
     }
 
+    // Forwarders for creature events
+    private void HandleOccupantHPChanged(int current, int max)
+    {
+        OnCreatureHPChanged?.Invoke(current, max);
+    }
+
+    private void HandleOccupantDamaged(int dmg)
+    {
+        OnCreatureDamaged?.Invoke(dmg);
+    }
+
+    private void HandleOccupantHealed(int amt)
+    {
+        OnCreatureHealed?.Invoke(amt);
+    }
+
     // Trigger surface effect on creature
     public void TriggerSurfaceEffect(Creature creature, SurfaceTriggerTiming timing, BattleContext context)
     {
@@ -157,40 +239,4 @@ public class BattleTile
         return Terrain.GetMovementCost(creature);
     }
 
-    // Get effective defense modifier for creature on this tile
-    // NOTE: Only applies to RANGED attacks
-    public float GetRangedDefenseBonus(Creature creature)
-    {
-        if (Terrain == null) return 0f;
-
-        float bonus = Terrain.GetRangedDefenseAdjustment(creature);
-
-        // Check if the space ahead contains heavy cover
-        /*
-        if (!creature.IsElement(CreatureElement.Air) && ParentGrid != null)
-        {
-            GridPosition aheadPos = Position.GetAdjacentPosition(
-                creature.TeamSide == TeamSide.Player ? Direction.Right : Direction.Left);
-            if (ParentGrid.TryGetTile(aheadPos, out BattleTile aheadTile))
-            {
-                if (aheadTile?.Terrain is HeavyCoverTerrain)
-                {
-                    bonus += TerrainConstants.HEAVY_COVER_DEFENSE_BONUS;
-                }
-            }
-        }
-        */
-
-        return bonus;
-    }
-
-    // Get terrain damage for this creature this turn
-    public int GetTerrainDamage(Creature creature)
-    {
-        if (Terrain == null) return 0;
-
-        return Terrain.GetDamageForCreature(creature);
-    }
-
-    public override string ToString() => $"Tile {Position} ({TeamOwner})";
 }
