@@ -11,6 +11,7 @@ using static TerrainConstants;
 public class BattleGrid
 {
     public TeamSide TeamOwner { get; }
+    public UnifiedBattlefield Battlefield { get; set; }
     private BattleTile[,] tiles = new BattleTile[BATTLE_ROWS, BATTLE_COLS];
 
     // Events
@@ -18,10 +19,11 @@ public class BattleGrid
     public event Action<Creature, GridPosition> OnCreatureRemoved;
     public event Action<TerrainLayout> OnTerrainApplied;
 
-    public BattleGrid(TeamSide owner)
+    public BattleGrid(TeamSide owner, UnifiedBattlefield battlefield = null)
     {
         TeamOwner = owner;
         InitializeTiles();
+        Battlefield = battlefield;
     }
 
     private void InitializeTiles()
@@ -82,8 +84,6 @@ public class BattleGrid
                     TerrainTypeEnum.HeavyCover => Terrains.HeavyCover,
                     TerrainTypeEnum.LightRough => Terrains.LightRough,
                     TerrainTypeEnum.HeavyRough => Terrains.HeavyRough,
-                    TerrainTypeEnum.Water => Terrains.Water,
-                    TerrainTypeEnum.Lava => Terrains.Lava,
                     TerrainTypeEnum.Chasm => Terrains.Chasm,
                     _ => null
                 };
@@ -200,6 +200,45 @@ public class BattleGrid
     public List<BattleTile> GetFrontline() => GetColumn(0);
     public List<BattleTile> GetMidline() => GetColumn(1);
     public List<BattleTile> GetBackline() => GetColumn(2);
+
+    // Get adjacent tiles by position
+    public List<BattleTile> GetAdjacentTiles(BattleTile tile)
+    {
+        if (tile == null) return new List<BattleTile>();
+
+        if (Battlefield != null)
+        {
+            return Battlefield.GetAdjacentTiles(tile);
+        }
+
+        return GetAdjacentTiles(tile.Position);
+    }
+
+    public List<BattleTile> GetAdjacentTiles(GridPosition pos)
+    {
+        var result = new List<BattleTile>();
+        if (!pos.IsValid()) return result;
+
+        // 8-directional adjacency (cardinal + diagonal)
+        (int dRow, int dCol)[] directions = {
+            (-1, 0), (1, 0),  // Up, Down
+            (0, -1), (0, 1),  // Left, Right
+            (-1, -1), (-1, 1), // Up-Left, Up-Right
+            (1, -1), (1, 1)   // Down-Left, Down-Right
+        };
+
+        foreach (var (dRow, dCol) in directions)
+        {
+            int r = pos.Row + dRow;
+            int c = pos.Col + dCol;
+            if (r >= 0 && r < BATTLE_ROWS && c >= 0 && c < BATTLE_COLS)
+            {
+                result.Add(tiles[r, c]);
+            }
+        }
+
+        return result;
+    }
 
     // Surface effects
     public void TickAllSurfaces()
