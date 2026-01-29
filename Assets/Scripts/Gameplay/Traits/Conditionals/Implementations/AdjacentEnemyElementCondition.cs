@@ -10,16 +10,15 @@ namespace Game.Traits.Conditionals
 
         public override bool CheckConditional(BattleEventData eventData)
         {
-            if (eventData.SourceCreature == null || eventData.SourceCreature.BattleSlot == null)
+            if (eventData.SourceCreature == null || eventData.SourceCreature.CurrentTile == null)
             {
                 Debug.LogWarning("AdjacentElementEnemyCondition: SourceCreature or BattleSlot is null in event data.");
                 return false;
             }
-            var adjacentSlots = eventData.SourceCreature.BattleSlot.GetAdjacentSlots();
-            foreach (var slot in adjacentSlots)
+            var adjacentEnemies = eventData.SourceCreature.CurrentTile.GetAdjacentEnemies();
+            foreach (var enemy in adjacentEnemies)
             {
-                var creature = slot.Creature;
-                if (creature != null && creature != eventData.SourceCreature && creature.IsElement(requiredElement) && creature.IsEnemy(eventData.SourceCreature))
+                if (enemy != null && enemy.IsElement(requiredElement))
                 {
                     return true;
                 }

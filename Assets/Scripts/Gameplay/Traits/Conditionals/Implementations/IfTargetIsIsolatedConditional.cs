@@ -20,17 +20,8 @@ namespace Game.Traits.Conditionals
             }
 
 
-            var adjacentSlots = target.BattleSlot.GetAdjacentSlots();
-            int allyCount = 0;
-            foreach (var slot in adjacentSlots)
-            {
-                var creature = slot.Creature;
-                if (creature != null && creature != target && target.IsEnemy(creature))
-                {
-                    allyCount++;
-                }
-            }
-            return allyCount == 0;
+            var adjacentSlots = target.CurrentTile.GetAdjacentAllies();
+            return adjacentSlots.Count == 0;
         }
 
         public override string GetDescription()

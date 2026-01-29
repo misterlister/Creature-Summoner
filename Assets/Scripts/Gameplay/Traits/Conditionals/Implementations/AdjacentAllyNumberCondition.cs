@@ -13,22 +13,14 @@ namespace Game.Traits.Conditionals
         public override bool CheckConditional(BattleEventData eventData)
         {
             Creature thisCreature = eventData.SourceCreature;
-            if (thisCreature == null || thisCreature.BattleSlot == null)
+            if (thisCreature == null || thisCreature.CurrentTile == null)
             {
                 Debug.LogWarning("AdjacentAllyNumberCondition: SourceCreature or BattleSlot is null in event data.");
                 return false;
             }
-            var adjacentSlots = thisCreature.BattleSlot.GetAdjacentSlots();
-            int allyCount = 0;
-            foreach (var slot in adjacentSlots)
-            {
-                var creature = slot.Creature;
-                if (creature != null && creature != thisCreature && thisCreature.IsAlly(creature))
-                {
-                    allyCount++;
-                }
-            }
-            return MathUtils.Compare(allyCount, requiredNum, comparisonType);
+            var adjacentAllies = thisCreature.CurrentTile.GetAdjacentAllies();
+
+            return MathUtils.Compare(adjacentAllies.Count, requiredNum, comparisonType);
         }
 
         public override string GetDescription()
