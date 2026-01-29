@@ -35,7 +35,7 @@ namespace Game.Traits.Triggers.Results
 
             int damage = CalculateDamage(damageEvent);
 
-            target.BattleSlot.HitByAttack(damage);
+            target.TakeDamage(damage);
         }
 
         private int CalculateDamage(DamageEventData damageEventData)
