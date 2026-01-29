@@ -119,8 +119,8 @@ public enum PositionRole
 public enum ActionRange
 {
     Melee,
-    ShortRanged,
-    LongRanged,
+    Short,
+    Long,
     Self
 }
 
@@ -132,13 +132,15 @@ public enum Perspective
     Team,
 }
 
-public enum Target
+public enum TargetType
 {
     Any,
     Self,
-    Team,
-    Opponent,
-    Ally
+    AllyIncludingSelf,
+    Enemy,
+    Ally,
+    EmptySpace,
+    OccupiedSpace
 }
 
 public enum StatType
@@ -151,6 +153,13 @@ public enum StatType
     Speed,
     Defense,
     Resistance
+}
+
+public enum HitType
+{
+    Hit,
+    Glance,
+    Critical
 }
 
 public enum CombatModifierType
