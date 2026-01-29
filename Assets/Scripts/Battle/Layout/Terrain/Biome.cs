@@ -30,14 +30,6 @@ public class Biome : ScriptableObject
     }
 
     /// <summary>
-    /// Check if a terrain type is valid in this biome
-    /// </summary>
-    public bool IsTerrainValid(System.Type terrainType)
-    {
-        return AvailableTerrains?.HasTerrain(terrainType) ?? false;
-    }
-
-    /// <summary>
     /// Get all terrain types valid for this biome
     /// </summary>
     public List<System.Type> GetValidTerrainTypes()
@@ -52,16 +44,12 @@ public class Biome : ScriptableObject
 [System.Serializable]
 public class BiomeTerrainSet
 {
-    [Header("Common Terrains (All Biomes)")]
+    [Header("Terrain Tiles")]
     public List<TerrainVisuals> RegularVariants = new List<TerrainVisuals>();
     public List<TerrainVisuals> LightCoverVariants = new List<TerrainVisuals>();
     public List<TerrainVisuals> HeavyCoverVariants = new List<TerrainVisuals>();
     public List<TerrainVisuals> LightRoughVariants = new List<TerrainVisuals>();
     public List<TerrainVisuals> HeavyRoughVariants = new List<TerrainVisuals>();
-
-    [Header("Biome-Specific Terrains")]
-    public List<TerrainVisuals> WaterVariants = new List<TerrainVisuals>();
-    public List<TerrainVisuals> LavaVariants = new List<TerrainVisuals>();
     public List<TerrainVisuals> ChasmVariants = new List<TerrainVisuals>();
 
     public TerrainVisuals GetRandomVariant(System.Type terrainType)
@@ -69,12 +57,6 @@ public class BiomeTerrainSet
         var variants = GetVariantList(terrainType);
         if (variants == null || variants.Count == 0) return null;
         return variants[Random.Range(0, variants.Count)];
-    }
-
-    public bool HasTerrain(System.Type terrainType)
-    {
-        var variants = GetVariantList(terrainType);
-        return variants != null && variants.Count > 0;
     }
 
     public List<System.Type> GetAllTerrainTypes()
@@ -86,8 +68,6 @@ public class BiomeTerrainSet
         if (HeavyCoverVariants.Count > 0) types.Add(typeof(HeavyCoverTerrain));
         if (LightRoughVariants.Count > 0) types.Add(typeof(LightRoughTerrain));
         if (HeavyRoughVariants.Count > 0) types.Add(typeof(HeavyRoughTerrain));
-        if (WaterVariants.Count > 0) types.Add(typeof(WaterTerrain));
-        if (LavaVariants.Count > 0) types.Add(typeof(LavaTerrain));
         if (ChasmVariants.Count > 0) types.Add(typeof(ChasmTerrain));
 
         return types;
@@ -100,8 +80,6 @@ public class BiomeTerrainSet
         if (terrainType == typeof(HeavyCoverTerrain)) return HeavyCoverVariants;
         if (terrainType == typeof(LightRoughTerrain)) return LightRoughVariants;
         if (terrainType == typeof(HeavyRoughTerrain)) return HeavyRoughVariants;
-        if (terrainType == typeof(WaterTerrain)) return WaterVariants;
-        if (terrainType == typeof(LavaTerrain)) return LavaVariants;
         if (terrainType == typeof(ChasmTerrain)) return ChasmVariants;
         return null;
     }
@@ -134,8 +112,6 @@ public class TerrainWeights
     [Range(0f, 1f)] public float HeavyCover = 0.1f;
     [Range(0f, 1f)] public float LightRough = 0.15f;
     [Range(0f, 1f)] public float HeavyRough = 0.1f;
-    [Range(0f, 1f)] public float Water = 0.05f;
-    [Range(0f, 1f)] public float Lava = 0.05f;
     [Range(0f, 1f)] public float Chasm = 0.05f;
 
     public float GetWeight(System.Type terrainType)
@@ -145,8 +121,6 @@ public class TerrainWeights
         if (terrainType == typeof(HeavyCoverTerrain)) return HeavyCover;
         if (terrainType == typeof(LightRoughTerrain)) return LightRough;
         if (terrainType == typeof(HeavyRoughTerrain)) return HeavyRough;
-        if (terrainType == typeof(WaterTerrain)) return Water;
-        if (terrainType == typeof(LavaTerrain)) return Lava;
         if (terrainType == typeof(ChasmTerrain)) return Chasm;
         return 0f;
     }

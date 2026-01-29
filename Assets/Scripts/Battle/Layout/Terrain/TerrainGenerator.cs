@@ -20,7 +20,7 @@ public static class TerrainGenerator
         foreach (TerrainTypeEnum terrainEnum in allTypes)
         {
             var terrainInstance = terrainEnum.GetTerrainInstance();
-            if (terrainInstance != null && biome.IsTerrainValid(terrainInstance.GetType()))
+            if (terrainInstance != null)
             {
                 validTerrains.Add(terrainEnum);
             }

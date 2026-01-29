@@ -6,9 +6,6 @@ public static class TerrainConstants
     public const float HELPLESS_TERRAIN_DEFENSE_PENALTY = -0.25f; // defense penalty from helpless terrain
     public const float LIGHT_ROUGH_TERRAIN_MOVEMENT_COST = 0.1f; // energy movement cost for light rough terrain
     public const float HEAVY_ROUGH_TERRAIN_MOVEMENT_COST = 0.25f; // energy movement cost for heavy rough terrain
-    public const float HAZARDOUS_TERRAIN_DAMAGE_PER_TURN = 0.25f; // Max HP Damage taken per turn in hazardous terrain
-
-    public const float EARTH_DEFENSE_BONUS_MULTIPLIER = 1.5f; // Multiplier for Earth creature defense bonuses from cover
 }
 
 /// <summary>
@@ -21,8 +18,6 @@ public enum TerrainTypeEnum
     HeavyCover,         // Large defensive buff, tile is impassable
     LightRough,         // Movement cost penalty
     HeavyRough,         // Large movement cost penalty
-    Water,              // Heavy rough + defensive penalty
-    Lava,               // Heavy rough + damage per turn
     Chasm               // Impassable, instant defeat
 }
 

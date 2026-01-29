@@ -143,28 +143,6 @@ public class TerrainLayout : ScriptableObject
         }
     }
 
-    private void OnValidate()
-    {
-        if (LayoutBiome == null) return;
-
-        // Check all terrain types are valid for the biome
-        for (int col = 0; col < BATTLE_COLS; col++)
-        {
-            for (int row = 0; row < BATTLE_ROWS; row++)
-            {
-                var terrainType = GetTerrainType(row, col);
-                var terrainInstance = terrainType.GetTerrainInstance();
-
-                if (terrainInstance != null && !LayoutBiome.IsTerrainValid(terrainInstance.GetType()))
-                {
-                    Debug.LogWarning(
-                        $"Terrain '{terrainType}' at ({row},{col}) is not valid for biome '{LayoutBiome.BiomeName}'",
-                        this);
-                }
-            }
-        }
-    }
-
     [System.Serializable]
     public class TerrainSlot
     {
@@ -187,8 +165,6 @@ public static class TerrainTypeExtensions
             TerrainTypeEnum.HeavyCover => Terrains.HeavyCover,
             TerrainTypeEnum.LightRough => Terrains.LightRough,
             TerrainTypeEnum.HeavyRough => Terrains.HeavyRough,
-            TerrainTypeEnum.Water => Terrains.Water,
-            TerrainTypeEnum.Lava => Terrains.Lava,
             TerrainTypeEnum.Chasm => Terrains.Chasm,
             _ => null
         };
@@ -205,8 +181,6 @@ public static class TerrainTypeExtensions
             HeavyCoverTerrain => TerrainTypeEnum.HeavyCover,
             LightRoughTerrain => TerrainTypeEnum.LightRough,
             HeavyRoughTerrain => TerrainTypeEnum.HeavyRough,
-            WaterTerrain => TerrainTypeEnum.Water,
-            LavaTerrain => TerrainTypeEnum.Lava,
             ChasmTerrain => TerrainTypeEnum.Chasm,
             _ => TerrainTypeEnum.Regular
         };
