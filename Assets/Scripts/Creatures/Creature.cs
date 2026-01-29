@@ -108,17 +108,16 @@ public class Creature
     public float StartingEnergy { get; private set; }
     public float CritDamageBonus { get; set; }
     public float CritDamageResistance { get; set; }
-    //
 
     public int Initiative { get; set; }
 
-    // REMOVE LATER WHEN REWORKING
-    public BattleSlot BattleSlot { get; private set; }
-    //
-
     public BattleTile CurrentTile { get; private set; }
+
+    // Is this the best way to handle invalid positions?
     public GridPosition Position => CurrentTile?.Position ?? new GridPosition(-1, -1);
-    public TeamSide TeamSide => CurrentTile?.TeamOwner ?? TeamSide.Player;
+
+    // This shouldn't be mutable
+    public TeamSide TeamSide { get; set; }
 
     public void SetBattlePosition(BattleTile tile)
     {
@@ -134,13 +133,13 @@ public class Creature
     {
         if (newTile.TeamOwner != this.TeamSide)
         {
-            throw new System.InvalidOperationException(
+            throw new InvalidOperationException(
                 "Cannot move creature to opposing team's grid");
         }
 
         if (newTile.IsOccupied)
         {
-            throw new System.InvalidOperationException("Target tile occupied");
+            throw new InvalidOperationException("Target tile occupied");
         }
 
         CurrentTile?.RemoveCreature();
@@ -149,18 +148,32 @@ public class Creature
     }
 
 
+    // Resource changes
     public event Action<int, int> OnHPChanged;
-    public event Action<int> OnDamageTaken;
-    public event Action<int> OnHealed;
     public event Action<int, int> OnEnergyChanged;
+    public event Action<int> OnXPChanged;
+
+    // Specific resource actions (with amounts for VFX/numbers/feedback)
+    public event Action<int> OnTakeDamage;
+    public event Action<int> OnHealed;
     public event Action<int> OnEnergySpent;
     public event Action<int> OnEnergyGained;
+    public event Action<int> OnXPGained;
+
+    // Stats and progression
+    public event Action OnStatsChanged;              // Strength, Magic, Defense, etc.
+    public event Action<int, int> OnLevelUp;         // (oldLevel, newLevel)
     public event Action OnClassChanged;
-    public event Action OnLevelUp;
-    public event Action OnDefeated;
-    public event Action OnRevived;
+
+    // Status
     public event Action<StatusEffect> OnStatusAdded;
     public event Action<StatusEffect> OnStatusRemoved;
+    public event Action<StatusEffect> OnStatusDurationChanged;
+
+    // Battle state
+    public event Action<BattlePosition, BattlePosition> OnMoved;  // (from, to)
+    public event Action OnDefeated;
+    public event Action OnRevived;
 
 
     public static Creature FromConfig(CreatureConfig config)
@@ -201,6 +214,9 @@ public class Creature
         Actions = new ActionManager(this);
         Statuses = new CreatureStatusManager(this);
         CombatModifiers = new CreatureCombatModifiers(this);
+
+        // Forward stat manager changes to Creature-level event
+        Stats.OnStatsChanged += () => OnStatsChanged?.Invoke();
 
         // Set starting resources
         currentHP = MaxHP;
@@ -404,7 +420,7 @@ public class Creature
         int previousHP = HP;
         currentHP = Mathf.Max(0, HP - amount);
 
-        OnHPChanged?.Invoke(HP, MaxHP);
+        OnTakeDamage?.Invoke(amount);
 
         if (HP <= 0 && !IsDefeated)
         {
@@ -418,13 +434,13 @@ public class Creature
         {
             amount = -amount;
         }
-        if (amount + HP > MaxHP)
+
+        int healAmount = Mathf.Min(amount, MaxHP - HP);
+        HP = Mathf.Min(MaxHP, HP + healAmount);
+
+        if (healAmount > 0)
         {
-           currentHP = MaxHP;
-        }
-        else
-        {
-            currentHP += amount;
+            OnHealed?.Invoke(healAmount);
         }
     }
     public void RemoveEnergy(int amount)
@@ -433,13 +449,11 @@ public class Creature
         {
             amount = -amount;
         }
-        if (amount > Energy)
-        {
-            currentEnergy = 0;
-        }
-        else
-        {
-            currentEnergy -= amount;
+        int spent = Mathf.Min(amount, Energy);
+        Energy = Mathf.Max(0, Energy - spent);
+        if (spent > 0)
+        { 
+            OnEnergySpent?.Invoke(spent); 
         }
     }
 
@@ -449,13 +463,11 @@ public class Creature
         {
             amount = -amount;
         }
-        if (amount + Energy > MaxEnergy)
+        int gained = Mathf.Min(amount, MaxEnergy - Energy);
+        Energy = Mathf.Min(MaxEnergy, Energy + gained);
+        if (gained > 0)
         {
-            currentEnergy = MaxEnergy;
-        }
-        else
-        {
-            currentEnergy += amount;
+            OnEnergyGained?.Invoke(gained);
         }
     }
 
@@ -467,9 +479,13 @@ public class Creature
         }
 
         XP += amount;
+        OnXPGained?.Invoke(amount);
+        OnXPChanged?.Invoke(XP);
 
-        if (amount + XP > XPForNextLevel)
+        // Handle level-ups properly (loop in case of multiple levels)
+        while (XP >= XPForNextLevel && level < MAX_LEVEL)
         {
+            XP -= XPForNextLevel;
             LevelUp();
         }
     }
@@ -477,6 +493,7 @@ public class Creature
     {
         int oldMaxHP = MaxHP;
         int oldMaxEnergy = MaxEnergy;
+        int oldLevel = level;
 
         level++;
         Stats.MarkBaseStatsDirty();
@@ -488,7 +505,7 @@ public class Creature
         HP += hpIncrease;
         Energy += energyIncrease;
 
-        OnLevelUp?.Invoke();
+        OnLevelUp?.Invoke(oldLevel, level);
 
         Debug.Log($"{Nickname} leveled up to {level}! HP +{hpIncrease}, Energy +{energyIncrease}");
 
@@ -501,11 +518,6 @@ public class Creature
             return true;
         }
         return false;
-    }
-
-    public void SetBattleSlot(BattleSlot slot)
-    {
-        BattleSlot = slot;
     }
 
     public bool IsElement(CreatureElement type)
@@ -544,21 +556,12 @@ public class Creature
             return false;
         }
 
-        if (BattleSlot == null || other.BattleSlot == null)
-        {
-            return false;
-        }
-
-        return BattleSlot.IsPlayerSlot == other.BattleSlot.IsPlayerSlot;
+        return TeamSide == other.TeamSide;
     }
 
     public bool IsEnemy(Creature other)
     {
-        if (BattleSlot == null || other.BattleSlot == null)
-        {
-            return false;
-        }
-        return BattleSlot.IsPlayerSlot != other.BattleSlot.IsPlayerSlot;
+        return TeamSide != other.TeamSide;
     }
 
     public bool IsTurnActive()
