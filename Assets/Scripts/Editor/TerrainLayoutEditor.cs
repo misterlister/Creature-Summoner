@@ -304,7 +304,7 @@ public class TerrainLayoutEditor : Editor
             foreach (TerrainTypeEnum terrainEnum in allTypes)
             {
                 var terrainInstance = terrainEnum.GetTerrainInstance();
-                if (terrainInstance != null && layout.LayoutBiome.IsTerrainValid(terrainInstance.GetType()))
+                if (terrainInstance != null)
                 {
                     validTerrains.Add(terrainEnum);
                 }
