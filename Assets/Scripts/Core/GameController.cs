@@ -8,7 +8,7 @@ public enum GameState {
 public class GameController : MonoBehaviour
 {
     [SerializeField] PlayerController playerController;
-    [SerializeField] BattleSystem battleSystem;
+    [SerializeField] BattleManager battleManager;
     [SerializeField] Camera worldCamera;
     GameState state;
 
@@ -16,30 +16,39 @@ public class GameController : MonoBehaviour
     {
         ToFreeRoamState();
         playerController.OnEncountered += StartBattle;
-        battleSystem.OnBattleOver += EndBattle;
+        battleManager.OnBattleEnd += EndBattle;
     }
 
     void ToFreeRoamState()
     {
         state = GameState.FreeRoam;
-        battleSystem.gameObject.SetActive(false);
+        battleManager.gameObject.SetActive(false);
         worldCamera.gameObject.SetActive(true);
     }
 
     void StartBattle()
     {
         state = GameState.Battle;
-        battleSystem.gameObject.SetActive(true);
+        battleManager.gameObject.SetActive(true);
         worldCamera.gameObject.SetActive(false);
 
         var playerTeam = playerController.GetComponent<CreatureTeam>();
         var enemyTeam = FindFirstObjectByType<MapArea>().GetComponent<MapArea>().GenerateWildCreatureTeam();
 
-        battleSystem.StartBattle(playerTeam, enemyTeam);
+        battleManager.StartBattle(playerTeam, enemyTeam);
     }
 
-    void EndBattle(bool won)
+    void EndBattle(TeamSide victor)
     {
+        if (victor == TeamSide.Player)
+        {
+            Debug.Log("Player won the battle!");
+        }
+        else
+        {
+            Debug.Log("Player lost the battle...");
+        }
+
         ToFreeRoamState();
     }
 
@@ -51,7 +60,7 @@ public class GameController : MonoBehaviour
         }
         else if (state == GameState.Battle)
         {
-            battleSystem.HandleUpdate();
+            battleManager.HandleUpdate();
         }
     }
 }
