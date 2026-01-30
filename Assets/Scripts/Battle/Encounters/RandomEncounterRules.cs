@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Battle/Random Encounter Rules")]
+[CreateAssetMenu(menuName = "Battle/Create Random Encounter Ruleset")]
 public class RandomEncounterRules : ScriptableObject
 {
     [Header("Environment")]
