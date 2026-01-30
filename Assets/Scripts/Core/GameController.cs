@@ -1,8 +1,9 @@
 using UnityEngine;
 
-public enum GameState { 
-    FreeRoam, 
-    Battle 
+public enum GameState
+{
+    FreeRoam,
+    Battle
 }
 
 public class GameController : MonoBehaviour
@@ -10,6 +11,7 @@ public class GameController : MonoBehaviour
     [SerializeField] PlayerController playerController;
     [SerializeField] BattleManager battleManager;
     [SerializeField] Camera worldCamera;
+
     GameState state;
 
     private void Start()
@@ -33,7 +35,17 @@ public class GameController : MonoBehaviour
         worldCamera.gameObject.SetActive(false);
 
         var playerTeam = playerController.GetComponent<CreatureTeam>();
-        var enemyTeam = FindFirstObjectByType<MapArea>().GetComponent<MapArea>().GenerateWildCreatureTeam();
+
+        // Get the map area the player is currently in
+        var currentMapArea = playerController.GetCurrentMapArea();
+        if (currentMapArea == null)
+        {
+            Debug.LogError("Cannot start battle: player is not in a map area!");
+            ToFreeRoamState();
+            return;
+        }
+
+        var enemyTeam = currentMapArea.GenerateWildCreatureTeam();
 
         battleManager.StartBattle(playerTeam, enemyTeam);
     }
@@ -48,7 +60,6 @@ public class GameController : MonoBehaviour
         {
             Debug.Log("Player lost the battle...");
         }
-
         ToFreeRoamState();
     }
 
