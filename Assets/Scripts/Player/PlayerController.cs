@@ -1,7 +1,6 @@
 using System;
 using UnityEngine;
 using System.Collections;
-using System.Collections.Generic;
 
 public class PlayerController : MonoBehaviour
 {
@@ -11,17 +10,15 @@ public class PlayerController : MonoBehaviour
     public event Action OnEncountered;
 
     private bool isMoving;
-
     private Vector2 input;
-
     private Animator animator;
+    private MapArea currentMapArea;
 
     const float DEADZONE = 0.19f;
 
-
     private void Awake()
     {
-        animator = GetComponent<Animator> ();
+        animator = GetComponent<Animator>();
     }
 
     public void HandleUpdate()
@@ -42,7 +39,6 @@ public class PlayerController : MonoBehaviour
 
                 // Calculate target position as Vector2
                 var targetPos = (Vector2)transform.position + input;
-
                 if (IsWalkable(targetPos))
                 {
                     StartCoroutine(Move(targetPos));
@@ -52,11 +48,9 @@ public class PlayerController : MonoBehaviour
         animator.SetBool("isMoving", isMoving);
     }
 
-
     IEnumerator Move(Vector3 targetPos)
     {
         isMoving = true;
-
         while ((targetPos - transform.position).sqrMagnitude > Mathf.Epsilon)
         {
             transform.position = Vector3.MoveTowards(transform.position, targetPos, moveSpeed * Time.deltaTime);
@@ -67,6 +61,7 @@ public class PlayerController : MonoBehaviour
 
         CheckForEncounters();
     }
+
     private bool IsWalkable(Vector3 targetPos)
     {
         if (Physics2D.OverlapCircle(targetPos, 0.2f, solidObjectsLayer) != null)
@@ -78,13 +73,45 @@ public class PlayerController : MonoBehaviour
 
     private void CheckForEncounters()
     {
-        if (Physics2D.OverlapCircle(transform.position, 0.2f, battleLayer) != null)
+        // Check if we're in a battle zone
+        var battleZone = Physics2D.OverlapCircle(transform.position, 0.2f, battleLayer);
+        if (battleZone != null)
         {
-            if (UnityEngine.Random.Range(1,101) <= 10)
+            // Get or update current map area
+            var mapArea = battleZone.GetComponent<MapArea>();
+            if (mapArea != null)
             {
-                animator.SetBool("isMoving", false);
-                OnEncountered();
+                if (currentMapArea != mapArea)
+                {
+                    // Entered a new map area
+                    currentMapArea = mapArea;
+                    currentMapArea.OnPlayerEnter();
+                }
+
+                // Notify map area of step and check if encounter triggers
+                if (currentMapArea.OnPlayerStep())
+                {
+                    animator.SetBool("isMoving", false);
+                    OnEncountered();
+                }
             }
         }
+        else
+        {
+            // Left the map area
+            if (currentMapArea != null)
+            {
+                currentMapArea.OnPlayerExit();
+                currentMapArea = null;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Get the current map area the player is in
+    /// </summary>
+    public MapArea GetCurrentMapArea()
+    {
+        return currentMapArea;
     }
 }
