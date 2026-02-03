@@ -1,4 +1,4 @@
-public static class UIConstants
+public static class BattleUIConstants
 {
     // Animation constants
     public const float SUMMON_DURATION = 1f;
