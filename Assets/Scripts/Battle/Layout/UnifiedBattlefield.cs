@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// Manages both player and enemy grids as a unified 3×6 battlefield.
@@ -16,6 +17,7 @@ public class UnifiedBattlefield : MonoBehaviour
 
     [Header("Visual Settings")]
     [SerializeField] private Biome currentBiome;
+    [SerializeField] private Image battleBackground;
 
     // Data layer - the source of truth
     public BattleGrid PlayerGrid { get; private set; }
@@ -37,6 +39,7 @@ public class UnifiedBattlefield : MonoBehaviour
         InitializeGrids();
         SetupTileUI();
         TargetingSystem = new TargetingSystem(this);
+        SetBattleBackground();
     }
 
     private void InitializeGrids()
@@ -51,6 +54,7 @@ public class UnifiedBattlefield : MonoBehaviour
         EnemyGrid.OnCreatureRemoved += (c, gp) => OnCreatureRemoved?.Invoke(c, GetBattlePosition(gp, TeamSide.Enemy));
     }
 
+    #region Terrain Management
     private void SetupTileUI()
     {
         SetupGridUI(PlayerGrid, playerGridParent, TeamSide.Player);
@@ -78,6 +82,34 @@ public class UnifiedBattlefield : MonoBehaviour
             tile.OnSurfaceRemoved += tileUI.OnSurfaceRemoved;
         }
     }
+
+    private void SetBattleBackground()
+    {
+        // Validate references
+        if (battleBackground == null)
+        {
+            Debug.LogWarning("UnifiedBattlefield: Battle Background Image is not assigned in Inspector!");
+            return;
+        }
+
+        if (currentBiome == null)
+        {
+            Debug.LogWarning("UnifiedBattlefield: Current Biome is not assigned!");
+            return;
+        }
+
+        // Set background sprite from biome
+        if (currentBiome.BackgroundSprite != null)
+        {
+            battleBackground.sprite = currentBiome.BackgroundSprite;
+        }
+        else
+        {
+            Debug.LogWarning($"UnifiedBattlefield: Biome '{currentBiome.BiomeName}' has no BackgroundSprite assigned!");
+        }
+    }
+
+    #endregion
 
     #region Unified Tile Access
 
@@ -332,10 +364,10 @@ public class UnifiedBattlefield : MonoBehaviour
 
     #region Terrain Management
 
-    public void ApplyTerrainLayout(TerrainLayout playerLayout, TerrainLayout enemyLayout)
+    public void ApplyTerrainLayout(TerrainLayout layout)
     {
-        PlayerGrid.ApplyTerrainLayout(playerLayout, currentBiome);
-        EnemyGrid.ApplyTerrainLayout(enemyLayout, currentBiome);
+        PlayerGrid.ApplyTerrainLayout(layout, currentBiome);
+        EnemyGrid.ApplyTerrainLayout(layout, currentBiome);
     }
 
     public void SetBiome(Biome biome)
