@@ -7,14 +7,8 @@ using System.Linq;
 /// </summary>
 public class TurnSystem
 {
-    private BattleContext context;
     private List<Creature> turnOrder = new List<Creature>();
     private int currentTurnIndex = 0;
-
-    public TurnSystem(BattleContext context)
-    {
-        this.context = context;
-    }
 
     /// <summary>
     /// Roll initiative for all creatures at the start of a round.
