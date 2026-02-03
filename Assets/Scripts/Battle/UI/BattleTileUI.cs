@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using DG.Tweening;
 using System.Collections.Generic;
-using static UIConstants;
+using static BattleUIConstants;
 
 /// <summary>
 /// Handles all visual presentation for a single battle tile.
@@ -191,7 +191,13 @@ public class BattleTileUI : MonoBehaviour
 
     public void OnTerrainChanged(TerrainType oldTerrain, TerrainType newTerrain, TerrainVisuals visuals)
     {
-        if (newTerrain == null || visuals == null)
+        if (terrainImage == null) { 
+            Debug.LogWarning("BattleTileUI: terrainImage is not assigned!");
+            return;
+        }
+
+        // If no visuals or no sprite, hide terrain overlay (shows background)
+        if (visuals == null || visuals.Sprite == null)
         {
             terrainImage.gameObject.SetActive(false);
             return;
