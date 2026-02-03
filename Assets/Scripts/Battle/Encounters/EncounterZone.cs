@@ -45,6 +45,11 @@ public class EncounterZone
         return EncounterRules?.GenerateTerrain();
     }
 
+    public Biome GetBiome()
+    {
+        return EncounterRules?.EncounterBiome;
+    }
+
     /// <summary>
     /// Calculate steps until next encounter
     /// </summary>
