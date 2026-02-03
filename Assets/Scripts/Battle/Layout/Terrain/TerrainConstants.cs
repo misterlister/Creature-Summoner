@@ -47,12 +47,24 @@ public enum TerrainGenerationMode
 /// </summary>
 public enum TerrainGenerationPattern
 {
-    Random,         // Random placement
-    Symmetric,      // Mirror layout
-    FrontlineHeavy, // More terrain in front
-    BacklineHeavy,  // More terrain in back
-    Scattered,      // Spread out placement
-    Clustered       // Grouped terrain
+    Default,        // Standard map pattern
+    Mirrored,       // Mirror layout
+    FrontlineFocus, // More terrain in front
+    BacklineFocus,  // More terrain in back
+    Clustered,      // Grouped terrain
+    CoverFocus,     // Emphasize cover terrain
+    RoughFocus,     // Emphasize rough terrain
+    Constricted,    // Can include narrow paths
+    LightFocus,     // Emphasize light terrain
+    HeavyFocus      // Emphasize heavy terrain
+}
+
+public enum TerrainFocusCategory
+{
+    Cover,
+    Rough,
+    Light,
+    Heavy
 }
 
 /// <summary>
