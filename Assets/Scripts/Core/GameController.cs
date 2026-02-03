@@ -46,8 +46,10 @@ public class GameController : MonoBehaviour
         }
 
         var enemyTeam = currentMapArea.GenerateWildCreatureTeam();
+        TerrainLayout terrainLayout = currentMapArea.GetTerrainLayout();
+        Biome biome = currentMapArea.GetBiome();
 
-        battleManager.StartBattle(playerTeam, enemyTeam);
+        battleManager.StartBattle(playerTeam, enemyTeam, terrainLayout, biome);
     }
 
     void EndBattle(TeamSide victor)
