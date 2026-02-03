@@ -45,11 +45,11 @@ public class PlayerTurnController
     private const KeyCode ACCEPT_KEY = KeyCode.Z;
     private const KeyCode BACK_KEY = KeyCode.X;
 
-    public PlayerTurnController(BattleManager manager, UnifiedBattlefield battlefield, BattleUI ui)
+    public PlayerTurnController(BattleManager manager, UnifiedBattlefield field, BattleUI ui)
     {
-        this.battleManager = manager;
-        this.battlefield = battlefield;
-        this.battleUI = ui;
+        battleManager = manager;
+        battlefield = field;
+        battleUI = ui;
 
         InitializeStateChoices();
     }
