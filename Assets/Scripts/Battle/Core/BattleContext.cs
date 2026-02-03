@@ -15,20 +15,21 @@ public class BattleContext
     // public WeatherEffect ActiveWeather { get; set; }
 
     // Turn tracking
-    public int TurnNumber { get; set; }
+    public int TurnNumber { get; set; } = 0;
     public Creature CurrentActingCreature { get; set; }
 
-    // RNG (for determinism/replays)
+    // RNG (for determinism)
     public System.Random RNG { get; set; }
 
     // Global modifiers
     public float GlobalDamageMultiplier { get; set; } = 1f;
     public float GlobalHealingMultiplier { get; set; } = 1f;
 
-    public BattleContext(UnifiedBattlefield battlefield, BattleManager manager)
+    public BattleContext(UnifiedBattlefield battlefield, BattleManager manager, Biome biome)
     {
         Battlefield = battlefield;
         BattleManager = manager;
+        CurrentBiome = biome;
         EventManager = new BattleEventManager();
         RNG = new System.Random();
     }
@@ -51,5 +52,10 @@ public class BattleContext
     public List<Creature> GetAlliesOfElement(Creature creature, CreatureElement element)
     {
         return GetAlliesOf(creature).Where(c => c.IsElement(element)).ToList();
+    }
+
+    public void IncrementTurn()
+    {
+        TurnNumber++;
     }
 }
