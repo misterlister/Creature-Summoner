@@ -1,6 +1,5 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using static GameConstants;
@@ -10,8 +9,11 @@ public class TerrainLayoutEditor : Editor
 {
     private const float CELL_SIZE = 80f;
     private const float CELL_SPACING = 4f;
-    private const float LABEL_WIDTH = 60f;
+    private const float LABEL_WIDTH = 110f;
     private const float LABEL_HEIGHT = 20f;
+
+    private bool mirrorRandomization = false;
+    private bool allowChasm = false;
 
     public override void OnInspectorGUI()
     {
@@ -20,33 +22,9 @@ public class TerrainLayoutEditor : Editor
 
         EditorGUILayout.Space(10);
 
-        // === BIOME SECTION ===
-        EditorGUILayout.LabelField("Biome Configuration", EditorStyles.boldLabel);
-
-        var biomeProp = serializedObject.FindProperty("LayoutBiome");
-        EditorGUILayout.PropertyField(biomeProp);
-
-        if (layout.LayoutBiome != null)
-        {
-            EditorGUILayout.HelpBox(
-                $"Biome: {layout.LayoutBiome.BiomeName}\n" +
-                $"Only terrain types valid for this biome will be used.",
-                MessageType.Info);
-        }
-        else
-        {
-            EditorGUILayout.HelpBox(
-                "No biome assigned. Set a biome to filter available terrain types.",
-                MessageType.Warning);
-        }
-
-        EditorGUILayout.Space(10);
-
-        // === GRID SECTION ===
         EditorGUILayout.LabelField("Terrain Grid Layout", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
             "Grid displayed left-to-right as it appears in battle.\n" +
-            "Front Line (left) faces the enemy center line.\n" +
             "Select terrain types from the dropdown.",
             MessageType.Info);
 
@@ -54,15 +32,180 @@ public class TerrainLayoutEditor : Editor
 
         DrawGrid(layout);
 
+        EditorGUILayout.Space(12);
+
+        DrawRandomizationOptions();
+
         EditorGUILayout.Space(10);
 
-        // === UTILITY BUTTONS ===
+        DrawUtilityButtons(layout);
+
+        serializedObject.ApplyModifiedProperties();
+    }
+
+    // ================= GRID =================
+
+    private void DrawGrid(TerrainLayout layout)
+    {
+        DrawBattlefieldIndicator();
+        EditorGUILayout.Space(8);
+
+        DrawColumnHeaders();
+
+        for (int row = 0; row < BATTLE_ROWS; row++)
+        {
+            EditorGUILayout.BeginHorizontal();
+
+            DrawRowLabel(row);
+
+            for (int col = 0; col < BATTLE_COLS; col++)
+            {
+                DrawTerrainCell(layout, row, col);
+            }
+
+            EditorGUILayout.EndHorizontal();
+            GUILayout.Space(CELL_SPACING);
+        }
+    }
+
+    private void DrawRowLabel(int row)
+    {
+        string label = row switch
+        {
+            0 => "Top",
+            1 => "Mid",
+            2 => "Bot",
+            _ => row.ToString()
+        };
+
+        var style = new GUIStyle(EditorStyles.label)
+        {
+            alignment = TextAnchor.MiddleRight,
+            fontStyle = FontStyle.Bold
+        };
+
+        GUILayout.BeginVertical(GUILayout.Width(LABEL_WIDTH), GUILayout.Height(CELL_SIZE));
+        GUILayout.FlexibleSpace();
+        GUILayout.Label($"{label} (Row {row})", style);
+        GUILayout.FlexibleSpace();
+        GUILayout.EndVertical();
+    }
+
+    private void DrawColumnHeaders()
+    {
+        EditorGUILayout.BeginHorizontal();
+        GUILayout.Space(LABEL_WIDTH);
+
+        for (int col = 0; col < BATTLE_COLS; col++)
+        {
+            DrawColumnHeader($"Col {col}", GetColumnTint(col));
+        }
+
+        EditorGUILayout.EndHorizontal();
+    }
+
+    private void DrawColumnHeader(string label, Color tint)
+    {
+        Rect rect = GUILayoutUtility.GetRect(CELL_SIZE, LABEL_HEIGHT * 2);
+        EditorGUI.DrawRect(rect, tint * 0.3f);
+
+        var style = new GUIStyle(EditorStyles.label)
+        {
+            alignment = TextAnchor.MiddleCenter,
+            fontStyle = FontStyle.Bold,
+            fontSize = 10,
+            normal = { textColor = Color.white }
+        };
+
+        EditorGUI.LabelField(rect, label, style);
+        GUILayout.Space(CELL_SPACING);
+    }
+
+    // ================= CELLS =================
+
+    private void DrawTerrainCell(TerrainLayout layout, int row, int col)
+    {
+        Color tintColor = GetColumnTint(col);
+        Rect cellRect = GUILayoutUtility.GetRect(CELL_SIZE, CELL_SIZE);
+
+        EditorGUI.DrawRect(cellRect, tintColor * 0.2f);
+        Handles.DrawSolidRectangleWithOutline(cellRect, Color.clear, tintColor * 0.6f);
+
+        TerrainTypeEnum current = layout.GetTerrainType(row, col);
+
+        Rect popupRect = new Rect(
+            cellRect.x + 4,
+            cellRect.y + 22,
+            cellRect.width - 8,
+            EditorGUIUtility.singleLineHeight
+        );
+
+        EditorGUI.BeginChangeCheck();
+        TerrainTypeEnum next = (TerrainTypeEnum)EditorGUI.EnumPopup(popupRect, current);
+        if (EditorGUI.EndChangeCheck())
+        {
+            Undo.RecordObject(layout, "Change Terrain");
+            layout.SetTerrain(row, col, next);
+            EditorUtility.SetDirty(layout);
+        }
+
+        DrawCellLabels(cellRect, row, col, current);
+        GUILayout.Space(CELL_SPACING);
+    }
+
+    private void DrawCellLabels(Rect cellRect, int row, int col, TerrainTypeEnum terrain)
+    {
+        var posStyle = new GUIStyle(EditorStyles.miniLabel)
+        {
+            fontSize = 8,
+            normal = { textColor = new Color(1f, 1f, 1f, 0.6f) }
+        };
+
+        EditorGUI.LabelField(
+            new Rect(cellRect.x + 2, cellRect.y + 2, 50, 14),
+            $"({row},{col})",
+            posStyle);
+
+        var nameStyle = new GUIStyle(EditorStyles.miniLabel)
+        {
+            alignment = TextAnchor.LowerCenter,
+            fontStyle = FontStyle.Bold,
+            fontSize = 9,
+            normal = { textColor = Color.white }
+        };
+
+        EditorGUI.LabelField(
+            new Rect(cellRect.x + 4, cellRect.yMax - 18, cellRect.width - 8, 16),
+            terrain.ToString(),
+            nameStyle);
+    }
+
+    // ================= UI SECTIONS =================
+
+    private void DrawRandomizationOptions()
+    {
+        EditorGUILayout.LabelField("Randomization Options", EditorStyles.boldLabel);
+
+        mirrorRandomization = EditorGUILayout.ToggleLeft(
+            "Mirror (symmetrical battlefield)",
+            mirrorRandomization);
+
+        allowChasm = EditorGUILayout.ToggleLeft(
+            "Allow Chasm terrain",
+            allowChasm);
+    }
+
+    private void DrawUtilityButtons(TerrainLayout layout)
+    {
         EditorGUILayout.BeginHorizontal();
 
         if (GUILayout.Button("Clear All"))
         {
-            if (EditorUtility.DisplayDialog("Clear Terrain",
-                "Remove all terrain from this layout?", "Yes", "Cancel"))
+            if (EditorUtility.DisplayDialog(
+                "Clear Terrain",
+                "Remove all terrain from this layout?",
+                "Yes",
+                "Cancel"))
             {
                 Undo.RecordObject(layout, "Clear Terrain Layout");
                 layout.Clear();
@@ -78,276 +221,85 @@ public class TerrainLayoutEditor : Editor
         }
 
         EditorGUILayout.EndHorizontal();
-
-        EditorGUILayout.Space(10);
-
-        serializedObject.ApplyModifiedProperties();
     }
 
-    private void DrawGrid(TerrainLayout layout)
+    // ================= HELPERS =================
+
+    private Color GetColumnTint(int col)
     {
-        var frontLineProp = serializedObject.FindProperty("frontLine");
-        var middleLineProp = serializedObject.FindProperty("middleLine");
-        var backLineProp = serializedObject.FindProperty("backLine");
-
-        // Draw battlefield orientation indicator
-        DrawBattlefieldIndicator();
-
-        EditorGUILayout.Space(5);
-
-        // Column headers with visual separator
-        EditorGUILayout.BeginHorizontal();
-        GUILayout.Space(LABEL_WIDTH);
-
-        DrawColumnHeader("FRONT LINE\n(Col 0)", new Color(0.8f, 0.3f, 0.3f));
-        DrawColumnHeader("MIDDLE LINE\n(Col 1)", new Color(0.8f, 0.6f, 0.3f));
-        DrawColumnHeader("BACK LINE\n(Col 2)", new Color(0.3f, 0.6f, 0.8f));
-
-        EditorGUILayout.EndHorizontal();
-
-        // Draw each row horizontally (left to right)
-        for (int row = 0; row < BATTLE_ROWS; row++)
-        {
-            DrawGridRow(row, frontLineProp, middleLineProp, backLineProp, layout);
-        }
+        if (col == 2 || col == 3) return new Color(0.8f, 0.3f, 0.3f); // Frontline
+        if (col == 1 || col == 4) return new Color(0.8f, 0.6f, 0.3f); // Midline
+        return new Color(0.3f, 0.6f, 0.8f);                           // Backline
     }
 
     private void DrawBattlefieldIndicator()
     {
-        var rect = GUILayoutUtility.GetRect(0, 30);
-        rect.width = EditorGUIUtility.currentViewWidth - 40;
-        rect.x = 20;
+        float totalWidth = EditorGUIUtility.currentViewWidth - 40;
+        float colWidth = CELL_SIZE; // width of one terrain cell
+        int colsPerSide = 3;        // player 3 columns, enemy 3 columns
 
-        // Draw arrow showing battle flow
-        var arrowStyle = new GUIStyle(EditorStyles.boldLabel)
+        float gridStartX = LABEL_WIDTH; // after row labels
+
+        // PLAYER SIDE
+        Rect playerRect = new Rect(
+            gridStartX,
+            GUILayoutUtility.GetLastRect().y, // use current Y position
+            colWidth * colsPerSide,
+            20);
+        EditorGUI.DrawRect(playerRect, new Color(0.2f, 0.4f, 0.8f, 0.2f));
+
+        var style = new GUIStyle(EditorStyles.boldLabel)
         {
             alignment = TextAnchor.MiddleCenter,
             fontSize = 12
         };
+        GUI.Label(playerRect, "PLAYER SIDE", style);
 
-        EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width * 0.4f, rect.height),
-            new Color(0.2f, 0.4f, 0.8f, 0.2f));
-        GUI.Label(new Rect(rect.x, rect.y, rect.width * 0.4f, rect.height),
-            "PLAYER SIDE", arrowStyle);
-
-        EditorGUI.DrawRect(new Rect(rect.x + rect.width * 0.6f, rect.y, rect.width * 0.4f, rect.height),
-            new Color(0.8f, 0.3f, 0.3f, 0.2f));
-        GUI.Label(new Rect(rect.x + rect.width * 0.6f, rect.y, rect.width * 0.4f, rect.height),
-            "ENEMY SIDE", arrowStyle);
-
-        // Center line
-        var centerX = rect.x + rect.width * 0.5f;
-        Handles.color = Color.yellow;
-        Handles.DrawLine(
-            new Vector3(centerX, rect.y),
-            new Vector3(centerX, rect.y + rect.height));
-
-        // Arrow showing direction
-        var arrowY = rect.y + rect.height + 5;
-        Handles.color = Color.white;
-        Handles.DrawLine(
-            new Vector3(rect.x, arrowY),
-            new Vector3(rect.x + rect.width, arrowY));
-        DrawArrowHead(new Vector2(rect.x + rect.width, arrowY), Vector2.right);
+        // ENEMY SIDE
+        Rect enemyRect = new Rect(
+            gridStartX + colWidth * colsPerSide,
+            playerRect.y,
+            colWidth * colsPerSide,
+            20);
+        EditorGUI.DrawRect(enemyRect, new Color(0.8f, 0.3f, 0.3f, 0.2f));
+        GUI.Label(enemyRect, "ENEMY SIDE", style);
     }
 
-    private void DrawArrowHead(Vector2 tip, Vector2 direction)
-    {
-        var perpendicular = new Vector2(-direction.y, direction.x);
-        var back = tip - direction * 8;
-        var side1 = back + perpendicular * 4;
-        var side2 = back - perpendicular * 4;
 
-        Handles.DrawLine(tip, side1);
-        Handles.DrawLine(tip, side2);
-    }
-
-    private void DrawColumnHeader(string label, Color tintColor)
-    {
-        var headerRect = GUILayoutUtility.GetRect(CELL_SIZE, LABEL_HEIGHT * 2);
-
-        EditorGUI.DrawRect(headerRect, tintColor * 0.3f);
-
-        var style = new GUIStyle(EditorStyles.label)
-        {
-            alignment = TextAnchor.MiddleCenter,
-            fontStyle = FontStyle.Bold,
-            fontSize = 10,
-            normal = { textColor = Color.white }
-        };
-
-        EditorGUI.LabelField(headerRect, label, style);
-        GUILayout.Space(CELL_SPACING);
-    }
-
-    private void DrawGridRow(int row, SerializedProperty frontProp,
-                            SerializedProperty middleProp, SerializedProperty backProp,
-                            TerrainLayout layout)
-    {
-        EditorGUILayout.BeginHorizontal();
-
-        // Row label on left
-        var rowLabel = row switch
-        {
-            0 => "Top",
-            1 => "Mid",
-            2 => "Bot",
-            _ => row.ToString()
-        };
-
-        var labelStyle = new GUIStyle(EditorStyles.label)
-        {
-            alignment = TextAnchor.MiddleRight,
-            fontStyle = FontStyle.Bold
-        };
-        GUILayout.Label($"{rowLabel} (Row {row})", labelStyle, GUILayout.Width(LABEL_WIDTH));
-
-        // Draw cells left to right: Front -> Middle -> Back
-        DrawTerrainCell(frontProp.FindPropertyRelative(GetRowPropertyName(row)),
-            row, 0, new Color(0.8f, 0.3f, 0.3f), layout);
-
-        DrawTerrainCell(middleProp.FindPropertyRelative(GetRowPropertyName(row)),
-            row, 1, new Color(0.8f, 0.6f, 0.3f), layout);
-
-        DrawTerrainCell(backProp.FindPropertyRelative(GetRowPropertyName(row)),
-            row, 2, new Color(0.3f, 0.6f, 0.8f), layout);
-
-        EditorGUILayout.EndHorizontal();
-        GUILayout.Space(CELL_SPACING);
-    }
-
-    private string GetRowPropertyName(int row)
-    {
-        return row switch
-        {
-            0 => "Top",
-            1 => "Middle",
-            2 => "Bottom",
-            _ => ""
-        };
-    }
-
-    private void DrawTerrainCell(SerializedProperty terrainEnumProp, int row, int col,
-                                 Color tintColor, TerrainLayout layout)
-    {
-        var cellRect = GUILayoutUtility.GetRect(CELL_SIZE, CELL_SIZE);
-
-        // Draw cell background with column color tint
-        var bgColor = tintColor * 0.2f;
-        EditorGUI.DrawRect(cellRect, bgColor);
-
-        // Draw border
-        var borderColor = tintColor * 0.6f;
-        Handles.color = borderColor;
-        Handles.DrawSolidRectangleWithOutline(cellRect, Color.clear, borderColor);
-
-        // Enum popup for terrain selection
-        var contentRect = new Rect(
-            cellRect.x + 4,
-            cellRect.y + 20,
-            cellRect.width - 8,
-            EditorGUIUtility.singleLineHeight);
-
-        EditorGUI.BeginChangeCheck();
-        var currentTerrain = (TerrainTypeEnum)terrainEnumProp.intValue;
-        var newTerrain = (TerrainTypeEnum)EditorGUI.EnumPopup(contentRect, currentTerrain);
-
-        if (EditorGUI.EndChangeCheck())
-        {
-            terrainEnumProp.intValue = (int)newTerrain;
-        }
-
-        // Draw position label in corner
-        var posLabel = $"({row},{col})";
-        var labelRect = new Rect(cellRect.x + 2, cellRect.y + 2, 30, 15);
-        var labelStyle = new GUIStyle(EditorStyles.miniLabel)
-        {
-            normal = { textColor = new Color(1, 1, 1, 0.6f) },
-            fontSize = 8
-        };
-        EditorGUI.LabelField(labelRect, posLabel, labelStyle);
-
-        // Show terrain name at bottom
-        var nameRect = new Rect(
-            cellRect.x + 4,
-            cellRect.y + cellRect.height - 18,
-            cellRect.width - 8,
-            16);
-
-        var nameStyle = new GUIStyle(EditorStyles.miniLabel)
-        {
-            alignment = TextAnchor.LowerCenter,
-            fontStyle = FontStyle.Bold,
-            fontSize = 9,
-            normal = { textColor = Color.white }
-        };
-
-        var displayName = currentTerrain.ToString();
-        if (displayName.Length > 10)
-            displayName = displayName.Substring(0, 10);
-
-        EditorGUI.LabelField(nameRect, displayName, nameStyle);
-
-        GUILayout.Space(CELL_SPACING);
-    }
+    // ================= RANDOMIZATION =================
 
     private void RandomizeTerrain(TerrainLayout layout)
     {
-        // Get valid terrain types based on biome
-        List<TerrainTypeEnum> validTerrains = new List<TerrainTypeEnum>();
+        var validTerrains = new List<TerrainTypeEnum>();
 
-        if (layout.LayoutBiome != null)
+        foreach (TerrainTypeEnum t in System.Enum.GetValues(typeof(TerrainTypeEnum)))
         {
-            // Get all terrain types and filter by biome
-            var allTypes = System.Enum.GetValues(typeof(TerrainTypeEnum));
+            if (!allowChasm && t == TerrainTypeEnum.Chasm)
+                continue;
 
-            foreach (TerrainTypeEnum terrainEnum in allTypes)
-            {
-                var terrainInstance = terrainEnum.GetTerrainInstance();
-                if (terrainInstance != null)
-                {
-                    validTerrains.Add(terrainEnum);
-                }
-            }
-
-            if (validTerrains.Count == 0)
-            {
-                EditorUtility.DisplayDialog("No Valid Terrains",
-                    $"No terrain types are valid for biome '{layout.LayoutBiome.BiomeName}'.\n\n" +
-                    "Make sure the biome has terrain variants configured.",
-                    "OK");
-                return;
-            }
-        }
-        else
-        {
-            // No biome - use all terrain types
-            var allTypes = System.Enum.GetValues(typeof(TerrainTypeEnum));
-            foreach (TerrainTypeEnum terrainEnum in allTypes)
-            {
-                validTerrains.Add(terrainEnum);
-            }
+            validTerrains.Add(t);
         }
 
-        // Randomize with filtered list
-        for (int col = 0; col < BATTLE_COLS; col++)
+        int rows = BATTLE_ROWS;
+        int cols = BATTLE_COLS;
+        int maxCol = mirrorRandomization ? (cols + 1) / 2 : cols;
+
+        for (int row = 0; row < rows; row++)
         {
-            for (int row = 0; row < BATTLE_ROWS; row++)
+            for (int col = 0; col < maxCol; col++)
             {
-                // 50% chance to use a random terrain, otherwise keep as Regular
-                if (Random.value > 0.5f && validTerrains.Count > 1)
+                TerrainTypeEnum value =
+                    Random.value > 0.5f
+                        ? validTerrains[Random.Range(0, validTerrains.Count)]
+                        : TerrainTypeEnum.Regular;
+
+                layout.SetTerrain(row, col, value);
+
+                if (mirrorRandomization)
                 {
-                    // Filter out Regular for variety
-                    var nonRegular = validTerrains.Where(t => t != TerrainTypeEnum.Regular).ToList();
-                    if (nonRegular.Count > 0)
-                    {
-                        var randomTerrain = nonRegular[Random.Range(0, nonRegular.Count)];
-                        layout.SetTerrain(new GridPosition(row, col), randomTerrain);
-                    }
-                }
-                else
-                {
-                    layout.SetTerrain(new GridPosition(row, col), TerrainTypeEnum.Regular);
+                    int mirrorRow = rows - 1 - row;
+                    int mirrorCol = cols - 1 - col;
+                    layout.SetTerrain(mirrorRow, mirrorCol, value);
                 }
             }
         }
