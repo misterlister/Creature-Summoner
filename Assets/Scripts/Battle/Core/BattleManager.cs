@@ -28,8 +28,6 @@ public class BattleManager : MonoBehaviour
     private Creature activeCreature;
     public Creature ActiveCreature => activeCreature;
 
-    private int currentRound = 0;
-
     // Player turn completion flag
     private bool isPlayerTurnComplete = false;
 
@@ -43,14 +41,10 @@ public class BattleManager : MonoBehaviour
 
     private void InitializeBattle()
     {
-        // Create battle context
-        Context = new BattleContext(battlefield, this);
-        Context.CurrentBiome = currentBiome;
-
-        // Initialize systems
-        actionExecutor = new ActionExecutor(Context);
-        turnSystem = new TurnSystem(Context);
-        playerTurnController = new PlayerTurnController(this, battlefield, battleUI);
+        if (currentBiome == null)
+        {
+            Debug.LogWarning("No default biome assigned to BattleManager!");
+        }
 
         // Subscribe to events
         battlefield.OnCreatureDefeated += HandleCreatureDefeated;
@@ -58,10 +52,37 @@ public class BattleManager : MonoBehaviour
 
     #region Battle Setup
 
-    public void StartBattle(CreatureTeam playerTeam, CreatureTeam enemyTeam)
+    public void StartBattle(CreatureTeam playerTeam, CreatureTeam enemyTeam, TerrainLayout terrainLayout = null, Biome biome = null)
     {
-        // Initialize event manager
-        Context.EventManager = new BattleEventManager();
+        if (terrainLayout == null)
+        {
+            Debug.LogWarning("No terrain layout provided - battlefield will use default terrain");
+        }
+
+        if (biome == null)
+        {
+            Debug.LogWarning("No biome provided - using default biome");
+        }
+
+        currentState = BattleState.NotStarted;
+        Context = new BattleContext(battlefield, this, biome);
+        activeCreature = null;
+        isPlayerTurnComplete = false;
+
+
+        // Initialize systems
+        actionExecutor = new ActionExecutor(Context);
+        turnSystem = new TurnSystem();
+        playerTurnController = new PlayerTurnController(this, battlefield, battleUI);
+
+        if (biome != null)
+        {
+            currentBiome = biome;
+            Context.CurrentBiome = biome;
+        }
+        battlefield.SetBiome(currentBiome);
+
+        battlefield.ApplyTerrainLayout(terrainLayout);
 
         // Initialize creatures with event manager
         foreach (var creature in playerTeam.Creatures)
@@ -88,8 +109,7 @@ public class BattleManager : MonoBehaviour
         int enemyCount = battlefield.GetEnemyCount();
         yield return battleUI.TypeMessage($"You have been attacked by {enemyCount} creatures!");
 
-        // Start first round
-        currentRound = 1;
+        // Start combat rounds
         yield return StartCoroutine(NewRound());
     }
 
@@ -127,7 +147,7 @@ public class BattleManager : MonoBehaviour
     private IEnumerator NewRound()
     {
         currentState = BattleState.NewRound;
-        currentRound++;
+        Context.IncrementTurn();
 
         // Roll initiative for all creatures
         var allCreatures = battlefield.GetAllCreatures();
