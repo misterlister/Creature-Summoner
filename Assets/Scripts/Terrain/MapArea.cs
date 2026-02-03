@@ -163,6 +163,11 @@ public class MapArea : MonoBehaviour
         return GetActiveZone()?.GenerateTerrain();
     }
 
+    public Biome GetBiome()
+    {
+        return GetActiveZone()?.GetBiome();
+    }
+
     private void OnValidate()
     {
         if (encounterZones == null || encounterZones.Count == 0)
