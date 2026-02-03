@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using static GameConstants;
-using static TerrainConstants;
 
 /// <summary>
 /// Represents one 3x3 battle grid (player or enemy).
@@ -71,28 +70,26 @@ public class BattleGrid
             return;
         }
 
-        var slots = layout.GetAllSlots();
-        foreach (var slot in slots)
-        {
-            var tile = GetTile(slot.Position);
-            if (tile != null)
-            {
-                TerrainType terrainInstance = slot.TerrainType switch
-                {
-                    TerrainTypeEnum.Regular => Terrains.Regular,
-                    TerrainTypeEnum.LightCover => Terrains.LightCover,
-                    TerrainTypeEnum.HeavyCover => Terrains.HeavyCover,
-                    TerrainTypeEnum.LightRough => Terrains.LightRough,
-                    TerrainTypeEnum.HeavyRough => Terrains.HeavyRough,
-                    TerrainTypeEnum.Chasm => Terrains.Chasm,
-                    _ => null
-                };
+        // Determine column range based on team side
+        int minCol = TeamOwner == TeamSide.Player ? 0 : BATTLE_COLS / 2;
+        int maxCol = TeamOwner == TeamSide.Player ? BATTLE_COLS / 2 : BATTLE_COLS;
 
-                if (terrainInstance != null)
-                {
-                    var visuals = biome?.GetRandomVariant(terrainInstance.GetType());
-                    tile.SetTerrain(terrainInstance, visuals);
-                }
+        for (int row = 0; row < BATTLE_ROWS; row++)
+        {
+            for (int col = minCol; col < maxCol; col++)
+            {
+                var tile = GetTile(row, col);
+                if (tile == null)
+                    continue;
+
+                var terrainEnum = layout.GetTerrainType(row, col);
+
+                var terrainInstance = terrainEnum.GetTerrainInstance();
+                if (terrainInstance == null)
+                    continue;
+
+                var visuals = biome?.GetRandomVariant(terrainInstance.GetType());
+                tile.SetTerrain(terrainInstance, visuals);
             }
         }
 
