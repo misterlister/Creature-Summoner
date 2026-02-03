@@ -62,7 +62,8 @@ public class RandomEncounterRules : ScriptableObject
     [Header("Procedural Terrain")]
     [Range(0f, 1f)]
     public float TerrainDensity = 0.4f;
-    public TerrainGenerationPattern GenerationPattern = TerrainGenerationPattern.Random;
+    public TerrainGenerationPattern GenerationPattern = TerrainGenerationPattern.Default;
+    public bool EnableChasms = false;
 
     /// <summary>
     /// Generate a complete encounter from this ruleset
@@ -205,7 +206,6 @@ public class RandomEncounterRules : ScriptableObject
         return true;
     }
 
-    // Generate terrain based on biome
     public TerrainLayout GenerateTerrain()
     {
         switch (TerrainMode)
@@ -213,7 +213,7 @@ public class RandomEncounterRules : ScriptableObject
             case TerrainGenerationMode.UsePreset:
                 return GetRandomPresetLayout();
             case TerrainGenerationMode.Procedural:
-                return GenerateProceduralTerrain();
+                return TerrainGenerator.GenerateByPattern(GenerationPattern, TerrainDensity, EnableChasms);
             case TerrainGenerationMode.None:
             default:
                 return null;
@@ -226,7 +226,7 @@ public class RandomEncounterRules : ScriptableObject
             return null;
 
         var matchingLayouts = PresetTerrainLayouts
-            .Where(layout => layout != null && layout.LayoutBiome == EncounterBiome)
+            .Where(layout => layout != null)
             .ToList();
 
         if (matchingLayouts.Count > 0)
@@ -235,29 +235,6 @@ public class RandomEncounterRules : ScriptableObject
         }
 
         return PresetTerrainLayouts[Random.Range(0, PresetTerrainLayouts.Count)];
-    }
-
-    private TerrainLayout GenerateProceduralTerrain()
-    {
-        if (EncounterBiome == null)
-        {
-            Debug.LogWarning($"Cannot generate procedural terrain: no biome set on '{name}'");
-            return null;
-        }
-
-        return GenerationPattern switch
-        {
-            TerrainGenerationPattern.Random =>
-                TerrainGenerator.GenerateForBiome(EncounterBiome, TerrainDensity),
-            TerrainGenerationPattern.Symmetric =>
-                TerrainGenerator.GenerateSymmetric(
-                    TerrainGenerator.GetTerrainTypesForBiome(EncounterBiome),
-                    TerrainDensity),
-            TerrainGenerationPattern.FrontlineHeavy =>
-                TerrainGenerator.GenerateFrontlineHeavy(
-                    TerrainGenerator.GetTerrainTypesForBiome(EncounterBiome)),
-            _ => TerrainGenerator.GenerateForBiome(EncounterBiome, TerrainDensity)
-        };
     }
 
     private void OnValidate()
@@ -318,22 +295,6 @@ public class RandomEncounterRules : ScriptableObject
         if (MinBackline > 0 && (BacklinePool == null || !BacklinePool.IsValid()))
         {
             Debug.LogWarning($"Encounter '{name}': Requires backline creatures but pool is invalid", this);
-        }
-
-        // Check preset layouts match biome
-        if (PresetTerrainLayouts != null && EncounterBiome != null)
-        {
-            foreach (var layout in PresetTerrainLayouts)
-            {
-                if (layout != null && layout.LayoutBiome != null &&
-                    layout.LayoutBiome != EncounterBiome)
-                {
-                    Debug.LogWarning(
-                        $"Layout '{layout.name}' biome ({layout.LayoutBiome.BiomeName}) " +
-                        $"doesn't match encounter biome ({EncounterBiome.BiomeName})",
-                        this);
-                }
-            }
         }
     }
 }
