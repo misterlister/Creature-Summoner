@@ -13,6 +13,9 @@ public class Biome : ScriptableObject
     [TextArea(2, 3)]
     public string Description;
 
+    [Header("Visual Settings")]
+    public Sprite BackgroundSprite;
+
     [Header("Terrain Types")]
     [Tooltip("Terrain types that can appear in this biome")]
     public BiomeTerrainSet AvailableTerrains;
