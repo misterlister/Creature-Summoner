@@ -3,8 +3,8 @@ using UnityEngine;
 using static GameConstants;
 
 /// <summary>
-/// Defines a 3x3 terrain layout for a battle grid.
-/// Stores terrain types (mechanics) - visuals come from Biome.
+/// Defines a 6x6 terrain layout for a player/enemy pair of battle grids.
+/// Stores terrain types (mechanics) - visuals differ based on Biome.
 /// </summary>
 [CreateAssetMenu(menuName = "Battle/Create Terrain Layout")]
 public class TerrainLayout : ScriptableObject
@@ -42,112 +42,50 @@ public class TerrainLayout : ScriptableObject
             }
         }
     }
+    [Header("Battlefield Columns (0–5, left to right)")]
+    [SerializeField]
+    private List<GridColumn> columns = new();
 
-    [Header("Biome")]
-    [Tooltip("What biome is this layout for?")]
-    public Biome LayoutBiome;
-
-    [Header("Grid Layout (Left to Right on Battlefield)")]
-    [Tooltip("Front Line (Col 0) - Closest to enemy")]
-    [SerializeField] private GridColumn frontLine = new();
-
-    [Tooltip("Middle Line (Col 1)")]
-    [SerializeField] private GridColumn middleLine = new();
-
-    [Tooltip("Back Line (Col 2) - Furthest from enemy")]
-    [SerializeField] private GridColumn backLine = new();
-
-    // Get terrain enum at specific position
-    public TerrainTypeEnum GetTerrainType(GridPosition pos)
+    private void OnEnable()
     {
-        if (!pos.IsValid()) return TerrainTypeEnum.Regular;
+        EnsureColumnCount();
+    }
 
-        return pos.Col switch
-        {
-            0 => frontLine.GetRow(pos.Row),
-            1 => middleLine.GetRow(pos.Row),
-            2 => backLine.GetRow(pos.Row),
-            _ => TerrainTypeEnum.Regular
-        };
+    private void OnValidate()
+    {
+        EnsureColumnCount();
+    }
+
+    private void EnsureColumnCount()
+    {
+        while (columns.Count < BATTLE_COLS)
+            columns.Add(new GridColumn());
+
+        while (columns.Count > BATTLE_COLS)
+            columns.RemoveAt(columns.Count - 1);
     }
 
     public TerrainTypeEnum GetTerrainType(int row, int col)
     {
-        var pos = GridPosition.TryCreate(row, col);
-        return pos.HasValue ? GetTerrainType(pos.Value) : TerrainTypeEnum.Regular;
+        if (row < 0 || row >= BATTLE_ROWS || col < 0 || col >= BATTLE_COLS)
+            return TerrainTypeEnum.Regular;
+
+        return columns[col].GetRow(row);
     }
 
-    // Set terrain at specific position
-    public void SetTerrain(GridPosition pos, TerrainTypeEnum terrain)
+    public void SetTerrain(int row, int col, TerrainTypeEnum terrain)
     {
-        if (!pos.IsValid())
-        {
-            Debug.LogError($"Cannot set terrain at invalid position {pos}");
+        if (row < 0 || row >= BATTLE_ROWS || col < 0 || col >= BATTLE_COLS)
             return;
-        }
 
-        switch (pos.Col)
-        {
-            case 0: frontLine.SetRow(pos.Row, terrain); break;
-            case 1: middleLine.SetRow(pos.Row, terrain); break;
-            case 2: backLine.SetRow(pos.Row, terrain); break;
-        }
+        columns[col].SetRow(row, terrain);
     }
 
-    // Get all terrain slots as a flat list
-    public List<TerrainSlot> GetAllSlots()
-    {
-        var slots = new List<TerrainSlot>();
-
-        for (int col = 0; col < BATTLE_COLS; col++)
-        {
-            for (int row = 0; row < BATTLE_ROWS; row++)
-            {
-                var pos = new GridPosition(row, col);
-                var terrainType = GetTerrainType(pos);
-
-                slots.Add(new TerrainSlot
-                {
-                    Position = pos,
-                    TerrainType = terrainType
-                });
-            }
-        }
-
-        return slots;
-    }
-
-    // Check if layout is all regular terrain
-    public bool IsAllRegular()
-    {
-        for (int col = 0; col < BATTLE_COLS; col++)
-        {
-            for (int row = 0; row < BATTLE_ROWS; row++)
-            {
-                if (GetTerrainType(row, col) != TerrainTypeEnum.Regular)
-                    return false;
-            }
-        }
-        return true;
-    }
-
-    // Clear all terrain (reset to regular)
     public void Clear()
     {
         for (int col = 0; col < BATTLE_COLS; col++)
-        {
             for (int row = 0; row < BATTLE_ROWS; row++)
-            {
-                SetTerrain(new GridPosition(row, col), TerrainTypeEnum.Regular);
-            }
-        }
-    }
-
-    [System.Serializable]
-    public class TerrainSlot
-    {
-        public GridPosition Position;
-        public TerrainTypeEnum TerrainType;
+                SetTerrain(row, col, TerrainTypeEnum.Regular);
     }
 }
 
@@ -167,22 +105,6 @@ public static class TerrainTypeExtensions
             TerrainTypeEnum.HeavyRough => Terrains.HeavyRough,
             TerrainTypeEnum.Chasm => Terrains.Chasm,
             _ => null
-        };
-    }
-
-    public static TerrainTypeEnum FromTerrainType(TerrainType terrain)
-    {
-        if (terrain == null) return TerrainTypeEnum.Regular;
-
-        return terrain switch
-        {
-            RegularTerrain => TerrainTypeEnum.Regular,
-            LightCoverTerrain => TerrainTypeEnum.LightCover,
-            HeavyCoverTerrain => TerrainTypeEnum.HeavyCover,
-            LightRoughTerrain => TerrainTypeEnum.LightRough,
-            HeavyRoughTerrain => TerrainTypeEnum.HeavyRough,
-            ChasmTerrain => TerrainTypeEnum.Chasm,
-            _ => TerrainTypeEnum.Regular
         };
     }
 }
