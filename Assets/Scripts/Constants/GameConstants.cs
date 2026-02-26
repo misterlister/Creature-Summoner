@@ -66,19 +66,19 @@ public static class GameConstants
 
     public static readonly Dictionary<CreatureElement, Color> ElementColours = new Dictionary<CreatureElement, Color>()
     {
-        { CreatureElement.Fire, new Color(1f, 0.3f, 0.3f) },           // Red
-        { CreatureElement.Water, new Color(0.3f, 0.5f, 1f) },          // Blue
-        { CreatureElement.Earth, new Color(0.6f, 0.4f, 0.2f) },        // Brown
-        { CreatureElement.Air, new Color(0.7f, 0.9f, 1f) },            // Light Blue
-        { CreatureElement.Beast, new Color(0.8f, 0.6f, 0.4f) },        // Tan
-        { CreatureElement.Plant, new Color(0.3f, 0.8f, 0.3f) },        // Green
-        { CreatureElement.Electric, new Color(1f, 1f, 0.3f) },         // Yellow
-        { CreatureElement.Radiant, new Color(1f, 0.9f, 0.6f) },        // Light Yellow
-        { CreatureElement.Necrotic, new Color(0.25f, 0.05f, 0.25f) },  // Dark Purple
-        { CreatureElement.Arcane, new Color(0.6f, 0.4f, 0.8f) },       // Violet
-        { CreatureElement.Metal, new Color(0.7f, 0.7f, 0.7f) },        // Grey
-        { CreatureElement.Cold, new Color(0.4f, 1f, 0.8f) },           // Cyan
-        { CreatureElement.None, new Color(0f, 0f, 0f) }                // Black
+        { CreatureElement.Fire,     new Color(1f,    0.278f, 0.200f) },     // Red-orange
+        { CreatureElement.Water,    new Color(0.302f,0.549f, 1f) },         // Blue
+        { CreatureElement.Earth,    new Color(0.502f,0.341f, 0.180f) },     // Brown
+        { CreatureElement.Air,      new Color(0.722f,0.902f, 1f) },         // Sky blue
+        { CreatureElement.Beast,    new Color(0.847f, 0.541f, 0.333f) },    // Orange-tan
+        { CreatureElement.Plant,    new Color(0.259f,0.780f, 0.341f) },     // Green
+        { CreatureElement.Electric, new Color(1f,    0.878f, 0.200f) },     // Yellow
+        { CreatureElement.Radiant,  new Color(1f,    0.886f, 0.478f) },     // Pale yellow
+        { CreatureElement.Necrotic, new Color(0.227f,0.031f, 0.188f) },     // Dark purple
+        { CreatureElement.Arcane,   new Color(0.522f,0.322f, 1f) },         // Arcane violet
+        { CreatureElement.Metal,    new Color(0.478f,0.510f, 0.541f) },     // Steel grey
+        { CreatureElement.Cold,     new Color(0.251f,0.922f, 0.878f) },     // Icy cyan
+        { CreatureElement.None,     new Color(0.949f,0.949f, 0.949f) }      // Off-white
     };
 
     public static readonly Color HP_COLOUR = new Color(0.5f, 1f, 0.5f);
