@@ -1,6 +1,6 @@
 using System;
-using UnityEngine;
 using System.Collections;
+using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
@@ -19,6 +19,21 @@ public class PlayerController : MonoBehaviour
     private void Awake()
     {
         animator = GetComponent<Animator>();
+    }
+
+    private void Start()
+    {
+        // Detect if player spawns inside a battle zone
+        var hit = Physics2D.OverlapCircle(transform.position, 0.2f, battleLayer);
+        if (hit != null)
+        {
+            var trigger = hit.GetComponent<EncounterZoneTrigger>();
+            if (trigger != null)
+            {
+                currentMapArea = trigger.GetParentArea();
+                currentMapArea?.OnPlayerEnterZone(trigger.GetZoneName());
+            }
+        }
     }
 
     public void HandleUpdate()
@@ -73,32 +88,31 @@ public class PlayerController : MonoBehaviour
 
     private void CheckForEncounters()
     {
-        // Check if we're in a battle zone
-        var battleZone = Physics2D.OverlapCircle(transform.position, 0.2f, battleLayer);
-        if (battleZone != null)
+        var hit = Physics2D.OverlapCircle(transform.position, 0.2f, battleLayer);
+        if (hit != null)
         {
-            // Get or update current map area
-            var mapArea = battleZone.GetComponent<MapArea>();
-            if (mapArea != null)
-            {
-                if (currentMapArea != mapArea)
-                {
-                    // Entered a new map area
-                    currentMapArea = mapArea;
-                    currentMapArea.OnPlayerEnter();
-                }
+            var trigger = hit.GetComponent<EncounterZoneTrigger>();
+            if (trigger == null) return;
 
-                // Notify map area of step and check if encounter triggers
-                if (currentMapArea.OnPlayerStep())
-                {
-                    animator.SetBool("isMoving", false);
-                    OnEncountered();
-                }
+            var mapArea = trigger.GetParentArea();
+            if (mapArea == null) return;
+
+            if (currentMapArea != mapArea)
+            {
+                currentMapArea?.OnPlayerExit();
+                currentMapArea = mapArea;
+            }
+
+            currentMapArea.OnPlayerEnterZone(trigger.GetZoneName());
+
+            if (currentMapArea.OnPlayerStep())
+            {
+                animator.SetBool("isMoving", false);
+                OnEncountered();
             }
         }
         else
         {
-            // Left the map area
             if (currentMapArea != null)
             {
                 currentMapArea.OnPlayerExit();
