@@ -63,14 +63,13 @@ public static class GameConstants
     public const float V_INEFF_DUAL = 0.44f;
     public const float V_INEFF_SINGLE = 0.25f;
 
-
     public static readonly Dictionary<CreatureElement, Color> ElementColours = new Dictionary<CreatureElement, Color>()
     {
         { CreatureElement.Fire,     new Color(1f,    0.278f, 0.200f) },     // Red-orange
         { CreatureElement.Water,    new Color(0.302f,0.549f, 1f) },         // Blue
-        { CreatureElement.Earth,    new Color(0.502f,0.341f, 0.180f) },     // Brown
+        { CreatureElement.Earth,    new Color(0.435f, 0.298f, 0.169f) },    // Brown
         { CreatureElement.Air,      new Color(0.722f,0.902f, 1f) },         // Sky blue
-        { CreatureElement.Beast,    new Color(0.847f, 0.541f, 0.333f) },    // Orange-tan
+        { CreatureElement.Beast,    new Color(0.878f, 0.541f, 0.278f) },    // Orange-tan
         { CreatureElement.Plant,    new Color(0.259f,0.780f, 0.341f) },     // Green
         { CreatureElement.Electric, new Color(1f,    0.878f, 0.200f) },     // Yellow
         { CreatureElement.Radiant,  new Color(1f,    0.886f, 0.478f) },     // Pale yellow
