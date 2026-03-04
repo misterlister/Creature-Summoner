@@ -30,6 +30,10 @@ public class CreatureBase : ScriptableObject
     public string CreatureName => creatureName;
     public string Description => description;
     public Sprite FrontSprite => frontSprite;
+
+    // TODO: UPDATE IN FUTURE
+    public Sprite Portrait => frontSprite;
+
     public CreatureElement Element1 => element1;
     public CreatureElement Element2 => element2;
     public CreatureSize Size => size;
