@@ -98,6 +98,7 @@ public class TerrainVisuals
     public string VariantName;
 
     public Sprite Sprite;
+    public Sprite ForegroundSprite;
     public Color TintColor = Color.white;
 
     [Tooltip("Optional particle effect")]
