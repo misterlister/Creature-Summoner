@@ -1,8 +1,7 @@
+using DG.Tweening;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
-using DG.Tweening;
-using System.Collections.Generic;
 using static BattleUIConstants;
 
 /// <summary>
@@ -13,42 +12,41 @@ public class BattleTileUI : MonoBehaviour
 {
     [Header("Creature Display")]
     [SerializeField] private Image creatureSprite;
+    [SerializeField] private GameObject spriteHolder;
     [SerializeField] private GameObject creatureContainer;
 
     [Header("Status Bars")]
-    [SerializeField] private Slider hpBar;
-    [SerializeField] private Slider energyBar;
-    [SerializeField] private Slider xpBar;
+    [SerializeField] private GameObject barsContainer;
+    [SerializeField] private ResourceBar shieldBar;
+    [SerializeField] private ResourceBar hpBar;
+    [SerializeField] private ResourceBar energyBar;
 
     [Header("Highlights")]
     [SerializeField] private Image highlightAura;
     [SerializeField] private Image selectionArrow;
 
     [Header("Highlight Sprites")]
-    [SerializeField] private Sprite activeCreatureSprite;
-    [SerializeField] private Sprite negativeTargetSprite;
-    [SerializeField] private Sprite positiveTargetSprite;
-    [SerializeField] private Sprite moveTargetSprite;
+    [SerializeField] private Sprite activeCreatureAura;
+    [SerializeField] private Sprite negativeTargetAura;
+    [SerializeField] private Sprite positiveTargetAura;
+    [SerializeField] private Sprite moveTargetAura;
     [SerializeField] private Sprite validArrowSprite;
     [SerializeField] private Sprite invalidArrowSprite;
     [SerializeField] private Sprite selectedArrowSprite;
 
     [Header("Info Display")]
-    [SerializeField] private TextMeshProUGUI nameText;
-    [SerializeField] private TextMeshProUGUI levelText;
-    [SerializeField] private GameObject infoPanel;
-
-    [Header("Status Window")]
-    [SerializeField] private CreatureStatusWindow statusWindow;
+    [SerializeField] private GameObject namePanel;
+    [SerializeField] private TextMeshProUGUI nameField;
+    [SerializeField] private GameObject levelPanel;
+    [SerializeField] private TextMeshProUGUI levelField;
 
     [Header("Terrain Display")]
-    [SerializeField] private Image terrainImage;
+    [SerializeField] private Image terrainBackgroundImage;
+    [SerializeField] private Image terrainForegroundImage;
 
     // References
     public BattleTile DataTile { get; private set; }
     private bool isPlayerSide;
-
-    // Currently bound creature for event subscriptions
     private Creature boundCreature;
 
     // Animation state
@@ -56,19 +54,10 @@ public class BattleTileUI : MonoBehaviour
     private Color originalSpriteColor;
     private bool isAnimating;
 
-    // Queued updates for smooth animations
-    private Queue<float> hpQueue = new Queue<float>();
-    private Queue<float> energyQueue = new Queue<float>();
-    private Queue<float> xpQueue = new Queue<float>();
-    private bool isUpdatingHP;
-    private bool isUpdatingEnergy;
-    private bool isUpdatingXP;
-
     public void Initialize(BattleTile tile, bool playerSide)
     {
         // Unsubscribe previous tile if any
-        if (DataTile != null)
-            UnsubscribeFromTile(DataTile);
+        if (DataTile != null) UnsubscribeFromTile(DataTile);
 
         DataTile = tile;
         isPlayerSide = playerSide;
@@ -77,7 +66,15 @@ public class BattleTileUI : MonoBehaviour
         SubscribeToTile(DataTile);
 
         SetupLayout();
-        Clear();
+
+        if (DataTile.OccupyingCreature != null)
+        {
+            OnCreaturePlaced(DataTile.OccupyingCreature);
+        } 
+        else
+        {
+            Clear();
+        }
     }
 
     private void SubscribeToTile(BattleTile tile)
@@ -114,9 +111,7 @@ public class BattleTileUI : MonoBehaviour
         if (!isPlayerSide)
         {
             // Flip sprite direction for enemy
-            Vector3 scale = creatureSprite.transform.localScale;
-            scale.x *= -1;
-            creatureSprite.transform.localScale = scale;
+            creatureSprite.transform.localScale = new Vector3(-1, 1, 1);
         }
 
         // Store original values
@@ -131,37 +126,31 @@ public class BattleTileUI : MonoBehaviour
         if (creature == null)
         {
             Clear();
+            Debug.Log("BattleTileUI: OnCreaturePlaced called with null creature.");
             return;
         }
 
-        // Unsubscribe from any previously-bound creature just in case
+        // Unsubscribe from any previously-bound creature
         if (boundCreature != null)
         {
             UnbindCreatureEvents();
-            boundCreature = null;
         }
 
         boundCreature = creature;
-
         SetupCreatureVisuals(creature);
         UpdateBars(creature, instant: true);
         PlaySummonAnimation();
 
-        // Subscribe to creature events (use actual event names)
+        // Subscribe to creature events
         boundCreature.OnHPChanged += OnBoundCreatureHPChanged;
         boundCreature.OnTakeDamage += OnBoundCreatureDamaged;
         boundCreature.OnHealed += OnBoundCreatureHealed;
+        boundCreature.OnShieldChanged += OnBoundCreatureShieldingChanged;
+        boundCreature.OnEnergyChanged += OnBoundCreatureEnergyChanged;
     }
 
     public void OnCreatureRemoved(Creature creature)
     {
-        // Unsubscribe to avoid memory leaks
-        if (boundCreature != null)
-        {
-            UnbindCreatureEvents();
-            boundCreature = null;
-        }
-
         Clear();
     }
 
@@ -171,11 +160,25 @@ public class BattleTileUI : MonoBehaviour
         boundCreature.OnHPChanged -= OnBoundCreatureHPChanged;
         boundCreature.OnTakeDamage -= OnBoundCreatureDamaged;
         boundCreature.OnHealed -= OnBoundCreatureHealed;
+        boundCreature.OnShieldChanged -= OnBoundCreatureShieldingChanged;
+        boundCreature.OnEnergyChanged -= OnBoundCreatureEnergyChanged;
     }
 
     private void OnBoundCreatureHPChanged(int currentHP, int maxHP)
     {
         // Update bars when HP or related stats change
+        UpdateBars(boundCreature, instant: false);
+    }
+
+    private void OnBoundCreatureEnergyChanged(int currentEnergy, int maxEnergy)
+    {
+        // Update bars when Energy or related stats change
+        UpdateBars(boundCreature, instant: false);
+    }
+
+    private void OnBoundCreatureShieldingChanged(int currentShielding, int maxHP)
+    {
+        // Update bars when Shielding or related stats change
         UpdateBars(boundCreature, instant: false);
     }
 
@@ -191,21 +194,33 @@ public class BattleTileUI : MonoBehaviour
 
     public void OnTerrainChanged(TerrainType oldTerrain, TerrainType newTerrain, TerrainVisuals visuals)
     {
-        if (terrainImage == null) { 
-            Debug.LogWarning("BattleTileUI: terrainImage is not assigned!");
+        if (terrainBackgroundImage == null) { 
+            Debug.LogWarning("BattleTileUI: terrainBackgroundImage is not assigned!");
             return;
         }
 
-        // If no visuals or no sprite, hide terrain overlay (shows background)
+        // If no visuals or no sprite, hide terrain background
         if (visuals == null || visuals.Sprite == null)
         {
-            terrainImage.gameObject.SetActive(false);
+            terrainBackgroundImage.gameObject.SetActive(false);
+        }
+        else
+        {
+            terrainBackgroundImage.sprite = visuals.Sprite;
+            terrainBackgroundImage.color = visuals.TintColor;
+            terrainBackgroundImage.gameObject.SetActive(true);
+        }
+
+        // If no visuals or no sprite, hide terrain
+        if (visuals == null || visuals.ForegroundSprite == null)
+        {
+            terrainForegroundImage.gameObject.SetActive(false);
             return;
         }
 
-        terrainImage.sprite = visuals.Sprite;
-        terrainImage.color = visuals.TintColor;
-        terrainImage.gameObject.SetActive(true);
+        terrainForegroundImage.sprite = visuals.ForegroundSprite;
+        terrainForegroundImage.color = visuals.TintColor;
+        terrainForegroundImage.gameObject.SetActive(true);
     }
 
     public void OnSurfaceApplied(SurfaceEffect surface)
@@ -225,27 +240,28 @@ public class BattleTileUI : MonoBehaviour
     private void SetupCreatureVisuals(Creature creature)
     {
         creatureSprite.sprite = creature.Species.FrontSprite;
-        creatureSprite.gameObject.SetActive(true);
+        spriteHolder.SetActive(true);
+
+        namePanel.SetActive(true);
+        levelPanel.SetActive(true);
+        barsContainer.SetActive(true);
+
         creatureContainer.SetActive(true);
 
-        SetSpriteSize(creature.Species.Size);
+        nameField.text = creature.Nickname;
+        levelField.text = creature.Level.ToString();
 
-        nameText.text = creature.Nickname;
-        levelText.text = creature.Level.ToString();
-        infoPanel.SetActive(true);
+        UpdateScale(creature.Species.Size);
 
-        // Setup bars
-        hpBar.gameObject.SetActive(true);
-        energyBar.gameObject.SetActive(isPlayerSide);
-        xpBar.gameObject.SetActive(isPlayerSide);
+        hpBar.SetVisibility(true);
+        energyBar.SetVisibility(true);
 
-        // Update status window if present
-        statusWindow?.UpdateCreature(creature);
+        UpdateBars(creature, instant: true);
     }
 
-    private void SetSpriteSize(CreatureSize size)
+    private void UpdateScale(CreatureSize size)
     {
-        int dimension = BASE_SPRITE_SIZE;
+        float dimension = BASE_SPRITE_SIZE;
 
         switch (size)
         {
@@ -261,37 +277,41 @@ public class BattleTileUI : MonoBehaviour
             case CreatureSize.ExtraLarge:
                 dimension += 2 * SIZE_INCREMENT;
                 break;
+            default:
+                break;
         }
 
-        RectTransform spriteRect = creatureSprite.GetComponent<RectTransform>();
-        spriteRect.sizeDelta = new Vector2(dimension, dimension);
+        float scaleFactor = dimension / MAX_SPRITE_SIZE;
 
-        // Scale aura accordingly
-        if (highlightAura != null)
-        {
-            RectTransform auraRect = highlightAura.GetComponent<RectTransform>();
-            float auraDimension = dimension * AURA_SIZE_MULTIPLIER;
-            auraRect.sizeDelta = new Vector2(auraDimension, auraDimension);
-        }
+        creatureContainer.transform.localScale = new Vector3(scaleFactor, scaleFactor, 1f);
     }
 
     private void Clear()
     {
+        // Kill any leftover tweens on this tile's components
+        creatureSprite.DOKill();
+        creatureContainer.transform.DOKill();
+        isAnimating = false;
+
+        UnbindCreatureEvents();
+        boundCreature = null;
+        
         creatureSprite.sprite = null;
-        creatureSprite.gameObject.SetActive(false);
-        creatureContainer.SetActive(false);
+        spriteHolder.SetActive(false);
 
-        hpBar.value = 0;
-        energyBar.value = 0;
-        xpBar.value = 0;
-        hpBar.gameObject.SetActive(false);
-        energyBar.gameObject.SetActive(false);
-        xpBar.gameObject.SetActive(false);
+        ZeroBars();
+        hpBar.SetVisibility(false, 0);
+        energyBar.SetVisibility(false, 0);
+        shieldBar.SetVisibility(false, 0);
 
-        infoPanel.SetActive(false);
+        barsContainer.SetActive(false);
+
+        if (nameField != null) nameField.text = "";
+        if (namePanel != null) namePanel.SetActive(false);
+        if (levelPanel != null) levelPanel.SetActive(false);
+
+        UpdateScale(CreatureSize.Medium);
         ClearHighlight();
-
-        statusWindow?.Clear();
     }
 
     #endregion
@@ -300,70 +320,25 @@ public class BattleTileUI : MonoBehaviour
 
     private void UpdateBars(Creature creature, bool instant)
     {
+        if (creature == null) return;
+
         float hpPercent = (float)creature.HP / creature.MaxHP;
         float energyPercent = (float)creature.Energy / creature.MaxEnergy;
-        float xpPercent = creature.XP / 100f; // TODO: Use actual XP requirement
+        float shieldPercent = (float)creature.Shielding / creature.MaxHP;
 
-        if (instant)
-        {
-            hpBar.value = hpPercent;
-            energyBar.value = energyPercent;
-            xpBar.value = xpPercent;
-        }
-        else
-        {
-            QueueBarUpdate(hpQueue, hpPercent, hpBar, () => isUpdatingHP = true, () => isUpdatingHP = false);
-            QueueBarUpdate(energyQueue, energyPercent, energyBar, () => isUpdatingEnergy = true, () => isUpdatingEnergy = false);
-            QueueBarUpdate(xpQueue, xpPercent, xpBar, () => isUpdatingXP = true, () => isUpdatingXP = false);
-        }
+        hpBar.SetValue(hpPercent, instant);
+        energyBar.SetValue(energyPercent, instant);
+
+        // Shield logic: Hide if 0, show if active
+        shieldBar.SetVisibility(creature.Shielding > 0);
+        shieldBar.SetValue(shieldPercent, instant);
     }
 
-    private void QueueBarUpdate(Queue<float> queue, float targetValue, Slider slider, System.Action onStart, System.Action onComplete)
+    private void ZeroBars()
     {
-        queue.Enqueue(Mathf.Clamp01(targetValue));
-
-        if (queue == hpQueue)
-        {
-            if (!isUpdatingHP)
-                StartCoroutine(ProcessBarUpdates(queue, slider, onStart, onComplete));
-        }
-        else if (queue == energyQueue)
-        {
-            if (!isUpdatingEnergy)
-                StartCoroutine(ProcessBarUpdates(queue, slider, onStart, onComplete));
-        }
-        else if (queue == xpQueue)
-        {
-            if (!isUpdatingXP)
-                StartCoroutine(ProcessBarUpdates(queue, slider, onStart, onComplete));
-        }
-    }
-
-    private System.Collections.IEnumerator ProcessBarUpdates(
-        Queue<float> queue,
-        Slider slider,
-        System.Action onStart,
-        System.Action onComplete)
-    {
-        onStart?.Invoke();
-
-        while (queue.Count > 0)
-        {
-            float targetValue = queue.Dequeue();
-            float startValue = slider.value;
-            float elapsed = 0f;
-
-            while (elapsed < SLIDER_DURATION)
-            {
-                slider.value = Mathf.Lerp(startValue, targetValue, elapsed / SLIDER_DURATION);
-                elapsed += Time.deltaTime;
-                yield return null;
-            }
-
-            slider.value = targetValue;
-        }
-
-        onComplete?.Invoke();
+        hpBar.SetValue(0, true);
+        energyBar.SetValue(0, true);
+        shieldBar.SetValue(0, true);
     }
 
     #endregion
@@ -372,16 +347,22 @@ public class BattleTileUI : MonoBehaviour
 
     public void PlaySummonAnimation()
     {
-        if (isAnimating) return;
-
         isAnimating = true;
-        Color fadeColor = originalSpriteColor;
-        fadeColor.a = 0;
-        creatureSprite.color = fadeColor;
 
-        creatureSprite.DOFade(1f, SUMMON_DURATION)
-            .SetEase(Ease.InOutQuad)
-            .OnComplete(() => isAnimating = false);
+        // 1. Reset states
+        creatureSprite.color = Color.white; // Start pure white
+        creatureSprite.canvasRenderer.SetAlpha(0f); // Start invisible
+
+        // 2. The Animation
+        var sequence = DOTween.Sequence();
+
+        // Fade in while white
+        sequence.Append(creatureSprite.DOFade(1f, SUMMON_DURATION * 0.3f));
+
+        // Then fade from white to the actual creature colors
+        sequence.Append(creatureSprite.DOColor(originalSpriteColor, SUMMON_DURATION * 0.7f));
+
+        sequence.OnComplete(() => isAnimating = false);
     }
 
     public void PlayAttackAnimation()
@@ -404,8 +385,15 @@ public class BattleTileUI : MonoBehaviour
 
         isAnimating = true;
         var sequence = DOTween.Sequence();
-        sequence.Append(creatureSprite.DOColor(Color.gray, HIT_DURATION));
+
+        // Flash white on hit
+        sequence.Append(creatureSprite.DOColor(Color.white, HIT_DURATION));
         sequence.Append(creatureSprite.DOColor(originalSpriteColor, HIT_DURATION));
+
+        // Shake for impact
+        creatureContainer.transform.DOShakePosition(
+            HIT_DURATION * 2, strength: 15f, vibrato: 10, randomness: 90, snapping: false, fadeOut: true);
+
         sequence.OnComplete(() => isAnimating = false);
     }
 
@@ -427,15 +415,21 @@ public class BattleTileUI : MonoBehaviour
     public void PlayDefeatAnimation()
     {
         if (isAnimating) return;
-
         isAnimating = true;
-        creatureSprite.DOFade(0f, DEFEAT_DURATION)
-            .SetEase(Ease.InOutQuad)
-            .OnComplete(() =>
-            {
-                isAnimating = false;
-                Clear();
-            });
+
+        var sequence = DOTween.Sequence();
+        sequence.Append(creatureSprite.DOFade(0f, DEFEAT_DURATION));
+
+        // Use your clean method instead of GetComponent
+        hpBar.SetVisibility(false, DEFEAT_DURATION);
+        energyBar.SetVisibility(false, DEFEAT_DURATION);
+        shieldBar.SetVisibility(false, DEFEAT_DURATION);
+
+        sequence.SetEase(Ease.InOutQuad).OnComplete(() =>
+        {
+            isAnimating = false;
+            Clear();
+        });
     }
 
     #endregion
@@ -447,27 +441,27 @@ public class BattleTileUI : MonoBehaviour
         switch (type)
         {
             case HighlightType.ActiveCreature:
-                highlightAura.sprite = activeCreatureSprite;
+                highlightAura.sprite = activeCreatureAura;
                 highlightAura.gameObject.SetActive(true);
                 selectionArrow.gameObject.SetActive(false);
                 break;
 
             case HighlightType.NegativeTarget:
-                highlightAura.sprite = negativeTargetSprite;
+                highlightAura.sprite = negativeTargetAura;
                 highlightAura.gameObject.SetActive(true);
                 selectionArrow.sprite = validArrowSprite;
                 selectionArrow.gameObject.SetActive(true);
                 break;
 
             case HighlightType.PositiveTarget:
-                highlightAura.sprite = positiveTargetSprite;
+                highlightAura.sprite = positiveTargetAura;
                 highlightAura.gameObject.SetActive(true);
                 selectionArrow.sprite = validArrowSprite;
                 selectionArrow.gameObject.SetActive(true);
                 break;
 
             case HighlightType.MoveTarget:
-                highlightAura.sprite = moveTargetSprite;
+                highlightAura.sprite = moveTargetAura;
                 highlightAura.gameObject.SetActive(true);
                 selectionArrow.sprite = validArrowSprite;
                 selectionArrow.gameObject.SetActive(true);
@@ -499,24 +493,7 @@ public class BattleTileUI : MonoBehaviour
 
     #endregion
 
-    #region Status Window
-
-    public void ShowStatusWindow()
-    {
-        if (DataTile.IsOccupied)
-        {
-            statusWindow?.Show(DataTile.OccupyingCreature);
-        }
-    }
-
-    public void HideStatusWindow()
-    {
-        statusWindow?.Hide();
-    }
-
-    #endregion
-
-    public bool IsAnimating => isAnimating || isUpdatingHP || isUpdatingEnergy || isUpdatingXP;
+    public bool IsAnimating => isAnimating;
 
     private void OnDestroy()
     {
