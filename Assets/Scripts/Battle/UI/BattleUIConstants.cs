@@ -10,7 +10,7 @@ public static class BattleUIConstants
     public const float SLIDER_DURATION = 0.5f;
 
     // Sprite sizing
-    public const int BASE_SPRITE_SIZE = 60;
-    public const int SIZE_INCREMENT = 10;
-    public const float AURA_SIZE_MULTIPLIER = 1.5f;
+    public const float MAX_SPRITE_SIZE = 135f;
+    public const float BASE_SPRITE_SIZE = 105f;
+    public const float SIZE_INCREMENT = 15f;
 }
