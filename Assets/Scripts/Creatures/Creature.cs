@@ -43,6 +43,7 @@ public class Creature
 
     private int currentHP;
     private int currentEnergy;
+    private int currentShield;
     private bool isDefeated;
 
     // Base Stats
@@ -87,6 +88,22 @@ public class Creature
             }
         }
     }
+
+    public int Shielding
+    {
+        get => currentShield;
+        private set
+        {
+            int oldShield = currentShield;
+
+            currentShield = Mathf.Clamp(value, 0, MaxHP);
+            if (currentShield != oldShield)
+            {
+                OnShieldChanged?.Invoke(currentShield, MaxHP);
+            }
+        }
+    }
+
     public int Strength => Stats.GetCurrentStat(StatType.Strength);
     public int Magic => Stats.GetCurrentStat(StatType.Magic);
     public int Skill => Stats.GetCurrentStat(StatType.Skill);
@@ -151,6 +168,7 @@ public class Creature
     // Resource changes
     public event Action<int, int> OnHPChanged;
     public event Action<int, int> OnEnergyChanged;
+    public event Action<int, int> OnShieldChanged;
     public event Action<int> OnXPChanged;
 
     // Specific resource actions (with amounts for VFX/numbers/feedback)
