@@ -6,6 +6,7 @@ namespace Game.Statuses
     public class StatModifierStatus : StatusEffect
     {
         public int Stacks { get; private set; }
+        public override int Intensity => Stacks;
         public int TurnsRemaining { get; private set; }
         public StatType Stat { get; private set; }
 

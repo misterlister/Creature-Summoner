@@ -5,6 +5,7 @@ namespace Game.Statuses
     public class TriggeredStatus :StatusEffect
     {
         public int Stacks { get; private set; }
+        public override int Intensity => Stacks;
         public TriggeredStatus(StatusType type, int stacks, bool isCrit, Creature source) 
             : base(type, StatusCategory.Triggered, false, source)
         {

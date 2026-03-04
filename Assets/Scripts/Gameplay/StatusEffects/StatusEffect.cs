@@ -11,6 +11,8 @@ namespace Game.Statuses
         public string InstanceId { get; private set; }
         public Creature Source { get; protected set; }
 
+        public virtual int Intensity => 1; // For stackable effects
+
         public StatusEffect(StatusType type, StatusCategory category, bool isBoon, Creature source)
         {
             Type = type;
