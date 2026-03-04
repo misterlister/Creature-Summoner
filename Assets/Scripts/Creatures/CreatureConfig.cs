@@ -50,7 +50,7 @@ public class CreatureConfig
 /// <summary>
 /// Optional: ScriptableObject version for reusable configs
 /// </summary>
-[CreateAssetMenu(fileName = "New Creature Config", menuName = "Game/Creature/Create Creature Config")]
+[CreateAssetMenu(fileName = "New Creature Config", menuName = "Creatures/Create Creature Config")]
 public class CreatureConfigAsset : ScriptableObject
 {
     public CreatureConfig Config;
