@@ -12,6 +12,8 @@ public class CreatureTeam : MonoBehaviour
     [Tooltip("Configure each creature in the team")]
     [SerializeField] private List<CreatureConfig> creatureConfigs = new List<CreatureConfig>();
 
+    public int ConfigTeamSize => creatureConfigs.Count;
+
     [Header("Runtime (Read Only)")]
     [Tooltip("The actual creature instances created at runtime")]
     [SerializeField, ReadOnly] private List<Creature> creatures = new List<Creature>();
