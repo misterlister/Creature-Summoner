@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9431cd71d40411e4aa74eb9d339a0347, type: 3}
+  m_Name: TestGrassEncounterRules 2
+  m_EditorClassIdentifier: 
+  EncounterBiome: {fileID: 11400000, guid: 604ee756c116666458e7dfd98ba69c48, type: 2}
+  FrontlinePool: {fileID: 11400000, guid: d1dba784d494c97438ca13fc2c2978a5, type: 2}
+  MidlinePool: {fileID: 11400000, guid: 8ea9b14590cac7f42962ad36bcef6c36, type: 2}
+  BacklinePool: {fileID: 11400000, guid: 4adf5088eb760d846bc9f3b38dd5d281, type: 2}
+  MinTotalCreatures: 2
+  MaxTotalCreatures: 5
+  MinFrontline: 1
+  MaxFrontline: 3
+  MinMidline: 0
+  MaxMidline: 2
+  MinBackline: 1
+  MaxBackline: 2
+  TerrainMode: 2
+  PresetTerrainLayouts: []
+  TerrainDensity: 0.605
+  GenerationPattern: 6
+  EnableChasms: 0

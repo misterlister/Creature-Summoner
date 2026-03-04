@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f75de105e5225d04dad5ba07acc516dd, type: 3}
+  m_Name: TestGrassFrontlinePool
+  m_EditorClassIdentifier: 
+  poolDescription: 
+  Creatures:
+  - Species: {fileID: 11400000, guid: 183ab2b800465584596a968b48885256, type: 2}
+    Level: 15
+    Nickname: 
+    Loadout: {fileID: 0}
+    StartingClass: {fileID: 0}
+  - Species: {fileID: 11400000, guid: 9d27590db4041dd4a9e00835d4547142, type: 2}
+    Level: 15
+    Nickname: 
+    Loadout: {fileID: 0}
+    StartingClass: {fileID: 0}
+  - Species: {fileID: 11400000, guid: 51aded4dfc00fc24b866a70e15e433c3, type: 2}
+    Level: 15
+    Nickname: 
+    Loadout: {fileID: 0}
+    StartingClass: {fileID: 0}
+  - Species: {fileID: 11400000, guid: 51aded4dfc00fc24b866a70e15e433c3, type: 2}
+    Level: 12
+    Nickname: 
+    Loadout: {fileID: 0}
+    StartingClass: {fileID: 0}
+  - Species: {fileID: 11400000, guid: 51aded4dfc00fc24b866a70e15e433c3, type: 2}
+    Level: 17
+    Nickname: 
+    Loadout: {fileID: 0}
+    StartingClass: {fileID: 0}

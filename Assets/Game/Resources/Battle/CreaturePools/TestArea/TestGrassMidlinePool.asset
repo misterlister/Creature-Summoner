@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f75de105e5225d04dad5ba07acc516dd, type: 3}
+  m_Name: TestGrassMidlinePool
+  m_EditorClassIdentifier: 
+  poolDescription: 
+  Creatures:
+  - Species: {fileID: 11400000, guid: a3bdf46070b6500448c6ad999bb19b0d, type: 2}
+    Level: 15
+    Nickname: 
+    Loadout: {fileID: 0}
+    StartingClass: {fileID: 0}
+  - Species: {fileID: 11400000, guid: bda8fde13f4031c448ddaa8bd9da3250, type: 2}
+    Level: 15
+    Nickname: 
+    Loadout: {fileID: 0}
+    StartingClass: {fileID: 0}
