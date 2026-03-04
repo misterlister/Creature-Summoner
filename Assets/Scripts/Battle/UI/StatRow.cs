@@ -1,124 +1,233 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
+/// <summary>
+/// Represents a single row in a stat display using Layout Groups for automatic spacing.
+/// </summary>
 public class StatRow : MonoBehaviour
 {
-    [SerializeField] private TextMeshProUGUI statName;
-    [SerializeField] private TextMeshProUGUI singleValue;
-    [SerializeField] private TextMeshProUGUI firstValue;
-    [SerializeField] private TextMeshProUGUI secondValue;
+    [Header("Text Components")]
+    [SerializeField] private TextMeshProUGUI statNameText;
+    [SerializeField] private TextMeshProUGUI baseValueText;
+    [SerializeField] private TextMeshProUGUI modifiedValueText;
 
-    private bool singleEntry;
+    [Header("Colors")]
+    [SerializeField] private Color defaultColor = Color.black;
+    [SerializeField] private Color increasedColor = Color.green;
+    [SerializeField] private Color decreasedColor = Color.red;
 
+    [Header("Layout Settings")]
+    [SerializeField] private bool autoManageLayout = true;
+
+    private DisplayMode currentMode = DisplayMode.Uninitialized;
+
+    private enum DisplayMode
+    {
+        Uninitialized,
+        Single,
+        Double
+    }
+
+    #region Setup
+
+    /// <summary>
+    /// Initialize the row for single or double value display.
+    /// Layout groups will automatically handle spacing.
+    /// </summary>
     public void SetupRow(string name, bool singleField)
     {
-        statName.text = name;
-        singleEntry = singleField;
+        if (statNameText != null)
+            statNameText.text = name;
 
-        if (singleField)
+        currentMode = singleField ? DisplayMode.Single : DisplayMode.Double;
+        UpdateFieldVisibility();
+    }
+
+    private void UpdateFieldVisibility()
+    {
+        // In single mode, hide the modified value text
+        // Layout group will automatically expand baseValue to fill space
+        if (currentMode == DisplayMode.Single)
         {
-            singleValue.gameObject.SetActive(true);
-            secondValue.gameObject.SetActive(false);
-            firstValue.gameObject.SetActive(false);
+            SetActive(baseValueText, true);
+            SetActive(modifiedValueText, false);
+        }
+        else if (currentMode == DisplayMode.Double)
+        {
+            SetActive(baseValueText, true);
+            SetActive(modifiedValueText, true);
+        }
+
+        // Force layout rebuild if auto-manage is enabled
+        if (autoManageLayout)
+        {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(GetComponent<RectTransform>());
+        }
+    }
+
+    #endregion
+
+    #region Update Methods
+
+    /// <summary>
+    /// Update stats display with base and modified values.
+    /// Automatically color-codes and hides modified value if unchanged.
+    /// </summary>
+    public void UpdateStats(int baseValue, int modifiedValue)
+    {
+        ValidateMode(DisplayMode.Double, "UpdateStats");
+
+        if (baseValueText != null)
+        {
+            baseValueText.text = baseValue.ToString();
+            baseValueText.color = defaultColor;
+        }
+
+        // Only show modified value if different from base
+        if (modifiedValue == baseValue)
+        {
+            SetActive(modifiedValueText, false);
         }
         else
         {
-            singleValue.gameObject.SetActive(false);
-            secondValue.gameObject.SetActive(true);
-            firstValue.gameObject.SetActive(true);
+            SetActive(modifiedValueText, true);
+            if (modifiedValueText != null)
+            {
+                modifiedValueText.text = modifiedValue.ToString();
+                modifiedValueText.color = GetComparisonColor(modifiedValue, baseValue);
+            }
         }
-
     }
 
-    public void UpdateStats(int statValue, int modifiedValue)
+    /// <summary>
+    /// Update with a single text value.
+    /// When in single mode, baseValueText will automatically expand to fill available space.
+    /// </summary>
+    public void UpdateSingleText(string text, Color? color = null)
     {
+        ValidateMode(DisplayMode.Single, "UpdateSingleText");
 
-        firstValue.text = statValue.ToString();
+        SetActive(modifiedValueText, false);
 
-        if (modifiedValue == statValue)
+        if (baseValueText != null)
         {
-            this.secondValue.gameObject.SetActive(false);
+            baseValueText.text = text;
+            baseValueText.color = color ?? defaultColor;
         }
+    }
+
+    /// <summary>
+    /// Update with two text values (both the same color).
+    /// </summary>
+    public void UpdateDoubleText(string text1, string text2, Color? color = null)
+    {
+        ValidateMode(DisplayMode.Double, "UpdateDoubleText");
+
+        Color useColor = color ?? defaultColor;
+
+        if (baseValueText != null)
+        {
+            baseValueText.text = text1;
+            baseValueText.color = useColor;
+        }
+
+        if (modifiedValueText != null)
+        {
+            modifiedValueText.text = text2;
+            modifiedValueText.color = useColor;
+            SetActive(modifiedValueText, true);
+        }
+    }
+
+    /// <summary>
+    /// Update with current/max resource values (HP, Energy, etc.).
+    /// </summary>
+    public void UpdateResource(int current, int max, Color? color = null)
+    {
+        ValidateMode(DisplayMode.Single, "UpdateResource");
+
+        SetActive(modifiedValueText, false);
+
+        if (baseValueText != null)
+        {
+            baseValueText.text = $"{current}/{max}";
+            baseValueText.color = color ?? defaultColor;
+        }
+    }
+    public void UpdateModifier(float value)
+    {
+        ValidateMode(DisplayMode.Single, "UpdateModifier");
+        SetActive(modifiedValueText, false);
+
+        if (baseValueText != null)
+        {
+            string sign = value > 0 ? "+" : "";
+            baseValueText.text = $"{sign}{value:P0}";
+            baseValueText.color = value > 0 ? increasedColor
+                                : value < 0 ? decreasedColor
+                                : defaultColor;
+        }
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private Color GetComparisonColor(int modifiedValue, int baseValue)
+    {
+        if (modifiedValue < baseValue)
+            return decreasedColor;
+        else if (modifiedValue > baseValue)
+            return increasedColor;
         else
-        {
-            this.secondValue.gameObject.SetActive(true); // Show currentValue
-            this.secondValue.text = modifiedValue.ToString();
-
-            // Change the color of currentValue based on comparison
-            if (modifiedValue < statValue)
-            {
-                this.secondValue.color = Color.red; // Stat decreased
-            }
-            else if (modifiedValue > statValue)
-            {
-                this.secondValue.color = Color.green; // Stat increased
-            }
-            else
-            {
-                this.secondValue.color = Color.black; // Stat unchanged
-            }
-        }
+            return defaultColor;
     }
 
-    public void UpdateElement(CreatureElement element1, CreatureElement element2)
+    private void ValidateMode(DisplayMode expectedMode, string methodName)
     {
-        firstValue.text = element1.ToString();
-        firstValue.color = GameConstants.ElementColours[element1];
-
-        if (element1 == element2 || element2 == CreatureElement.None)
+        if (currentMode == DisplayMode.Uninitialized)
         {
-            secondValue.gameObject.SetActive(false);
+            Debug.LogWarning($"StatRow: {methodName} called before SetupRow. Call SetupRow first.");
         }
-        else
+        else if (currentMode != expectedMode)
         {
-            secondValue.gameObject.SetActive(true);
-            secondValue.text = element2.ToString();
-            secondValue.color = GameConstants.ElementColours[element2];
+            Debug.LogWarning($"StatRow: {methodName} called but row is in {currentMode} mode (expected {expectedMode}).");
         }
     }
 
-    public void UpdateSingleText(string text, Color colour = default)
+    private void SetActive(Component component, bool active)
     {
-        if (colour == default)
+        if (component != null)
         {
-            colour = Color.black;
-        }
-        singleValue.text = text;
-        singleValue.color = colour;
-        if (!singleEntry)
-        {
-            Debug.LogWarning("Error: Updating single text on double value statRow");
+            component.gameObject.SetActive(active);
         }
     }
 
-    public void UpdateDoubleText(string text, string text2, Color colour = default)
+    #endregion
+
+    #region Public Accessors
+
+    public void SetStatName(string name)
     {
-        if (colour == default)
-        {
-            colour = Color.black;
-        }
-        firstValue.text = text;
-        firstValue.color = colour;
-        secondValue.text = text2;
-        secondValue.color = colour;
-
-        if (singleEntry)
-        {
-            Debug.LogWarning($"Error: Updating double text on single value. Values: {text}, {text2}");
-        }
+        if (statNameText != null)
+            statNameText.text = name;
     }
 
-    public void UpdateResource(int max, int current, Color colour = default)
+    public void Clear()
     {
-        if (colour == default)
-        {
-            colour = Color.black;
-        }
-        singleValue.text = $"{current}/{max}";
-        singleValue.color = colour;
-        if (!singleEntry)
-        {
-            Debug.LogWarning("Error: Updating single text on double value statRow");
-        }
+        if (statNameText != null) statNameText.text = "";
+        if (baseValueText != null) baseValueText.text = "";
+        if (modifiedValueText != null) modifiedValueText.text = "";
     }
+
+    /// <summary>
+    /// Force the layout to rebuild (useful if you've changed sizes manually).
+    /// </summary>
+    public void RebuildLayout()
+    {
+        LayoutRebuilder.ForceRebuildLayoutImmediate(GetComponent<RectTransform>());
+    }
+
+    #endregion
 }
