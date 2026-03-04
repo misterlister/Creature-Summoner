@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -9,6 +10,9 @@ public class TurnSystem
 {
     private List<Creature> turnOrder = new List<Creature>();
     private int currentTurnIndex = 0;
+
+    public event Action<IReadOnlyList<Creature>> OnRoundStarted;
+    public event Action<Creature> OnCreatureRemovedFromTurn;
 
     /// <summary>
     /// Roll initiative for all creatures at the start of a round.
@@ -36,8 +40,10 @@ public class TurnSystem
             .ThenByDescending(c => c.Species.Speed)
             .ToList();
 
-        // Optional: Log turn order for debugging
+        // Log turn order for debugging
         LogTurnOrder();
+
+        OnRoundStarted?.Invoke(turnOrder);
     }
 
     /// <summary>
@@ -81,6 +87,7 @@ public class TurnSystem
             {
                 currentTurnIndex--;
             }
+            OnCreatureRemovedFromTurn.Invoke(creature);
         }
     }
 
