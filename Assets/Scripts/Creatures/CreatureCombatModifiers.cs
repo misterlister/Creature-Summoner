@@ -30,7 +30,7 @@ public class CreatureCombatModifiers
         } 
     }
 
-    public float GetCombatModifier(CombatModifierType type, BattleContext context)
+    public float GetCombatModifier(CombatModifierType type)
     {
         if (modsDirty)
         {
