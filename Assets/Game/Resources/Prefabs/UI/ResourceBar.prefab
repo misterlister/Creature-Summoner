@@ -162,7 +162,7 @@ GameObject:
   - component: {fileID: 5752354750502174889}
   - component: {fileID: 2224766361526544337}
   m_Layer: 0
-  m_Name: StatBar
+  m_Name: ResourceBar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
