@@ -32,7 +32,18 @@ namespace Game.Creatures.Managers
         // Get known actions by slot type
         public IEnumerable<CreatureAction> GetKnownActions(ActionSlotType slotType)
         {
-            return knownActions.Where(a => a.Action.SlotType == slotType);
+            List<CreatureAction> result = new();
+
+            foreach (CreatureAction creatureAction in knownActions)
+            {
+                if (creatureAction == null) continue;
+                if (creatureAction.Action == null) continue;
+                if (creatureAction.Action.SlotType != slotType) continue;
+
+                result.Add(creatureAction);
+            }
+
+            return result;
         }
 
         public IReadOnlyList<CreatureAction> GetEquippedActions(ActionSlotType slotType)
@@ -66,7 +77,14 @@ namespace Game.Creatures.Managers
         {
             knownActions.Clear();
             foreach (var learnableAction in owner.Species.LearnableActions)
-            {   if (learnableAction.Level <= owner.Level)
+            {   
+                if (learnableAction.Action == null)
+                {
+                    Debug.LogWarning($"Learnable action with null Action in species {owner.Species.CreatureName}");
+                    continue;
+                }
+
+                if (learnableAction.Level <= owner.Level)
                 {
                     knownActions.Add(new CreatureAction(learnableAction.Action));
                 }
@@ -86,6 +104,12 @@ namespace Game.Creatures.Managers
 
         public bool LearnAction(ActionBase action)
         {
+            if (action == null)
+            {
+                Debug.LogWarning($"Attempted to learn null action for {owner.Nickname}");
+                return false;
+            }
+
             if (!knownActions.Any(a => a.Action == action))
             {
                 knownActions.Add(new CreatureAction(action));
