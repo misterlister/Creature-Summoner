@@ -1,3 +1,5 @@
+using UnityEngine;
+
 public static class BattleUIConstants
 {
     // Animation constants
@@ -13,4 +15,8 @@ public static class BattleUIConstants
     public const float MAX_SPRITE_SIZE = 135f;
     public const float BASE_SPRITE_SIZE = 105f;
     public const float SIZE_INCREMENT = 15f;
+
+    public static readonly Color PositiveColour = Color.green;
+    public static readonly Color NegativeColour = Color.red;
+    public static readonly Color NeutralColour = Color.black;
 }

@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static BattleUIConstants;
 
 /// <summary>
 /// Represents a single row in a stat display using Layout Groups for automatic spacing.
@@ -11,11 +12,6 @@ public class StatRow : MonoBehaviour
     [SerializeField] private TextMeshProUGUI statNameText;
     [SerializeField] private TextMeshProUGUI baseValueText;
     [SerializeField] private TextMeshProUGUI modifiedValueText;
-
-    [Header("Colors")]
-    [SerializeField] private Color defaultColor = Color.black;
-    [SerializeField] private Color increasedColor = Color.green;
-    [SerializeField] private Color decreasedColor = Color.red;
 
     [Header("Layout Settings")]
     [SerializeField] private bool autoManageLayout = true;
@@ -81,7 +77,7 @@ public class StatRow : MonoBehaviour
         if (baseValueText != null)
         {
             baseValueText.text = baseValue.ToString();
-            baseValueText.color = defaultColor;
+            baseValueText.color = NeutralColour;
         }
 
         // Only show modified value if different from base
@@ -113,7 +109,7 @@ public class StatRow : MonoBehaviour
         if (baseValueText != null)
         {
             baseValueText.text = text;
-            baseValueText.color = color ?? defaultColor;
+            baseValueText.color = color ?? NeutralColour;
         }
     }
 
@@ -124,7 +120,7 @@ public class StatRow : MonoBehaviour
     {
         ValidateMode(DisplayMode.Double, "UpdateDoubleText");
 
-        Color useColor = color ?? defaultColor;
+        Color useColor = color ?? NeutralColour;
 
         if (baseValueText != null)
         {
@@ -152,7 +148,7 @@ public class StatRow : MonoBehaviour
         if (baseValueText != null)
         {
             baseValueText.text = $"{current}/{max}";
-            baseValueText.color = color ?? defaultColor;
+            baseValueText.color = color ?? NeutralColour;
         }
     }
     public void UpdateModifier(float value)
@@ -164,9 +160,9 @@ public class StatRow : MonoBehaviour
         {
             string sign = value > 0 ? "+" : "";
             baseValueText.text = $"{sign}{value:P0}";
-            baseValueText.color = value > 0 ? increasedColor
-                                : value < 0 ? decreasedColor
-                                : defaultColor;
+            baseValueText.color = value > 0 ? PositiveColour
+                                : value < 0 ? NegativeColour
+                                : NeutralColour;
         }
     }
 
@@ -177,11 +173,11 @@ public class StatRow : MonoBehaviour
     private Color GetComparisonColor(int modifiedValue, int baseValue)
     {
         if (modifiedValue < baseValue)
-            return decreasedColor;
+            return NegativeColour;
         else if (modifiedValue > baseValue)
-            return increasedColor;
+            return PositiveColour;
         else
-            return defaultColor;
+            return NeutralColour;
     }
 
     private void ValidateMode(DisplayMode expectedMode, string methodName)
