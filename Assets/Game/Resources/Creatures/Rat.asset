@@ -15,8 +15,8 @@ MonoBehaviour:
   creatureName: Rat
   description: 
   frontSprite: {fileID: 21300000, guid: 56861d5492e84ab4a87de2a6e0e27716, type: 3}
-  type1: 9
-  type2: 0
+  element1: 9
+  element2: 9
   size: 0
   hp: 44
   energy: 31
@@ -26,10 +26,11 @@ MonoBehaviour:
   speed: 50
   defense: 44
   resistance: 32
-  learnableTalents:
-  - talentBase: {fileID: 11400000, guid: dd9ca51cc3c476c4d9f0b1846f6b589c, type: 2}
+  learnableActions:
+  - action: {fileID: 11400000, guid: dd9ca51cc3c476c4d9f0b1846f6b589c, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: a6dc8027bde9dc14b878f3510c649f5e, type: 2}
+  - action: {fileID: 11400000, guid: a6dc8027bde9dc14b878f3510c649f5e, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: 90371eaf51bbc0340af0488d50e25867, type: 2}
+  - action: {fileID: 11400000, guid: e8407a767f651f24e9965446150ecf1d, type: 2}
     level: 0
+  learnableTraits: []

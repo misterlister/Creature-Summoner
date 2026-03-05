@@ -15,8 +15,8 @@ MonoBehaviour:
   creatureName: FlyingCat
   description: 
   frontSprite: {fileID: 21300000, guid: 3cc9544f5b2dcc446987f3933ecc2919, type: 3}
-  type1: 1
-  type2: 0
+  element1: 1
+  element2: 1
   size: 1
   hp: 32
   energy: 45
@@ -26,14 +26,11 @@ MonoBehaviour:
   speed: 62
   defense: 32
   resistance: 32
-  learnableTalents:
-  - talentBase: {fileID: 11400000, guid: c0012350002e10e4eb9324d80501ca29, type: 2}
+  learnableActions:
+  - action: {fileID: 11400000, guid: 71f2310440dff12408be0834ee55d6f5, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: 71f2310440dff12408be0834ee55d6f5, type: 2}
+  - action: {fileID: 11400000, guid: c0012350002e10e4eb9324d80501ca29, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: 90371eaf51bbc0340af0488d50e25867, type: 2}
+  - action: {fileID: 11400000, guid: 90371eaf51bbc0340af0488d50e25867, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: ee9b2c055c3209440a8b219f82295c44, type: 2}
-    level: 15
-  - talentBase: {fileID: 11400000, guid: caad790ea991d1c44bae54293f04f159, type: 2}
-    level: 20
+  learnableTraits: []

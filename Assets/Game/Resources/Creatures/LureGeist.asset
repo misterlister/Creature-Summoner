@@ -15,8 +15,8 @@ MonoBehaviour:
   creatureName: LureGeist
   description: 
   frontSprite: {fileID: 21300000, guid: 9db05c79ed98d4349909113f2b8eebff, type: 3}
-  type1: 7
-  type2: 9
+  element1: 7
+  element2: 9
   size: 2
   hp: 33
   energy: 52
@@ -26,10 +26,11 @@ MonoBehaviour:
   speed: 45
   defense: 28
   resistance: 48
-  learnableTalents:
-  - talentBase: {fileID: 11400000, guid: ac17ccc810d9dcb4f9341fc122eb5cd5, type: 2}
+  learnableActions:
+  - action: {fileID: 11400000, guid: ac17ccc810d9dcb4f9341fc122eb5cd5, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: a6dc8027bde9dc14b878f3510c649f5e, type: 2}
+  - action: {fileID: 11400000, guid: a6dc8027bde9dc14b878f3510c649f5e, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: 90371eaf51bbc0340af0488d50e25867, type: 2}
+  - action: {fileID: 11400000, guid: 90371eaf51bbc0340af0488d50e25867, type: 2}
     level: 0
+  learnableTraits: []

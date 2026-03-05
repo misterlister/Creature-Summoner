@@ -15,8 +15,8 @@ MonoBehaviour:
   creatureName: Flitfeather
   description: 
   frontSprite: {fileID: 21300000, guid: 48892aa5149cba14094da706b9857727, type: 3}
-  type1: 1
-  type2: 0
+  element1: 1
+  element2: 1
   size: 0
   hp: 24
   energy: 48
@@ -26,10 +26,11 @@ MonoBehaviour:
   speed: 68
   defense: 22
   resistance: 34
-  learnableTalents:
-  - talentBase: {fileID: 11400000, guid: c0012350002e10e4eb9324d80501ca29, type: 2}
+  learnableActions:
+  - action: {fileID: 11400000, guid: 71f2310440dff12408be0834ee55d6f5, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: 71f2310440dff12408be0834ee55d6f5, type: 2}
+  - action: {fileID: 11400000, guid: c0012350002e10e4eb9324d80501ca29, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: 90371eaf51bbc0340af0488d50e25867, type: 2}
+  - action: {fileID: 11400000, guid: 90371eaf51bbc0340af0488d50e25867, type: 2}
     level: 0
+  learnableTraits: []

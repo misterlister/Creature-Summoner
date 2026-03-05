@@ -15,8 +15,8 @@ MonoBehaviour:
   creatureName: ShimmerBunny
   description: 
   frontSprite: {fileID: 21300000, guid: 7ace40151bc6d2f46b633a70d2434fc3, type: 3}
-  type1: 11
-  type2: 0
+  element1: 11
+  element2: 11
   size: 0
   hp: 33
   energy: 38
@@ -26,12 +26,11 @@ MonoBehaviour:
   speed: 53
   defense: 32
   resistance: 40
-  learnableTalents:
-  - talentBase: {fileID: 11400000, guid: d9c98a239df22dd4389d089264df332b, type: 2}
+  learnableActions:
+  - action: {fileID: 11400000, guid: d9c98a239df22dd4389d089264df332b, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: eb0f396c98bf77e40a0846aed8416200, type: 2}
+  - action: {fileID: 11400000, guid: eb0f396c98bf77e40a0846aed8416200, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: 90371eaf51bbc0340af0488d50e25867, type: 2}
+  - action: {fileID: 11400000, guid: 90371eaf51bbc0340af0488d50e25867, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: 9982932f6f3f6a64aa7e0b100b7d128e, type: 2}
-    level: 15
+  learnableTraits: []

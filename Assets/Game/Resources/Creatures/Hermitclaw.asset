@@ -15,8 +15,8 @@ MonoBehaviour:
   creatureName: Hermitclaw
   description: 
   frontSprite: {fileID: 21300000, guid: bef28d64667565240a16e8ca3365c905, type: 3}
-  type1: 12
-  type2: 0
+  element1: 12
+  element2: 12
   size: 1
   hp: 38
   energy: 35
@@ -26,10 +26,11 @@ MonoBehaviour:
   speed: 50
   defense: 26
   resistance: 26
-  learnableTalents:
-  - talentBase: {fileID: 11400000, guid: 928688c4c7bc753428b05a77ec016554, type: 2}
+  learnableActions:
+  - action: {fileID: 11400000, guid: 015a2e489d11b4541bc9296fd276dcb8, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: 015a2e489d11b4541bc9296fd276dcb8, type: 2}
+  - action: {fileID: 11400000, guid: 928688c4c7bc753428b05a77ec016554, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: 90371eaf51bbc0340af0488d50e25867, type: 2}
+  - action: {fileID: 11400000, guid: e8407a767f651f24e9965446150ecf1d, type: 2}
     level: 0
+  learnableTraits: []

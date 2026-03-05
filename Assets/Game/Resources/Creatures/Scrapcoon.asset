@@ -15,8 +15,8 @@ MonoBehaviour:
   creatureName: Scrapcoon
   description: 
   frontSprite: {fileID: 21300000, guid: 75f1075287df84541a9e3395a0774999, type: 3}
-  type1: 3
-  type2: 0
+  element1: 3
+  element2: 3
   size: 1
   hp: 32
   energy: 44
@@ -26,10 +26,11 @@ MonoBehaviour:
   speed: 48
   defense: 36
   resistance: 32
-  learnableTalents:
-  - talentBase: {fileID: 11400000, guid: fee5fb45c5ad4f142b6fc5b2f6c30363, type: 2}
+  learnableActions:
+  - action: {fileID: 11400000, guid: fee5fb45c5ad4f142b6fc5b2f6c30363, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: 189177c3ce83e3e41bf876750d9a9934, type: 2}
+  - action: {fileID: 11400000, guid: 189177c3ce83e3e41bf876750d9a9934, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: 90371eaf51bbc0340af0488d50e25867, type: 2}
+  - action: {fileID: 11400000, guid: 90371eaf51bbc0340af0488d50e25867, type: 2}
     level: 0
+  learnableTraits: []

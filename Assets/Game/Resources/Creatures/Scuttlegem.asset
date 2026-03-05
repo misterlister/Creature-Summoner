@@ -15,8 +15,8 @@ MonoBehaviour:
   creatureName: Scuttlegem
   description: 
   frontSprite: {fileID: 21300000, guid: 56b90faee1bbde94daf91cee93cf6a73, type: 3}
-  type1: 5
-  type2: 0
+  element1: 5
+  element2: 5
   size: 0
   hp: 36
   energy: 36
@@ -26,10 +26,11 @@ MonoBehaviour:
   speed: 32
   defense: 52
   resistance: 48
-  learnableTalents:
-  - talentBase: {fileID: 11400000, guid: bdcc2f257cac2b3448a700bfbb70ad21, type: 2}
+  learnableActions:
+  - action: {fileID: 11400000, guid: bdcc2f257cac2b3448a700bfbb70ad21, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: d79454c2190f1ed46a5f9c56316bdea7, type: 2}
+  - action: {fileID: 11400000, guid: d79454c2190f1ed46a5f9c56316bdea7, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: e8407a767f651f24e9965446150ecf1d, type: 2}
+  - action: {fileID: 11400000, guid: e8407a767f651f24e9965446150ecf1d, type: 2}
     level: 0
+  learnableTraits: []

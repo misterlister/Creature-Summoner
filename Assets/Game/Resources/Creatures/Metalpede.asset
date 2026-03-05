@@ -15,8 +15,8 @@ MonoBehaviour:
   creatureName: Metalpede
   description: 
   frontSprite: {fileID: 21300000, guid: 4984ef79d5c313049a31e21266e30e65, type: 3}
-  type1: 8
-  type2: 0
+  element1: 8
+  element2: 8
   size: 1
   hp: 36
   energy: 34
@@ -26,10 +26,11 @@ MonoBehaviour:
   speed: 36
   defense: 60
   resistance: 36
-  learnableTalents:
-  - talentBase: {fileID: 11400000, guid: 0a1629779d38fc94e880902ea9bb7573, type: 2}
+  learnableActions:
+  - action: {fileID: 11400000, guid: d0a9fe768c90ae54fa3bbbadd0af9558, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: d0a9fe768c90ae54fa3bbbadd0af9558, type: 2}
+  - action: {fileID: 11400000, guid: 0a1629779d38fc94e880902ea9bb7573, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: e8407a767f651f24e9965446150ecf1d, type: 2}
+  - action: {fileID: 11400000, guid: e8407a767f651f24e9965446150ecf1d, type: 2}
     level: 0
+  learnableTraits: []

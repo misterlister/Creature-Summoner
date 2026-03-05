@@ -15,8 +15,8 @@ MonoBehaviour:
   creatureName: Tardigarde
   description: 
   frontSprite: {fileID: 21300000, guid: dd55fd4d4ea2623499e37786e4d430dd, type: 3}
-  type1: 2
-  type2: 12
+  element1: 2
+  element2: 12
   size: 2
   hp: 99
   energy: 50
@@ -26,12 +26,11 @@ MonoBehaviour:
   speed: 5
   defense: 60
   resistance: 40
-  learnableTalents:
-  - talentBase: {fileID: 11400000, guid: e4448373afcddba46bf0bbed4c2ea161, type: 2}
+  learnableActions:
+  - action: {fileID: 11400000, guid: e4448373afcddba46bf0bbed4c2ea161, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: 015a2e489d11b4541bc9296fd276dcb8, type: 2}
+  - action: {fileID: 11400000, guid: 015a2e489d11b4541bc9296fd276dcb8, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: e8407a767f651f24e9965446150ecf1d, type: 2}
+  - action: {fileID: 11400000, guid: e8407a767f651f24e9965446150ecf1d, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: ff3ce5e9cf40a4e479d1c3d97810776d, type: 2}
-    level: 15
+  learnableTraits: []

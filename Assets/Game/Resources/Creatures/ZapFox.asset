@@ -15,8 +15,8 @@ MonoBehaviour:
   creatureName: ZapFox
   description: 
   frontSprite: {fileID: 21300000, guid: d0646cdbf1cae2145bf8cbeab3fcc07d, type: 3}
-  type1: 6
-  type2: 0
+  element1: 6
+  element2: 6
   size: 1
   hp: 28
   energy: 44
@@ -26,10 +26,11 @@ MonoBehaviour:
   speed: 54
   defense: 24
   resistance: 28
-  learnableTalents:
-  - talentBase: {fileID: 11400000, guid: cd46375c0614bfc47b3e37e5147ced30, type: 2}
+  learnableActions:
+  - action: {fileID: 11400000, guid: cd46375c0614bfc47b3e37e5147ced30, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: 26d099ffd42fca64fbcbe3d55e82f153, type: 2}
+  - action: {fileID: 11400000, guid: 26d099ffd42fca64fbcbe3d55e82f153, type: 2}
     level: 0
-  - talentBase: {fileID: 11400000, guid: 90371eaf51bbc0340af0488d50e25867, type: 2}
+  - action: {fileID: 11400000, guid: 90371eaf51bbc0340af0488d50e25867, type: 2}
     level: 0
+  learnableTraits: []
