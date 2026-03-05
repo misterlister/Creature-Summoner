@@ -13,7 +13,7 @@ public class BattleManager : MonoBehaviour
     // Core references
     [SerializeField] private UnifiedBattlefield battlefield;
     [SerializeField] private BattleUI battleUI;
-    [SerializeField] private Biome currentBiome;
+    [SerializeField] private Biome defaultBiome;
 
     // Systems
     public BattleContext Context { get; private set; }
@@ -41,7 +41,7 @@ public class BattleManager : MonoBehaviour
 
     private void InitializeBattle()
     {
-        if (currentBiome == null)
+        if (defaultBiome == null)
         {
             Debug.LogWarning("No default biome assigned to BattleManager!");
         }
@@ -77,10 +77,10 @@ public class BattleManager : MonoBehaviour
 
         if (biome != null)
         {
-            currentBiome = biome;
+            defaultBiome = biome;
             Context.CurrentBiome = biome;
         }
-        battlefield.SetBiome(currentBiome);
+        battlefield.SetBiome(defaultBiome);
 
         battlefield.ApplyTerrainLayout(terrainLayout);
 
