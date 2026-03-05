@@ -12,18 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 315860d76bb5c634898a6655fc3bd6e4, type: 3}
   m_Name: ArcaneBurst
   m_EditorClassIdentifier: 
-  talentName: Arcane Burst
+  actionName: Arcane Burst
   description: 
-  type: 2
-  category: 0
-  source: 2
+  element: 2
+  slotType: 0
+  source: 1
+  role: 0
+  range: 1
+  validTargets: 0
+  energyValue: 25
   power: 35
   accuracy: 80
-  range: 1
-  offensive: 1
-  preparation: 0
-  numTargets: 1
   baseCrit: 5
-  tags: []
-  energyCost: 0
-  energyGain: 25
+  areaOfEffect: 0
+  preparation: 0
+  tags: 

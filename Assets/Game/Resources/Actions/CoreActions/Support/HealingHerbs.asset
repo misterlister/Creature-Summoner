@@ -12,15 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 315860d76bb5c634898a6655fc3bd6e4, type: 3}
   m_Name: HealingHerbs
   m_EditorClassIdentifier: 
-  talentName: Healing Herbs
+  actionName: 
   description: 
-  type: 10
-  category: 0
-  source: 1
-  actionClass: 1
+  element: 10
+  slotType: 0
+  source: 0
+  role: 1
   range: 0
-  energyCost: 0
-  energyGain: 20
+  validTargets: 0
+  energyValue: 20
   power: 15
   accuracy: 100
   baseCrit: 10

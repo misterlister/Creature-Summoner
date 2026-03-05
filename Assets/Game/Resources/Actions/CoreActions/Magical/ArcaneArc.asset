@@ -12,18 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 315860d76bb5c634898a6655fc3bd6e4, type: 3}
   m_Name: ArcaneArc
   m_EditorClassIdentifier: 
-  talentName: Arcane Arc
+  actionName: Arcane Arc
   description: 
-  type: 2
-  category: 0
-  source: 2
-  power: 15
-  accuracy: 75
+  element: 2
+  slotType: 0
+  source: 1
+  role: 0
   range: 1
-  offensive: 1
-  preparation: 0
-  areaOfEffect: 1
+  validTargets: 0
+  energyValue: 20
+  power: 20
+  accuracy: 75
   baseCrit: 5
-  tags: []
-  energyCost: 0
-  energyGain: 20
+  areaOfEffect: 1
+  preparation: 0
+  tags: 

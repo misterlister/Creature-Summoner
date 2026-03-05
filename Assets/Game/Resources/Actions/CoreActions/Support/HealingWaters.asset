@@ -12,15 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 315860d76bb5c634898a6655fc3bd6e4, type: 3}
   m_Name: HealingWaters
   m_EditorClassIdentifier: 
-  talentName: Healing Waters
+  actionName: 
   description: 
-  type: 12
-  category: 0
-  source: 2
-  actionClass: 1
+  element: 12
+  slotType: 0
+  source: 1
+  role: 1
   range: 1
-  energyCost: 0
-  energyGain: 15
+  validTargets: 0
+  energyValue: 15
   power: 10
   accuracy: 100
   baseCrit: 5

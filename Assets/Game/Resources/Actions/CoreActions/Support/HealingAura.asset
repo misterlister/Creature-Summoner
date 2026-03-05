@@ -12,15 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 315860d76bb5c634898a6655fc3bd6e4, type: 3}
   m_Name: HealingAura
   m_EditorClassIdentifier: 
-  talentName: Healing Aura
+  actionName: 
   description: 
-  type: 11
-  category: 0
-  source: 2
-  actionClass: 1
+  element: 11
+  slotType: 0
+  source: 1
+  role: 1
   range: 1
-  energyCost: 0
-  energyGain: 10
+  validTargets: 0
+  energyValue: 10
   power: 20
   accuracy: 100
   baseCrit: 5
