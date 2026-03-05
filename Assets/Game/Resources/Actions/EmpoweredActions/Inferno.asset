@@ -12,18 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 315860d76bb5c634898a6655fc3bd6e4, type: 3}
   m_Name: Inferno
   m_EditorClassIdentifier: 
-  talentName: Inferno
+  actionName: Inferno
   description: 
-  type: 7
-  category: 1
-  source: 2
+  element: 7
+  slotType: 1
+  source: 1
+  role: 0
+  range: 1
+  validTargets: 0
+  energyValue: 70
   power: 50
   accuracy: 85
-  range: 1
-  offensive: 1
-  preparation: 0
-  areaOfEffect: 7
   baseCrit: 5
-  tags: []
-  energyCost: 70
-  energyGain: 0
+  areaOfEffect: 11
+  preparation: 0
+  tags: 
