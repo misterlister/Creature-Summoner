@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 315860d76bb5c634898a6655fc3bd6e4, type: 3}
   m_Name: ArcaneStrike
   m_EditorClassIdentifier: 
-  actionName: 
+  actionName: Arcane Strike
   description: 
   element: 2
   slotType: 0
