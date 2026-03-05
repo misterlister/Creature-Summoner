@@ -14,7 +14,7 @@ TagManager:
   - 
   - 
   - SolidObjects
-  - LongGrass
+  - Encounter Zones
   - 
   - 
   - 
@@ -43,6 +43,9 @@ TagManager:
     locked: 0
   - name: Background
     uniqueID: 3103367543
+    locked: 0
+  - name: Ground Detail
+    uniqueID: 2575737375
     locked: 0
   - name: Shadows
     uniqueID: 1751820917
