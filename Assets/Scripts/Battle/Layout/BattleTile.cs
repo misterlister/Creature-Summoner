@@ -238,4 +238,10 @@ public class BattleTile
         return Terrain.GetMovementCost(creature);
     }
 
+    public bool IsValidSpawnTile()
+    {
+        if (IsOccupied) return false;
+        if (Terrain == null) return true;
+        return Terrain.CanBeEntered;
+    }
 }
