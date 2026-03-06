@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using static GameConstants;
 
@@ -115,29 +116,50 @@ public class BattleManager : MonoBehaviour
 
     private void PlaceTeam(CreatureTeam team, TeamSide side)
     {
-        for (int i = 0; i < team.Creatures.Count; i++)
+        var grid = battlefield.GetGrid(side);
+
+        foreach (var creature in team.Creatures)
         {
-            if (team.Creatures[i] == null) continue;
+            if (creature == null) continue;
 
-            int row = i % BATTLE_ROWS;
-            int col;
+            var tile = FindPlacementTile(grid, creature);
 
-            if (side == TeamSide.Player)
+            if (tile == null)
             {
-                // Player: col 0 = back, col 1 = mid, col 2 = front
-                col = (i < BATTLE_ROWS) ? 1 : 0;
-            }
-            else
-            {
-                // Enemy: col 0 = front, col 1 = mid, col 2 = back (maps to global 3, 4, 5)
-                col = (i < BATTLE_ROWS) ? 0 : 2;
+                Debug.LogError($"No valid placement tile found for {creature.Nickname} on {side} side");
+                continue;
             }
 
-            var gridPos = new GridPosition(row, col);
-            var battlePos = BattlePosition.FromGridPosition(gridPos, side);
-
-            battlefield.PlaceCreature(team.Creatures[i], battlePos);
+            var battlePos = BattlePosition.FromGridPosition(tile.Position, side);
+            battlefield.PlaceCreature(creature, battlePos);
         }
+    }
+
+    private BattleTile FindPlacementTile(BattleGrid grid, Creature creature)
+    {
+        // Try preferred column first, then fallback order
+        var colPriority = GetColumnPriority(creature.PreferredPositionRole);
+
+        foreach (int col in colPriority)
+        {
+            var tile = grid.GetColumn(col)
+                .FirstOrDefault(t => t.IsValidSpawnTile());
+
+            if (tile != null) return tile;
+        }
+
+        return null;
+    }
+
+    private int[] GetColumnPriority(PositionRole role)
+    {
+        return role switch
+        {
+            PositionRole.Frontline => new[] { 0, 1, 2 },
+            PositionRole.Midline => new[] { 1, 0, 2 },
+            PositionRole.Backline => new[] { 2, 1, 0 },
+            _ => new[] { 0, 1, 2 }
+        };
     }
 
     #endregion
