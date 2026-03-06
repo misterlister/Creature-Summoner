@@ -85,31 +85,33 @@ public class RandomEncounterRules : ScriptableObject
     /// </summary>
     public List<CreatureConfig> GenerateEncounter()
     {
-        // First, determine how many creatures to spawn per position
         var spawnCounts = CalculateSpawnCounts();
-
-        // Then generate the actual creatures
         var encounterCreatures = new List<CreatureConfig>();
 
-        // Generate frontline
         if (FrontlinePool != null && spawnCounts.Frontline > 0)
         {
-            encounterCreatures.AddRange(FrontlinePool.GetRandomCreatures(spawnCounts.Frontline));
+            var frontliners = FrontlinePool.GetRandomCreatures(spawnCounts.Frontline);
+            foreach (var config in frontliners)
+                config.PreferredRole = PositionRole.Frontline;
+            encounterCreatures.AddRange(frontliners);
         }
 
-        // Generate midline
         if (MidlinePool != null && spawnCounts.Midline > 0)
         {
-            encounterCreatures.AddRange(MidlinePool.GetRandomCreatures(spawnCounts.Midline));
+            var midliners = MidlinePool.GetRandomCreatures(spawnCounts.Midline);
+            foreach (var config in midliners)
+                config.PreferredRole = PositionRole.Midline;
+            encounterCreatures.AddRange(midliners);
         }
 
-        // Generate backline
         if (BacklinePool != null && spawnCounts.Backline > 0)
         {
-            encounterCreatures.AddRange(BacklinePool.GetRandomCreatures(spawnCounts.Backline));
+            var backliners = BacklinePool.GetRandomCreatures(spawnCounts.Backline);
+            foreach (var config in backliners)
+                config.PreferredRole = PositionRole.Backline;
+            encounterCreatures.AddRange(backliners);
         }
 
-        // Filter out any null or invalid creatures
         return encounterCreatures.Where(c => c != null && c.IsValid()).ToList();
     }
 
