@@ -1,4 +1,5 @@
 using UnityEngine;
+using static GameConstants;
 
 [System.Serializable]
 public class CreatureConfig
@@ -18,9 +19,14 @@ public class CreatureConfig
     [Tooltip("Optional: Custom action loadout. If null, uses auto-equipped actions.")]
     public CreatureActionLoadout Loadout;
 
-    [Header("Starting Class (Optional)")]
-    [Tooltip("Optional: Starting class. If null, creature has no class.")]
+    [Header("Current Class")]
+    [Tooltip("Optional: Current class. If null, creature has no class.")]
     public CreatureClass StartingClass;
+
+    [Header("Battle Position")]
+    [Tooltip("Preferred column role in battle")]
+    public PositionRole PreferredRole = PositionRole.Frontline;
+
     public bool IsValid()
     {
         if (Species == null)
@@ -29,7 +35,7 @@ public class CreatureConfig
             return false;
         }
 
-        if (Level < 1)
+        if (Level < 1 || Level > MAX_LEVEL)
         {
             Debug.LogWarning($"CreatureConfig for {Species.CreatureName} has invalid level: {Level}");
             return false;

@@ -23,6 +23,8 @@ public class Creature
     private List<RuntimeTrait> runtimeTraits = new();
     public CreatureEventProxy EventProxy { get; private set; }
 
+    public PositionRole PreferredPositionRole { get; private set; }
+
     public string ClassName
     {
         get
@@ -221,6 +223,8 @@ public class Creature
         {
             creature.Actions.LoadActionLoadout(config.Loadout, fillEmptySlots: true);
         }
+
+        creature.PreferredPositionRole = config.PreferredRole;
 
         return creature;
     }
@@ -585,5 +589,10 @@ public class Creature
     public bool IsTurnActive()
     {
         return true;
+    }
+
+    public void SetPreferredPositionRole(PositionRole role)
+    {
+        PreferredPositionRole = role;
     }
 }
