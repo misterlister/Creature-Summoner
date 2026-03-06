@@ -6,64 +6,28 @@ public class MapArea : MonoBehaviour
     [Header("Area Configuration")]
     [SerializeField] private string areaName = "Unnamed Area";
 
-    [Header("Encounter Zones")]
-    [Tooltip("Encounter zones within this area")]
-    [SerializeField] private List<EncounterZone> encounterZones = new List<EncounterZone>();
-
     [Header("Team Setup")]
     [SerializeField] private CreatureTeam wildTeam;
 
     [Header("Debug")]
-    [Tooltip("If assigned, this specific team will always be used instead of generating one randomly. " +
-         "Use for testing specific encounters.")]
+    [Tooltip("Overrides randomized encounters. Use for testing specific teams.")]
     [SerializeField] private CreatureTeam debugWildTeam;
 
-    private EncounterZone activeZone;
+    private RandomEncounterRules activeRules;
     private int stepsSinceLastEncounter = 0;
     private int stepsUntilNextEncounter;
     private bool playerInArea = false;
 
-    private Dictionary<string, EncounterZone> zonesByName;
-
-    private void Awake()
-    {
-        BuildZoneLookup();
-    }
-
-    private void BuildZoneLookup()
-    {
-        zonesByName = new Dictionary<string, EncounterZone>();
-        foreach (var zone in encounterZones)
-        {
-            if (zone != null && !string.IsNullOrEmpty(zone.ZoneName))
-                zonesByName[zone.ZoneName] = zone;
-        }
-    }
-
     // Called by EncounterZoneTrigger when player enters it
-    public void OnPlayerEnterZone(string zoneName)
+    public void OnPlayerEnterZone(RandomEncounterRules rules)
     {
         playerInArea = true;
 
-        if (zonesByName.TryGetValue(zoneName, out var zone))
+        if (activeRules != rules)
         {
-            if (activeZone != zone)
-            {
-                activeZone = zone;
-                ResetEncounterSteps();
-            }
+            activeRules = rules;
+            ResetEncounterSteps();
         }
-        else
-        {
-            Debug.LogWarning($"MapArea '{areaName}': no zone named '{zoneName}'");
-        }
-    }
-
-    public void OnPlayerExitZone()
-    {
-        // Only fully exit if player isn't in any other trigger in this area
-        // PlayerController handles setting currentMapArea to null
-        playerInArea = false;
     }
 
     /// <summary>
@@ -73,7 +37,7 @@ public class MapArea : MonoBehaviour
     {
         playerInArea = false;
         stepsSinceLastEncounter = 0;
-        Debug.Log($"Player left {areaName}");
+        activeRules = null;
     }
 
     /// <summary>
@@ -81,11 +45,7 @@ public class MapArea : MonoBehaviour
     /// </summary>
     public bool OnPlayerStep()
     {
-        if (!playerInArea) return false;
-
-        // If no zones, this is a safe area — never trigger encounters
-        if (encounterZones == null || encounterZones.Count == 0) return false;
-
+        if (!playerInArea || activeRules == null) return false;
         stepsSinceLastEncounter++;
         if (stepsSinceLastEncounter >= stepsUntilNextEncounter)
         {
@@ -101,8 +61,8 @@ public class MapArea : MonoBehaviour
     private void ResetEncounterSteps()
     {
         stepsSinceLastEncounter = 0;
-        stepsUntilNextEncounter = activeZone?.RollStepsUntilEncounter() ?? int.MaxValue;
-        // int.MaxValue means "never encounter" for zone-free areas
+        stepsUntilNextEncounter = activeRules?.RollStepsUntilEncounter() ?? int.MaxValue;
+        // int.MaxValue means "never encounter" for non-combat zones
     }
 
     /// <summary>
@@ -123,15 +83,15 @@ public class MapArea : MonoBehaviour
             return null;
         }
 
-        wildTeam.ClearCreatures();
-
-        if (activeZone == null)
+        if (activeRules == null)
         {
-            Debug.LogError($"MapArea '{areaName}' has no active encounter zone");
-            return wildTeam;
+            Debug.LogError($"MapArea '{areaName}' has no active encounter rules");
+            return null;
         }
 
-        var encounterCreatures = activeZone.GenerateEncounter();
+        wildTeam.ClearCreatures();
+
+        var encounterCreatures = activeRules.GenerateEncounter();
 
         foreach (var config in encounterCreatures)
         {
@@ -149,32 +109,26 @@ public class MapArea : MonoBehaviour
     /// </summary>
     public TerrainLayout GetTerrainLayout()
     {
-        return activeZone?.GenerateTerrain();
+        return activeRules?.GenerateTerrain();
     }
 
     public Biome GetBiome()
     {
-        return activeZone?.GetBiome();
+        return activeRules?.EncounterBiome;
     }
 
     private void OnValidate()
     {
-        if (encounterZones == null) encounterZones = new List<EncounterZone>();
 
         #if UNITY_EDITOR
-        // Check that all child triggers have matching zone names
-        var triggers = GetComponentsInChildren<EncounterZoneTrigger>();
+        var triggers = GetComponentsInChildren<EncounterZone>();
         foreach (var trigger in triggers)
         {
-            bool found = encounterZones.Exists(z => z?.ZoneName == trigger.ZoneName);
-            if (!found)
-                Debug.LogWarning($"EncounterZoneTrigger '{trigger.name}' has zone name " +
-                                 $"'{trigger.ZoneName}' which doesn't match any zone in MapArea '{areaName}'", trigger);
+            if (trigger.GetEncounterRules() == null)
+                Debug.LogWarning($"EncounterZoneTrigger '{trigger.name}' has no rules assigned", trigger);
         }
-
         if (debugWildTeam != null && debugWildTeam.ConfigTeamSize > 0)
-            Debug.LogWarning($"MapArea '{areaName}' has a DEBUG wild team assigned — " +
-                             $"random encounters are disabled!", this);
+            Debug.LogWarning($"MapArea '{areaName}' has a DEBUG wild team — random encounters disabled!", this);
         #endif
     }
 }

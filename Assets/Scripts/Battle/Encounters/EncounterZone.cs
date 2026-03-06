@@ -1,72 +1,19 @@
-using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Represents a zone within a MapArea where encounters can occur
-/// </summary>
-[System.Serializable]
-public class EncounterZone
+public class EncounterZone : MonoBehaviour
 {
-    [Header("Zone Configuration")]
-    [Tooltip("Name for this encounter zone")]
-    public string ZoneName = "Default Zone";
+    public RandomEncounterRules encounterRules;
+    private MapArea parentArea;
 
-    [Tooltip("The rules that govern encounters in this zone")]
-    public RandomEncounterRules EncounterRules;
-
-    [Header("Encounter Rate")]
-    [Tooltip("Steps between encounters (lower = more frequent)")]
-    [Range(1, 100)]
-    public int StepsPerEncounter = 20;
-
-    [Tooltip("Random variance in steps")]
-    [Range(0, 20)]
-    public int StepVariance = 5;
-
-    /// <summary>
-    /// Generate an encounter using this zone's rules
-    /// </summary>
-    public List<CreatureConfig> GenerateEncounter()
+    private void Awake()
     {
-        if (EncounterRules == null)
-        {
-            Debug.LogWarning($"EncounterZone '{ZoneName}' has no rules assigned");
-            return new List<CreatureConfig>();
-        }
+        // Walk up the hierarchy to find the MapArea
+        parentArea = GetComponentInParent<MapArea>();
 
-        return EncounterRules.GenerateEncounter();
+        if (parentArea == null)
+            Debug.LogError($"EncounterZone '{name}' has no MapArea in its parent hierarchy");
     }
 
-    /// <summary>
-    /// Get terrain layout for this zone
-    /// </summary>
-    public TerrainLayout GenerateTerrain()
-    {
-        return EncounterRules?.GenerateTerrain();
-    }
-
-    public Biome GetBiome()
-    {
-        return EncounterRules?.EncounterBiome;
-    }
-
-    /// <summary>
-    /// Calculate steps until next encounter
-    /// </summary>
-    public int RollStepsUntilEncounter()
-    {
-        int variance = Random.Range(-StepVariance, StepVariance + 1);
-        return Mathf.Max(1, StepsPerEncounter + variance);
-    }
-
-    public bool IsValid()
-    {
-        if (EncounterRules == null)
-        {
-            Debug.LogWarning($"EncounterZone '{ZoneName}' has no rules");
-            return false;
-        }
-
-        return true;
-    }
+    public MapArea GetParentArea() => parentArea;
+    public RandomEncounterRules GetEncounterRules() => encounterRules;
 }

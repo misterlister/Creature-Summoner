@@ -65,6 +65,21 @@ public class RandomEncounterRules : ScriptableObject
     public TerrainGenerationPattern GenerationPattern = TerrainGenerationPattern.Default;
     public bool EnableChasms = false;
 
+    [Header("Encounter Rate")]
+    [Tooltip("Steps between encounters (lower = more frequent)")]
+    [Range(1, 100)]
+    public int StepsPerEncounter = 20;
+
+    [Tooltip("Random variance in steps")]
+    [Range(0, 20)]
+    public int StepVariance = 5;
+
+    public int RollStepsUntilEncounter()
+    {
+        int variance = Random.Range(-StepVariance, StepVariance + 1);
+        return Mathf.Max(1, StepsPerEncounter + variance);
+    }
+
     /// <summary>
     /// Generate a complete encounter from this ruleset
     /// </summary>

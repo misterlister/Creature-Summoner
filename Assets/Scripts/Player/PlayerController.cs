@@ -27,11 +27,11 @@ public class PlayerController : MonoBehaviour
         var hit = Physics2D.OverlapCircle(transform.position, 0.2f, battleLayer);
         if (hit != null)
         {
-            var trigger = hit.GetComponent<EncounterZoneTrigger>();
-            if (trigger != null)
+            var zone = hit.GetComponent<EncounterZone>();
+            if (zone != null)
             {
-                currentMapArea = trigger.GetParentArea();
-                currentMapArea?.OnPlayerEnterZone(trigger.GetZoneName());
+                currentMapArea = zone.GetParentArea();
+                currentMapArea?.OnPlayerEnterZone(zone.GetEncounterRules());
             }
         }
     }
@@ -91,10 +91,10 @@ public class PlayerController : MonoBehaviour
         var hit = Physics2D.OverlapCircle(transform.position, 0.2f, battleLayer);
         if (hit != null)
         {
-            var trigger = hit.GetComponent<EncounterZoneTrigger>();
-            if (trigger == null) return;
+            var zone = hit.GetComponent<EncounterZone>();
+            if (zone == null) return;
 
-            var mapArea = trigger.GetParentArea();
+            var mapArea = zone.GetParentArea();
             if (mapArea == null) return;
 
             if (currentMapArea != mapArea)
@@ -103,7 +103,7 @@ public class PlayerController : MonoBehaviour
                 currentMapArea = mapArea;
             }
 
-            currentMapArea.OnPlayerEnterZone(trigger.GetZoneName());
+            currentMapArea.OnPlayerEnterZone(zone.GetEncounterRules());
 
             if (currentMapArea.OnPlayerStep())
             {
