@@ -8670,7 +8670,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   battlefield: {fileID: 43227980}
   battleUI: {fileID: 46771491}
-  defaultBiome: {fileID: 0}
+  defaultBiome: {fileID: 11400000, guid: 604ee756c116666458e7dfd98ba69c48, type: 2}
 --- !u!1 &879089762
 GameObject:
   m_ObjectHideFlags: 0
@@ -19646,16 +19646,25 @@ MonoBehaviour:
     Nickname: Fang
     Loadout: {fileID: 0}
     StartingClass: {fileID: 11400000, guid: 69a8f535018ea254c8adf4e9a20d050e, type: 2}
+    PreferredRole: 0
   - Species: {fileID: 11400000, guid: d6fe3c87ebf01ee48afa66d2c3ebff5e, type: 2}
     Level: 21
     Nickname: Titan
     Loadout: {fileID: 0}
     StartingClass: {fileID: 11400000, guid: fe9b18bb4ed802f4b9300755ff1c7fca, type: 2}
+    PreferredRole: 0
   - Species: {fileID: 11400000, guid: e0f1fa553c3ad87408adfd429614afc5, type: 2}
     Level: 21
     Nickname: Spook
     Loadout: {fileID: 0}
     StartingClass: {fileID: 11400000, guid: bcc9a6dd717f391458575d6dd5317912, type: 2}
+    PreferredRole: 2
+  - Species: {fileID: 11400000, guid: e0f1fa553c3ad87408adfd429614afc5, type: 2}
+    Level: 21
+    Nickname: Spook
+    Loadout: {fileID: 0}
+    StartingClass: {fileID: 11400000, guid: bcc9a6dd717f391458575d6dd5317912, type: 2}
+    PreferredRole: 2
 --- !u!1 &1431166914
 GameObject:
   m_ObjectHideFlags: 0
@@ -24755,6 +24764,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1497543352007707163, guid: 2df6957737c95934eac3490fd0d3bd11, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1497543352007707163, guid: 2df6957737c95934eac3490fd0d3bd11, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -24762,6 +24775,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1948246657564485284, guid: 2df6957737c95934eac3490fd0d3bd11, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3251324889665021882, guid: 2df6957737c95934eac3490fd0d3bd11, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -24841,6 +24858,10 @@ PrefabInstance:
     - target: {fileID: 5449825910327059361, guid: 2df6957737c95934eac3490fd0d3bd11, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6209840082845271516, guid: 2df6957737c95934eac3490fd0d3bd11, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6268532854966044032, guid: 2df6957737c95934eac3490fd0d3bd11, type: 3}
       propertyPath: m_AnchorMax.y
@@ -24862,6 +24883,10 @@ PrefabInstance:
       propertyPath: terrainForegroundImage
       value: 
       objectReference: {fileID: 1592563838}
+    - target: {fileID: 6576668695829870117, guid: 2df6957737c95934eac3490fd0d3bd11, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6795385160144861841, guid: 2df6957737c95934eac3490fd0d3bd11, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
