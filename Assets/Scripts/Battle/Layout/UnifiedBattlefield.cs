@@ -72,13 +72,6 @@ public class UnifiedBattlefield : MonoBehaviour
             tileUI.Initialize(tile, isPlayerSide);
 
             allTileUIs[tile.BattlefieldPosition] = tileUI;
-
-            // Wire up tile events to UI
-            tile.OnCreaturePlaced += tileUI.OnCreaturePlaced;
-            tile.OnCreatureRemoved += tileUI.OnCreatureRemoved;
-            tile.OnTerrainChanged += tileUI.OnTerrainChanged;
-            tile.OnSurfaceApplied += tileUI.OnSurfaceApplied;
-            tile.OnSurfaceRemoved += tileUI.OnSurfaceRemoved;
         }
     }
 
