@@ -4,8 +4,23 @@ using System.Linq;
 using static GameConstants;
 
 /// <summary>
-/// Handles all targeting calculations for the unified battlefield.
-/// Implements same-grid and across-grid targeting rules.
+/// Handles all targeting calculations for the unified 3×6 battlefield.
+/// 
+/// Offensive (Melee/Reach/Distant): always targets enemies across the grid divide.
+///   - Scans along the target's row from the grid boundary inward.
+///   - Melee: first enemy only, zero pass-overs allowed.
+///   - Reach: first or second enemy, up to 2 pass-overs.
+///   - Distant: any enemy in row/adjacent row, ignores blockers.
+/// 
+/// Support (Touch/Team): always targets allies on the same (player) grid.
+///   - Self: only self.
+///   - Touch: cardinally adjacent allies only.
+///   - Team: any ally anywhere on the grid.
+/// 
+/// Row adjacency rule:
+///   - Top (row 0): can target rows 0 and 1 only.
+///   - Middle (row 1): can target rows 0, 1, and 2.
+///   - Bottom (row 2): can target rows 1 and 2 only.
 /// </summary>
 public class TargetingSystem
 {
@@ -17,313 +32,254 @@ public class TargetingSystem
     }
 
     /// <summary>
-    /// Get all valid targets for an action, checking both same-grid and across-grid rules.
-    /// Returns union of both sets (a target valid under either rule is included).
-    /// </summary>
-    public List<BattleTile> GetAllValidTargets(Creature attacker, ActionRange range)
-    {
-        var attackerPos = battlefield.GetBattlePosition(attacker);
-        if (!attackerPos.IsValid())
-            return new List<BattleTile>();
-
-        var sameGridTargets = GetSameGridTargets(attackerPos, range);
-        var acrossGridTargets = GetAcrossGridTargets(attackerPos, range);
-
-        // Union - add all same-grid targets, then add across-grid targets that aren't already included
-        var allTargets = new List<BattleTile>(sameGridTargets);
-        foreach (var target in acrossGridTargets)
-        {
-            if (!allTargets.Contains(target))
-            {
-                allTargets.Add(target);
-            }
-        }
-
-        return allTargets;
-    }
-
-    #region Same-Grid Targeting
-
-    /// <summary>
-    /// Get valid targets within the same grid as the attacker.
-    /// Range is space-based, units do not block.
-    /// </summary>
-    private List<BattleTile> GetSameGridTargets(BattlePosition attacker, ActionRange range)
-    {
-        var targets = new List<BattleTile>();
-        var grid = battlefield.GetGrid(attacker.GetTeamSide());
-
-        foreach (var tile in grid.GetAllTiles())
-        {
-            var targetPos = battlefield.GetBattlePosition(tile);
-
-            if (IsValidSameGridTarget(attacker, targetPos, range))
-            {
-                targets.Add(tile);
-            }
-        }
-
-        return targets;
-    }
-
-    private bool IsValidSameGridTarget(BattlePosition attacker, BattlePosition target, ActionRange range)
-    {
-        // Must be same team (self counts as same team)
-        if (attacker.GetTeamSide() != target.GetTeamSide())
-            return false;
-
-        return range switch
-        {
-            ActionRange.Self => attacker == target, // Only self
-            ActionRange.Melee => attacker == target || IsMeleeRangeSameGrid(attacker, target),
-            ActionRange.Short => attacker == target || IsShortRangeSameGrid(attacker, target),
-            ActionRange.Long => true, // All allies including self
-            _ => false
-        };
-    }
-
-    private bool IsMeleeRangeSameGrid(BattlePosition from, BattlePosition to)
-    {
-        // Adjacent including diagonals
-        return from.IsAdjacentTo(to);
-    }
-
-    private bool IsShortRangeSameGrid(BattlePosition from, BattlePosition to)
-    {
-        // Within 2 spaces, but NOT two spaces diagonally
-        int distance = from.ManhattanDistance(to);
-        if (distance > 2)
-            return false;
-
-        // Check if it's exactly 2 spaces diagonally (which is not allowed)
-        if (Math.Abs(from.Row - to.Row) == 2 && Math.Abs(from.GlobalCol - to.GlobalCol) == 2)
-            return false;
-
-        return true;
-    }
-
-    #endregion
-
-    #region Across-Grid Targeting
-
-    /// <summary>
-    /// Get valid targets in the opposite grid.
-    /// Range is blocker-based, units in front block targets behind them.
-    /// Targets must be in same row or within 1 row.
-    /// </summary>
-    private List<BattleTile> GetAcrossGridTargets(BattlePosition attacker, ActionRange range)
-    {
-        var targets = new List<BattleTile>();
-        var oppositeGrid = battlefield.GetGrid(
-            attacker.GetTeamSide() == TeamSide.Player ? TeamSide.Enemy : TeamSide.Player
-        );
-
-        foreach (var tile in oppositeGrid.GetAllTiles())
-        {
-            var targetPos = battlefield.GetBattlePosition(tile);
-
-            if (IsValidAcrossGridTarget(attacker, targetPos, range))
-            {
-                targets.Add(tile);
-            }
-        }
-
-        return targets;
-    }
-
-    private bool IsValidAcrossGridTarget(BattlePosition attacker, BattlePosition target, ActionRange range)
-    {
-        // Self range doesn't work across grids
-        if (range == ActionRange.Self)
-            return false;
-
-        // Must be in same row or within 1 row
-        if (!attacker.IsInTargetableRow(target))
-            return false;
-
-        // Count all blockers between attacker and target (including friendlies!)
-        int blockers = CountBlockersInPath(attacker, target);
-
-        return range switch
-        {
-            ActionRange.Melee => IsValidMeleeAcrossGrid(attacker, target, blockers),
-            ActionRange.Short => IsValidShortAcrossGrid(attacker, target, blockers),
-            ActionRange.Long => IsValidLongAcrossGrid(attacker, target, blockers),
-            _ => false
-        };
-    }
-
-    private bool IsValidMeleeAcrossGrid(BattlePosition attacker, BattlePosition target, int blockers)
-    {
-        // Cannot pass over any units
-        if (blockers > 0)
-            return false;
-
-        // Must be the closest unit in that row (or adjacent rows if within 1 row)
-        if (!IsClosestInRow(attacker, target))
-            return false;
-
-        // Check column reach limits based on attacker's position
-        int maxReachableCol = GetMeleeMaxReachableColumn(attacker);
-
-        return target.GlobalCol <= maxReachableCol;
-    }
-
-    private int GetMeleeMaxReachableColumn(BattlePosition attacker)
-    {
-        // Player perspective: col 0 = back, col 1 = mid, col 2 = front
-        // Enemy perspective: col 0 = front, col 1 = mid, col 2 = back
-
-        if (attacker.GetTeamSide() == TeamSide.Player)
-        {
-            return attacker.LocalCol switch
-            {
-                0 => 3, // Back -> enemy front (col 3)
-                1 => 4, // Mid -> enemy mid (col 4)
-                2 => 5, // Front -> enemy back (col 5)
-                _ => 3
-            };
-        }
-        else // Enemy
-        {
-            return attacker.LocalCol switch
-            {
-                0 => 2, // Front (enemy col 0 = global 3) -> player front (col 2)
-                1 => 1, // Mid -> player mid (col 1)
-                2 => 0, // Back -> player back (col 0)
-                _ => 2
-            };
-        }
-    }
-
-    private bool IsValidShortAcrossGrid(BattlePosition attacker, BattlePosition target, int blockers)
-    {
-        // Can pass over 1-2 units
-        if (blockers > 2)
-            return false;
-
-        // Cannot target opposing backline from own backline (max 4 column distance)
-        int colDistance = attacker.ColumnDistance(target);
-        return colDistance <= 4;
-    }
-
-    private bool IsValidLongAcrossGrid(BattlePosition attacker, BattlePosition target, int blockers)
-    {
-        // Can pass over 3-4 units
-        return blockers <= 4;
-    }
-
-    private int CountBlockersInPath(BattlePosition from, BattlePosition to)
-    {
-        // Count blockers in the TARGET's row, from next column after attacker to just before target
-        // This applies for same row or within 1 row targeting
-
-        int minCol = Math.Min(from.GlobalCol, to.GlobalCol);
-        int maxCol = Math.Max(from.GlobalCol, to.GlobalCol);
-
-        int blockerCount = 0;
-
-        // Count from the column after attacker, up to (but not including) target's column
-        // Always count along the target's row
-        for (int col = minCol + 1; col < maxCol; col++)
-        {
-            var checkPos = new BattlePosition(to.Row, col);
-            var tile = battlefield.GetTile(checkPos);
-
-            if (tile != null && tile.IsOccupied)
-            {
-                blockerCount++;
-            }
-        }
-
-        return blockerCount;
-    }
-
-    private bool IsClosestInRow(BattlePosition attacker, BattlePosition target)
-    {
-        // Get all enemies in the TARGET's row (not attacker's row)
-        var enemiesInRow = battlefield.GetCreaturesInRow(target.Row)
-            .Where(c => c.TeamSide != attacker.GetTeamSide())
-            .ToList();
-
-        if (enemiesInRow.Count == 0)
-            return false;
-
-        // Target must be the closest or tied for closest in that row
-        int targetDistance = attacker.ColumnDistance(target);
-        return enemiesInRow.All(e =>
-        {
-            var enemyPos = battlefield.GetBattlePosition(e);
-            return attacker.ColumnDistance(enemyPos) >= targetDistance;
-        });
-    }
-
-    #endregion
-
-    #region Helper Methods
-
-    /// <summary>
-    /// Get valid targets for a specific action, filtered by target type.
+    /// Returns all valid target tiles for an action, filtered by the action's
+    /// ValidTargets constraint.
     /// </summary>
     public List<BattleTile> GetValidTargetsForAction(Creature attacker, ActionBase action)
     {
         if (attacker == null || action == null)
             return new List<BattleTile>();
 
-        // Get all positionally valid targets
-        var potentialTargets = GetAllValidTargets(attacker, action.Range);
+        bool groundTarget = action.ValidTargets == TargetType.Tile;
 
-        // Filter by target type (enemy/ally/self/empty)
-        return FilterByTargetType(potentialTargets, attacker, action.ValidTargets);
+        return action.Range switch
+        {
+            ActionRange.Melee => GetOffensiveTargets(attacker, maxPassOvers: 0, groundTarget),
+            ActionRange.Reach => GetOffensiveTargets(attacker, maxPassOvers: 2, groundTarget),
+            ActionRange.Distant => GetDistantTargets(attacker, groundTarget),
+            ActionRange.Touch => GetTouchTargets(attacker, action.ValidTargets),
+            ActionRange.Team => GetTeamTargets(attacker, action.ValidTargets),
+            ActionRange.Self => GetSelfTarget(attacker),
+            _ => new List<BattleTile>()
+        };
+    }
+    // -------------------------------------------------------------------------
+    // Offensive targeting (cross-grid, enemies only)
+    // -------------------------------------------------------------------------
+
+    /// <summary>
+    /// Melee and Reach: for each targetable row, scan along that row from the
+    /// grid boundary toward the enemy backline and collect enemies up to the
+    /// pass-over limit.
+    /// </summary>
+    private List<BattleTile> GetOffensiveTargets(Creature attacker, int maxPassOvers, bool groundTarget)
+    {
+        var attackerPos = battlefield.GetBattlePosition(attacker);
+        if (!attackerPos.IsValid()) return new List<BattleTile>();
+
+        var results = new List<BattleTile>();
+
+        foreach (int targetRow in GetTargetableRows(attackerPos.Row))
+        {
+            var targetsInRow = ScanEnemyRow(attackerPos, targetRow, maxPassOvers, groundTarget);
+            results.AddRange(targetsInRow);
+        }
+
+        return results;
     }
 
-    private List<BattleTile> FilterByTargetType(
-        List<BattleTile> tiles,
-        Creature attacker,
-        TargetType targetType)
+    /// <summary>
+    /// Scan one enemy row from the frontline column toward the backline.
+    /// Returns occupied enemy tiles up to the pass-over limit.
+    /// 
+    /// "Pass-over" means a unit that is skipped to reach a further target.
+    /// Melee (0 pass-overs): only the very first enemy in the row is valid.
+    /// Reach (2 pass-overs): the 1st and 2nd enemies in the row are valid.
+    /// </summary>
+    private List<BattleTile> ScanEnemyRow(BattlePosition attackerPos, int targetRow, int maxPassOvers, bool groundTarget)
     {
-        var filtered = new List<BattleTile>();
+        var results = new List<BattleTile>();
+        TeamSide enemySide = attackerPos.GetTeamSide() == TeamSide.Player
+            ? TeamSide.Enemy
+            : TeamSide.Player;
 
-        foreach (var tile in tiles)
+        int[] colOrder = GetEnemyColumnScanOrder(enemySide);
+        int targetsFound = 0;
+
+        foreach (int globalCol in colOrder)
         {
-            if (IsValidTargetType(tile, attacker, targetType))
+            var pos = new BattlePosition(targetRow, globalCol);
+            var tile = battlefield.GetTile(pos);
+            if (tile == null) continue;
+
+            if (!tile.IsOccupied)
             {
-                filtered.Add(tile);
+                // Empty tiles are valid ground targets only if no enemy has been
+                // encountered yet — i.e. they lie between the attacker and the
+                // first reachable enemy.
+                if (groundTarget && targetsFound == 0)
+                    results.Add(tile);
+                continue;
+            }
+
+            // Occupied enemy tile — valid if within pass-over budget
+            if (targetsFound <= maxPassOvers)
+                results.Add(tile);
+
+            targetsFound++;
+            if (targetsFound > maxPassOvers) break;
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Returns global column indices for the enemy grid in frontline-first order.
+    /// </summary>
+    private int[] GetEnemyColumnScanOrder(TeamSide enemySide)
+    {
+        // Enemy grid occupies global cols 3-5; their frontline is col 3.
+        // Player grid occupies global cols 0-2; their frontline is col 2.
+        return enemySide == TeamSide.Enemy
+            ? new[] { 3, 4, 5 }   // Enemy frontline -> midline -> backline
+            : new[] { 2, 1, 0 };  // Player frontline -> midline -> backline
+    }
+
+    /// <summary>
+    /// Distant: any enemy in a targetable row, no blocker restriction.
+    /// </summary>
+    private List<BattleTile> GetDistantTargets(Creature attacker, bool groundTarget)
+    {
+        var attackerPos = battlefield.GetBattlePosition(attacker);
+        if (!attackerPos.IsValid()) return new List<BattleTile>();
+
+        var results = new List<BattleTile>();
+        TeamSide enemySide = attackerPos.GetTeamSide() == TeamSide.Player
+            ? TeamSide.Enemy
+            : TeamSide.Player;
+
+        var enemyGrid = battlefield.GetGrid(enemySide);
+
+        foreach (var tile in enemyGrid.GetAllTiles())
+        {
+            var tilePos = tile.BattlefieldPosition;
+
+            if (IsTargetableRow(attackerPos.Row, tilePos.Row))
+            {
+                if (groundTarget || tile.IsOccupied)
+                {
+                    results.Add(tile);
+                }
             }
         }
 
-        return filtered;
+        return results;
     }
 
-    private bool IsValidTargetType(BattleTile tile, Creature attacker, TargetType targetType)
+    // -------------------------------------------------------------------------
+    // Support targeting (same-grid, allies only)
+    // -------------------------------------------------------------------------
+
+    /// <summary>
+    /// Touch: cardinally adjacent ally tiles (up/down/left/right, no diagonals).
+    /// Cannot skip intervening units.
+    /// </summary>
+    private List<BattleTile> GetTouchTargets(Creature attacker, TargetType validTargets)
     {
-        switch (targetType)
+        var attackerPos = battlefield.GetBattlePosition(attacker);
+        if (!attackerPos.IsValid()) return new List<BattleTile>();
+
+        var results = new List<BattleTile>();
+
+        // Cardinal directions
+        (int dRow, int dCol)[] cardinals = { (-1, 0), (1, 0), (0, -1), (0, 1) };
+
+        foreach (var (dRow, dCol) in cardinals)
         {
-            case TargetType.Enemy:
-                return tile.IsOccupied && tile.OccupyingCreature.TeamSide != attacker.TeamSide;
+            int r = attackerPos.Row + dRow;
+            int c = attackerPos.GlobalCol + dCol;
 
-            case TargetType.Ally:
-                return tile.IsOccupied && tile.OccupyingCreature.TeamSide == attacker.TeamSide && tile.OccupyingCreature != attacker;
+            var neighborPos = BattlePosition.TryCreate(r, c);
+            if (!neighborPos.HasValue) continue;
 
-            case TargetType.Self:
-                return tile.IsOccupied && tile.OccupyingCreature == attacker;
+            // Must stay on the same team's grid
+            if (neighborPos.Value.GetTeamSide() != attackerPos.GetTeamSide()) continue;
 
-            case TargetType.AllyIncludingSelf:
-                return tile.IsOccupied && tile.OccupyingCreature.TeamSide == attacker.TeamSide;
+            var tile = battlefield.GetTile(neighborPos.Value);
+            if (tile == null) continue;
 
-            case TargetType.EmptySpace:
-                return tile.IsEmpty;
-
-            case TargetType.OccupiedSpace:
-                return tile.IsOccupied;
-
-            case TargetType.Any:
-                return true;
-
-            default:
-                return false;
+            // Touch targets occupied ally tiles
+            if (tile.IsOccupied)
+            {
+                results.Add(tile);
+            }
+            else
+            { 
+                if (validTargets == TargetType.Tile)
+                {
+                    // If ground-targeting is allowed, empty adjacent tiles are also valid.
+                    results.Add(tile);
+                }
+            }
         }
+
+        if (validTargets == TargetType.Self || validTargets == TargetType.AllyOrSelf)
+        {
+            // If self-targeting is allowed, include the attacker's own tile as well.
+            var selfTile = battlefield.GetTile(attackerPos);
+            if (selfTile != null)
+            {
+                results.Add(selfTile);
+            }
+        }
+
+        return results;
     }
 
-    #endregion
+    /// <summary>
+    /// Team: any occupied ally tile on the attacker's grid, including self
+    /// if the action's ValidTargets includes self.
+    /// </summary>
+    private List<BattleTile> GetTeamTargets(Creature attacker, TargetType validTargets)
+    {
+        var attackerPos = battlefield.GetBattlePosition(attacker);
+        if (!attackerPos.IsValid()) return new List<BattleTile>();
+
+        bool selfAllowed = validTargets == TargetType.AllyOrSelf || validTargets == TargetType.Self;
+        bool groundTarget = validTargets == TargetType.Tile;
+        var allyGrid = battlefield.GetGrid(attackerPos.GetTeamSide());
+
+        return allyGrid.GetAllTiles()
+            .Where(t =>
+            {
+                if (t.IsOccupied)
+                    return t.OccupyingCreature != attacker || selfAllowed;
+                else
+                    return groundTarget;
+            })
+            .ToList();
+    }
+
+    private List<BattleTile> GetSelfTarget(Creature attacker)
+    {
+        var pos = battlefield.GetBattlePosition(attacker);
+        var tile = battlefield.GetTile(pos);
+        return tile != null ? new List<BattleTile> { tile } : new List<BattleTile>();
+    }
+
+    // -------------------------------------------------------------------------
+    // Row adjacency helpers
+    // -------------------------------------------------------------------------
+
+    /// <summary>
+    /// Returns the rows that an attacker in the given row can target.
+    /// Top (0)    -> rows 0, 1
+    /// Middle (1) -> rows 0, 1, 2
+    /// Bottom (2) -> rows 1, 2
+    /// </summary>
+    private IEnumerable<int> GetTargetableRows(int attackerRow)
+    {
+        return attackerRow switch
+        {
+            0 => new[] { 0, 1 },
+            1 => new[] { 0, 1, 2 },
+            2 => new[] { 1, 2 },
+            _ => Array.Empty<int>()
+        };
+    }
+
+    private bool IsTargetableRow(int attackerRow, int targetRow)
+    {
+        return GetTargetableRows(attackerRow).Contains(targetRow);
+    }
 }
