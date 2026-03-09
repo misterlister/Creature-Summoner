@@ -1,3 +1,4 @@
+using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,6 +38,7 @@ public class BattleManager : MonoBehaviour
 
     private void Awake()
     {
+        DOTween.Init(recycleAllByDefault: true, useSafeMode: true, logBehaviour: LogBehaviour.ErrorsOnly);
         InitializeBattle();
     }
 
