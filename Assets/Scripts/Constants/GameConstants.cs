@@ -117,10 +117,15 @@ public enum PositionRole
 
 public enum ActionRange
 {
-    Melee,
-    Short,
-    Long,
-    Self
+    // Offensive - always targets enemy grid
+    Melee,          // First enemy in the same or adjacent row
+    Reach,          // Can pass over 1-2 creatures in the same or adjacent row
+    Distant,        // Any enemy in the same or adjacent row
+
+    // Support - always targets own grid
+    Self,           // Only the acting creature itself
+    Touch,          // Any creature on the same tile or adjacent tiles
+    Team            // All creatures on the same grid
 }
 
 public enum Perspective
