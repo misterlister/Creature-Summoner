@@ -19,7 +19,7 @@ MonoBehaviour:
   source: 0
   role: 0
   range: 0
-  validTargets: 0
+  validTargets: 3
   energyValue: 20
   power: 25
   accuracy: 80

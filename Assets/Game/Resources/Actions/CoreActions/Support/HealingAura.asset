@@ -18,8 +18,8 @@ MonoBehaviour:
   slotType: 0
   source: 1
   role: 1
-  range: 1
-  validTargets: 0
+  range: 5
+  validTargets: 2
   energyValue: 10
   power: 20
   accuracy: 100

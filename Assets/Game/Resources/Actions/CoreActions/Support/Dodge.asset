@@ -18,7 +18,7 @@ MonoBehaviour:
   slotType: 0
   source: 0
   role: 2
-  range: 2
+  range: 3
   validTargets: 0
   energyValue: 25
   power: 0
