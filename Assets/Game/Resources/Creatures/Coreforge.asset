@@ -33,6 +33,6 @@ MonoBehaviour:
     level: 0
   - action: {fileID: 11400000, guid: e8407a767f651f24e9965446150ecf1d, type: 2}
     level: 0
-  - action: {fileID: 0}
-    level: 0
+  - action: {fileID: 11400000, guid: 2dbe796de8b26e745bff1caf7c747e6e, type: 2}
+    level: 10
   learnableTraits: []
