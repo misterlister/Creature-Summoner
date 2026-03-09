@@ -70,23 +70,19 @@ public class BattleGrid
             return;
         }
 
-        // Determine column range based on team side
-        int minCol = TeamOwner == TeamSide.Player ? 0 : GRID_COLS;
-        int maxCol = TeamOwner == TeamSide.Player ? GRID_COLS : BATTLE_COLS;
-
         for (int row = 0; row < BATTLE_ROWS; row++)
         {
-            for (int col = minCol; col < maxCol; col++)
+            for (int col = 0; col < GRID_COLS; col++)
             {
                 var tile = GetTile(row, col);
-                if (tile == null)
-                    continue;
+                if (tile == null) continue;
 
-                var terrainEnum = layout.GetTerrainType(row, col);
+                // Convert to global col so terrain layout is sampled correctly
+                int globalCol = TeamOwner == TeamSide.Player ? col : col + GRID_COLS;
+                var terrainEnum = layout.GetTerrainType(row, globalCol);
 
                 var terrainInstance = terrainEnum.GetTerrainInstance();
-                if (terrainInstance == null)
-                    continue;
+                if (terrainInstance == null) continue;
 
                 var visuals = biome?.GetRandomVariant(terrainInstance.GetType());
                 tile.SetTerrain(terrainInstance, visuals);
