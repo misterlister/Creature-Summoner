@@ -19659,11 +19659,11 @@ MonoBehaviour:
     Loadout: {fileID: 0}
     StartingClass: {fileID: 11400000, guid: bcc9a6dd717f391458575d6dd5317912, type: 2}
     PreferredRole: 2
-  - Species: {fileID: 11400000, guid: e0f1fa553c3ad87408adfd429614afc5, type: 2}
+  - Species: {fileID: 11400000, guid: fb76b50bcf3fa5d41a0fb4995edea302, type: 2}
     Level: 21
-    Nickname: Spook
+    Nickname: Flutter
     Loadout: {fileID: 0}
-    StartingClass: {fileID: 11400000, guid: bcc9a6dd717f391458575d6dd5317912, type: 2}
+    StartingClass: {fileID: 11400000, guid: d2bbbcd3c141fbf41be6ade346ce42be, type: 2}
     PreferredRole: 2
 --- !u!1 &1431166914
 GameObject:
