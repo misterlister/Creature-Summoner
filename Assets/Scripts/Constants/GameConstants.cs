@@ -35,6 +35,7 @@ public static class GameConstants
 
     public const int BATTLE_ROWS = 3; // Number of Rows on the battlefield
     public const int BATTLE_COLS = 6; // Number of Columns on the battlefield
+    public const int GRID_COLS = BATTLE_COLS / 2; // Number of Columns in each team's grid
 
     public const int ENEMY_COL = BATTLE_COLS / 2;
 
@@ -110,9 +111,9 @@ public enum TeamSide
 
 public enum PositionRole
 {
-    Frontline,
-    Midline,
-    Backline
+    Frontline,      // Row closest to the opponent, typically for tanks and melee fighters
+    Midline,        // Middle row, often for mid-ranged fighters and support
+    Backline        // Row farthest from the opponent, ideal for ranged attackers and fragile support
 }
 
 public enum ActionRange
@@ -130,40 +131,38 @@ public enum ActionRange
 
 public enum Perspective
 {
-    Self,
-    Ally,
-    Opponent,
-    Team,
+    Self,           // Only the acting creature itself
+    Ally,           // Any creature on the same team excluding self
+    Opponent,       // Any creature on the opposing team
+    Team,           // All creatures on the same team, including self
 }
 
 public enum TargetType
 {
-    Any,
-    Self,
-    AllyIncludingSelf,
-    Enemy,
-    Ally,
-    EmptySpace,
-    OccupiedSpace
+    Self,           // Only the acting creature itself
+    Ally,           // Any ally excluding self
+    AllyOrSelf,     // Any ally including self
+    Enemy,          // Any enemy
+    Tile,           // Any tile regardless of occupancy (for AoE ground targeting)
 }
 
 public enum StatType
 {
-    HP,
-    Energy,
-    Strength,
-    Magic,
-    Skill,
-    Speed,
-    Defense,
-    Resistance
+    HP,             // Health Points
+    Energy,         // Resource used for empowered actions
+    Strength,       // Physical power, affects physical damage
+    Magic,          // Magical power, affects magical damage
+    Skill,          // Accuracy and finesse, affects hit chance and application of status effects
+    Speed,          // Quickness and reflexes, affects turn order and evasion
+    Defense,        // Physical toughness, reduces physical damage taken
+    Resistance      // Magical toughness, reduces magical damage taken
 }
 
 public enum HitType
 {
-    Hit,
-    Glance,
-    Critical
+    Hit,            // Standard hit
+    Glance,         // Weaker hit, reduced damage
+    Critical        // Stronger hit, increased damage
 }
 
 public enum CombatModifierType
