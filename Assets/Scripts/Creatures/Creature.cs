@@ -140,11 +140,6 @@ public class Creature
 
     public void SetBattlePosition(BattleTile tile)
     {
-        if (CurrentTile != null && CurrentTile.OccupyingCreature == this)
-        {
-            CurrentTile.RemoveCreature();
-        }
-
         CurrentTile = tile;
     }
 
