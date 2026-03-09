@@ -11,7 +11,7 @@ public class BattleGrid
 {
     public TeamSide TeamOwner { get; }
     public UnifiedBattlefield Battlefield { get; set; }
-    private BattleTile[,] tiles = new BattleTile[BATTLE_ROWS, BATTLE_COLS];
+    private BattleTile[,] tiles = new BattleTile[BATTLE_ROWS, GRID_COLS];
 
     // Events
     public event Action<Creature, GridPosition> OnCreaturePlaced;
@@ -29,7 +29,7 @@ public class BattleGrid
     {
         for (int row = 0; row < BATTLE_ROWS; row++)
         {
-            for (int col = 0; col < BATTLE_COLS; col++)
+            for (int col = 0; col < GRID_COLS; col++)
             {
                 var pos = new GridPosition(row, col);
                 var tile = new BattleTile(pos, TeamOwner, this);
@@ -71,8 +71,8 @@ public class BattleGrid
         }
 
         // Determine column range based on team side
-        int minCol = TeamOwner == TeamSide.Player ? 0 : BATTLE_COLS / 2;
-        int maxCol = TeamOwner == TeamSide.Player ? BATTLE_COLS / 2 : BATTLE_COLS;
+        int minCol = TeamOwner == TeamSide.Player ? 0 : GRID_COLS;
+        int maxCol = TeamOwner == TeamSide.Player ? GRID_COLS : BATTLE_COLS;
 
         for (int row = 0; row < BATTLE_ROWS; row++)
         {
@@ -138,10 +138,10 @@ public class BattleGrid
 
     public List<BattleTile> GetAllTiles()
     {
-        var result = new List<BattleTile>(BATTLE_ROWS * BATTLE_COLS);
+        var result = new List<BattleTile>(BATTLE_ROWS * GRID_COLS);
         for (int row = 0; row < BATTLE_ROWS; row++)
         {
-            for (int col = 0; col < BATTLE_COLS; col++)
+            for (int col = 0; col < GRID_COLS; col++)
             {
                 result.Add(tiles[row, col]);
             }
@@ -169,7 +169,7 @@ public class BattleGrid
 
     public List<BattleTile> GetColumn(int col)
     {
-        if (col < 0 || col >= BATTLE_COLS)
+        if (col < 0 || col >= GRID_COLS)
             return new List<BattleTile>();
 
         var result = new List<BattleTile>(BATTLE_ROWS);
@@ -185,8 +185,8 @@ public class BattleGrid
         if (row < 0 || row >= BATTLE_ROWS)
             return new List<BattleTile>();
 
-        var result = new List<BattleTile>(BATTLE_COLS);
-        for (int col = 0; col < BATTLE_COLS; col++)
+        var result = new List<BattleTile>(GRID_COLS);
+        for (int col = 0; col < GRID_COLS; col++)
         {
             result.Add(tiles[row, col]);
         }
@@ -208,7 +208,7 @@ public class BattleGrid
             return Battlefield.GetAdjacentTiles(tile);
         }
 
-        return GetAdjacentTiles(tile.Position);
+        return GetAdjacentTiles(tile.LocalPosition);
     }
 
     public List<BattleTile> GetAdjacentTiles(GridPosition pos)
@@ -228,7 +228,7 @@ public class BattleGrid
         {
             int r = pos.Row + dRow;
             int c = pos.Col + dCol;
-            if (r >= 0 && r < BATTLE_ROWS && c >= 0 && c < BATTLE_COLS)
+            if (r >= 0 && r < BATTLE_ROWS && c >= 0 && c < GRID_COLS)
             {
                 result.Add(tiles[r, c]);
             }
@@ -271,7 +271,7 @@ public class BattleGrid
                 int cost = tile.GetMovementCost(creature);
                 if (cost <= maxEnergyCost)
                 {
-                    validPositions.Add(tile.Position);
+                    validPositions.Add(tile.LocalPosition);
                 }
             }
         }
