@@ -41,10 +41,30 @@ public class ActionBase : ScriptableObject
 
     // Simple query methods
     public bool IsMelee() => !Tags.Contains(ActionTag.NoContact) && range == ActionRange.Melee;
-    public bool IsRanged() => range == ActionRange.Short || range == ActionRange.Long;
+    public bool IsRanged() => range == ActionRange.Reach || range == ActionRange.Distant;
     public bool IsMagic() => source == ActionSource.Magical;
     public bool IsPhysical() => source == ActionSource.Physical;
     public bool IsElement(CreatureElement checkType) => element == checkType;
+
+    private void OnValidate()
+    {
+        if (!IsValidTargetCombination(range, validTargets))
+            Debug.LogError($"{name}: Invalid combination — {range} cannot use {validTargets}", this);
+    }
+
+    public static bool IsValidTargetCombination(ActionRange range, TargetType targetType)
+    {
+        return range switch
+        {
+            ActionRange.Melee => targetType == TargetType.Enemy || targetType == TargetType.Tile,
+            ActionRange.Reach => targetType == TargetType.Enemy || targetType == TargetType.Tile,
+            ActionRange.Distant => targetType == TargetType.Enemy || targetType == TargetType.Tile,
+            ActionRange.Self => targetType == TargetType.Self,
+            ActionRange.Touch => targetType == TargetType.Ally || targetType == TargetType.AllyOrSelf || targetType == TargetType.Tile,
+            ActionRange.Team => targetType == TargetType.Ally || targetType == TargetType.AllyOrSelf || targetType == TargetType.Tile,
+            _ => false
+        };
+    }
 
     /// <summary>
     /// Get all valid targets for this action.
@@ -66,7 +86,7 @@ public class ActionBase : ScriptableObject
         if (centerTile == null || battlefield == null || AreaOfEffect == AOE.Single)
             return new List<BattleTile> { centerTile };
 
-        var centerPos = battlefield.GetBattlePosition(centerTile);
+        var centerPos = centerTile.BattlefieldPosition;
         var isPlayer = centerPos.GetTeamSide() == TeamSide.Player;
 
         var aoeTargets = AOETargetCalculator.GetTargets(
