@@ -9,7 +9,8 @@ using System.Linq;
 /// </summary>
 public class BattleTile
 {
-    public GridPosition Position { get; }
+    public GridPosition LocalPosition { get; }
+    public BattlePosition BattlefieldPosition { get; }
     public TeamSide TeamOwner { get; }
     public BattleGrid ParentGrid { get; set; }
 
@@ -39,9 +40,10 @@ public class BattleTile
 
     public BattleTile(GridPosition position, TeamSide owner, BattleGrid parentGrid)
     {
-        Position = position;
+        LocalPosition = position;
         TeamOwner = owner;
         ParentGrid = parentGrid;
+        BattlefieldPosition = BattlePosition.FromGridPosition(position, owner);
     }
 
     // Terrain management
@@ -119,10 +121,10 @@ public class BattleTile
     public void PlaceCreature(Creature creature)
     {
         if (IsOccupied)
-            throw new InvalidOperationException($"Tile {Position} already occupied by {OccupyingCreature?.Nickname}");
+            throw new InvalidOperationException($"Tile {LocalPosition} already occupied by {OccupyingCreature?.Nickname}");
 
         if (Terrain != null && !Terrain.CanBeEnteredBy(creature))
-            throw new InvalidOperationException($"Tile {Position} is blocked by {Terrain.TerrainName}");
+            throw new InvalidOperationException($"Tile {LocalPosition} is blocked by {Terrain.TerrainName}");
 
         OccupyingCreature = creature;
 

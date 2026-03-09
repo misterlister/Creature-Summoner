@@ -133,7 +133,7 @@ public class Creature
     public BattleTile CurrentTile { get; private set; }
 
     // Is this the best way to handle invalid positions?
-    public GridPosition Position => CurrentTile?.Position ?? new GridPosition(-1, -1);
+    public GridPosition Position => CurrentTile?.LocalPosition ?? new GridPosition(-1, -1);
 
     // This shouldn't be mutable
     public TeamSide TeamSide { get; set; }

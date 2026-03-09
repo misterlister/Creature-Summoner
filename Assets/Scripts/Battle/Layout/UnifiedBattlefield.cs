@@ -71,8 +71,7 @@ public class UnifiedBattlefield : MonoBehaviour
             bool isPlayerSide = team == TeamSide.Player;
             tileUI.Initialize(tile, isPlayerSide);
 
-            BattlePosition battlePos = GetBattlePosition(tile.Position, team);
-            allTileUIs[battlePos] = tileUI;
+            allTileUIs[tile.BattlefieldPosition] = tileUI;
 
             // Wire up tile events to UI
             tile.OnCreaturePlaced += tileUI.OnCreaturePlaced;
@@ -152,19 +151,7 @@ public class UnifiedBattlefield : MonoBehaviour
     /// </summary>
     public BattlePosition GetBattlePosition(Creature creature)
     {
-        if (creature?.CurrentTile == null)
-            return default;
-
-        return GetBattlePosition(creature.CurrentTile.Position, creature.TeamSide);
-    }
-
-    /// <summary>
-    /// Get battle position for a tile
-    /// </summary>
-    public BattlePosition GetBattlePosition(BattleTile tile)
-    {
-        if (tile == null) return default;
-        return GetBattlePosition(tile.Position, tile.TeamOwner);
+        return creature?.CurrentTile?.BattlefieldPosition ?? default;
     }
 
     #endregion
@@ -179,7 +166,7 @@ public class UnifiedBattlefield : MonoBehaviour
         var result = new List<BattleTile>();
         if (tile == null) return result;
 
-        var center = GetBattlePosition(tile);
+        var center = tile.BattlefieldPosition;
         if (!center.IsValid()) return result;
 
         // 8-directional offsets
@@ -383,7 +370,7 @@ public class UnifiedBattlefield : MonoBehaviour
     {
         foreach (var tile in tiles)
         {
-            var battlePos = GetBattlePosition(tile);
+            var battlePos = tile.BattlefieldPosition;
             var tileUI = GetTileUI(battlePos);
             tileUI?.SetHighlight(highlightType);
         }
@@ -401,8 +388,7 @@ public class UnifiedBattlefield : MonoBehaviour
     {
         ClearAllHighlights();
 
-        var battlePos = GetBattlePosition(creature);
-        var tileUI = GetTileUI(battlePos);
+        var tileUI = GetTileUI(creature.CurrentTile.BattlefieldPosition);
         tileUI?.SetHighlight(HighlightType.ActiveCreature);
     }
 

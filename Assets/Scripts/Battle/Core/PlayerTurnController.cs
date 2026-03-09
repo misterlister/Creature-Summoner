@@ -546,7 +546,7 @@ public class PlayerTurnController
     private void ExecuteMovement(BattleTile targetTile)
     {
         var sourcePos = battlefield.GetBattlePosition(activeCreature);
-        var targetPos = battlefield.GetBattlePosition(targetTile);
+        var targetPos = targetTile.BattlefieldPosition;
 
         previousMovePosition = sourcePos;
 
@@ -654,7 +654,7 @@ public class PlayerTurnController
         var targets = selectedAction.GetValidTargets(activeCreature, battlefield);
         if (targets.Count > 0)
         {
-            return battlefield.GetBattlePosition(targets[0]);
+            return targets[0].BattlefieldPosition;
         }
         return null;
     }
@@ -703,23 +703,16 @@ public class PlayerTurnController
         hoveredTile = tile;
 
         // Update UI to show hover state
-        var tileUI = battlefield.GetTileUI(battlefield.GetBattlePosition(tile));
-        if (tileUI != null)
-        {
-            // Show selection arrow or other hover indicator
-            if (showStatus)
-            {
-                tileUI.ShowStatusWindow();
-            }
-        }
+        var tileUI = battlefield.GetTileUI(tile.BattlefieldPosition);
+        tileUI?.SetHighlight(isValid ? HighlightType.ValidTarget : HighlightType.InvalidTarget);
     }
 
     private void ClearHoveredTile()
     {
         if (hoveredTile != null)
         {
-            var tileUI = battlefield.GetTileUI(battlefield.GetBattlePosition(hoveredTile));
-            tileUI?.HideStatusWindow();
+            var tileUI = battlefield.GetTileUI(hoveredTile.BattlefieldPosition);
+            tileUI?.ClearHighlight();
             hoveredTile = null;
         }
     }

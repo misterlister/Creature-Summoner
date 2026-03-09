@@ -130,7 +130,7 @@ public class BattleManager : MonoBehaviour
                 continue;
             }
 
-            var battlePos = BattlePosition.FromGridPosition(tile.Position, side);
+            var battlePos = BattlePosition.FromGridPosition(tile.LocalPosition, side);
             battlefield.PlaceCreature(creature, battlePos);
         }
     }
