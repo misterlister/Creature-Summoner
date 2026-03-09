@@ -108,15 +108,17 @@ public class BattleTileUI : MonoBehaviour
 
     private void SetupLayout()
     {
-        if (!isPlayerSide)
+        // Flip player sprites to face right (toward enemy), enemies already face left
+        if (isPlayerSide)
         {
-            // Flip sprite direction for enemy
             creatureSprite.transform.localScale = new Vector3(-1, 1, 1);
         }
+        else
+        {
+            creatureSprite.transform.localScale = new Vector3(1, 1, 1);
+        }
 
-        // Store original values
         originalSpritePos = creatureSprite.transform.localPosition;
-        originalSpriteColor = creatureSprite.color;
     }
 
     #region Event Handlers from BattleTile
@@ -240,6 +242,7 @@ public class BattleTileUI : MonoBehaviour
     private void SetupCreatureVisuals(Creature creature)
     {
         creatureSprite.sprite = creature.Species.FrontSprite;
+        originalSpriteColor = creatureSprite.color;
         spriteHolder.SetActive(true);
 
         namePanel.SetActive(true);
@@ -348,21 +351,10 @@ public class BattleTileUI : MonoBehaviour
     public void PlaySummonAnimation()
     {
         isAnimating = true;
+        creatureSprite.color = new Color(originalSpriteColor.r, originalSpriteColor.g, originalSpriteColor.b, 0f);
 
-        // 1. Reset states
-        creatureSprite.color = Color.white; // Start pure white
-        creatureSprite.canvasRenderer.SetAlpha(0f); // Start invisible
-
-        // 2. The Animation
-        var sequence = DOTween.Sequence();
-
-        // Fade in while white
-        sequence.Append(creatureSprite.DOFade(1f, SUMMON_DURATION * 0.3f));
-
-        // Then fade from white to the actual creature colors
-        sequence.Append(creatureSprite.DOColor(originalSpriteColor, SUMMON_DURATION * 0.7f));
-
-        sequence.OnComplete(() => isAnimating = false);
+        creatureSprite.DOColor(originalSpriteColor, SUMMON_DURATION)
+            .OnComplete(() => isAnimating = false);
     }
 
     public void PlayAttackAnimation()
