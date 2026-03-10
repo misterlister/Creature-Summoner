@@ -3,6 +3,14 @@ using UnityEngine;
 
 public static class GameConstants
 {
+    // NAVIGATION CONTROL CONSTANTS
+    public const KeyCode UP_KEY = KeyCode.W;
+    public const KeyCode DOWN_KEY = KeyCode.S;
+    public const KeyCode LEFT_KEY = KeyCode.A;
+    public const KeyCode RIGHT_KEY = KeyCode.D;
+    public const KeyCode ACCEPT_KEY = KeyCode.Z;
+    public const KeyCode BACK_KEY = KeyCode.X;
+
     // ACTION CONSTANTS
 
     public const float ACCURACY_ADJUSTMENT_FACTOR = 0.5f;    // Value that controls how much accuracy changes based on stat ratio
