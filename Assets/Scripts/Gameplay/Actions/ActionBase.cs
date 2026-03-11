@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using static BattleSystemConstants;
 
 [CreateAssetMenu(fileName = "NewAction", menuName = "Action/Create new Action")]
 public class ActionBase : ScriptableObject
@@ -76,31 +77,6 @@ public class ActionBase : ScriptableObject
             return new List<BattleTile>();
 
         return battlefield.TargetingSystem.GetValidTargetsForAction(attacker, this);
-    }
-
-    /// <summary>
-    /// Get AOE targets centered on a specific tile.
-    /// </summary>
-    public List<BattleTile> GetAOETargets(BattleTile centerTile, UnifiedBattlefield battlefield, int yChoice = 0)
-    {
-        if (centerTile == null || battlefield == null || AreaOfEffect == AOE.Single)
-            return new List<BattleTile> { centerTile };
-
-        var centerPos = centerTile.BattlefieldPosition;
-        var isPlayer = centerPos.GetTeamSide() == TeamSide.Player;
-
-        var aoeTargets = AOETargetCalculator.GetTargets(
-            centerPos,
-            AreaOfEffect,
-            battlefield,
-            isPlayer,
-            yChoice
-        );
-
-        var allTargets = new List<BattleTile> { centerTile };
-        allTargets.AddRange(aoeTargets);
-
-        return allTargets;
     }
 
     /// <summary>
