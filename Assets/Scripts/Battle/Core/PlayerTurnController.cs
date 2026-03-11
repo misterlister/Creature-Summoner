@@ -1,6 +1,9 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using static GameConstants;
+using static BattleSystemConstants;
+using static BattleUIConstants;
 
 /// <summary>
 /// Handles all player turn input, state management, and UI interaction.
@@ -17,13 +20,18 @@ public class PlayerTurnController
 
     // Selection state
     private ActionBase selectedAction;
-    private List<BattleTile> selectedTargets = new List<BattleTile>();
     private BattleTile primaryTarget;
     private int selectionYChoice = 0;
+    private bool confirmingAOE = false;
+
 
     // Current menu position
-    private int selectionX = 0;
-    private int selectionY = 0;
+    private int menuIndex = 0;
+    private int menuCount = 0;
+    private int cursorRow = 0;
+    private int cursorCol = 0;
+
+    private int MenuRows => Mathf.CeilToInt((float)menuCount / MENU_COLS);
 
     // Movement tracking
     private bool hasMovedThisTurn = false;
@@ -31,42 +39,38 @@ public class PlayerTurnController
 
     // State tracking - only player-specific substates
     private PlayerTurnState currentState;
-    private Stack<PlayerTurnState> stateStack = new Stack<PlayerTurnState>();
-    private Stack<(int y, int x)> positionStack = new Stack<(int y, int x)>();
+
+    private struct StateSnapshot
+    {
+        public PlayerTurnState State;
+        public int MenuIndex;
+        public int CursorRow;
+        public int CursorCol;
+
+        public StateSnapshot(PlayerTurnState state, int menuIndex, int cursorRow, int cursorCol)
+        {
+            State = state;
+            MenuIndex = menuIndex;
+            CursorRow = cursorRow;
+            CursorCol = cursorCol;
+        }
+    }
+
+    private Stack<StateSnapshot> stateStack = new();
 
     // Currently highlighted/selected creatures for UI
     private BattleTile hoveredTile;
     private List<BattleTile> validTargets = new List<BattleTile>();
 
-    // State-specific menu dimensions
-    private Dictionary<PlayerTurnState, (int rows, int cols)> stateChoices;
+    private static readonly ActionCategoryMenuOptions[] ActionCategories =
+    (ActionCategoryMenuOptions[])Enum.GetValues(typeof(ActionCategoryMenuOptions));
 
-    // Input keys
-    private const KeyCode ACCEPT_KEY = KeyCode.Z;
-    private const KeyCode BACK_KEY = KeyCode.X;
 
     public PlayerTurnController(BattleManager manager, UnifiedBattlefield field, BattleUI ui)
     {
         battleManager = manager;
         battlefield = field;
         battleUI = ui;
-
-        InitializeStateChoices();
-    }
-
-    private void InitializeStateChoices()
-    {
-        stateChoices = new Dictionary<PlayerTurnState, (int rows, int cols)>
-        {
-            { PlayerTurnState.ActionCategorySelect, (Mathf.CeilToInt(5f / BATTLE_MENU_COLS), BATTLE_MENU_COLS) },
-            { PlayerTurnState.CoreActionSelect, (Mathf.CeilToInt((float)CORE_SLOTS / BATTLE_MENU_COLS), BATTLE_MENU_COLS) },
-            { PlayerTurnState.EmpoweredActionSelect, (Mathf.CeilToInt((float)EMPOWERED_SLOTS / BATTLE_MENU_COLS), BATTLE_MENU_COLS) },
-            { PlayerTurnState.MasteryActionSelect, (Mathf.CeilToInt((float)MASTERY_SLOTS / BATTLE_MENU_COLS), BATTLE_MENU_COLS) },
-            { PlayerTurnState.MovementSelect, (BATTLE_ROWS + 1, BATTLE_COLS / 2) },
-            { PlayerTurnState.Examine, (BATTLE_ROWS + 1, BATTLE_COLS) },
-            { PlayerTurnState.TargetSelect, (BATTLE_ROWS + 1, BATTLE_COLS) },
-            { PlayerTurnState.AOESelect, (0, 0) } // Dynamic based on AOE type
-        };
     }
 
     public void StartTurn(Creature creature)
@@ -75,11 +79,11 @@ public class PlayerTurnController
 
         // Reset state
         selectedAction = null;
-        selectedTargets.Clear();
         primaryTarget = null;
         selectionYChoice = 0;
         hasMovedThisTurn = false;
         previousMovePosition = null;
+        confirmingAOE = false;
         ClearStateStack();
 
         // Start at action category selection
@@ -121,34 +125,72 @@ public class PlayerTurnController
             case PlayerTurnState.TargetSelect:
                 HandleTargetSelectInput();
                 break;
-            case PlayerTurnState.AOESelect:
-                HandleAOESelectInput();
-                break;
         }
     }
 
     private void HandleMenuNavigation()
     {
-        if (!stateChoices.ContainsKey(currentState)) return;
+        switch (currentState)
+        {
+            case PlayerTurnState.ActionCategorySelect:
+            case PlayerTurnState.CoreActionSelect:
+            case PlayerTurnState.EmpoweredActionSelect:
+            case PlayerTurnState.MasteryActionSelect:
+                HandleListNavigation();
+                break;
+            case PlayerTurnState.MovementSelect:
+            case PlayerTurnState.TargetSelect:
+            case PlayerTurnState.Examine:
+                HandleGridNavigation();
+                break;
+        }
+    }
 
-        var (rows, cols) = stateChoices[currentState];
+    private void HandleListNavigation()
+    {
+        int row = menuIndex / MENU_COLS;
+        int col = menuIndex % MENU_COLS;
 
-        if (Input.GetKeyDown(KeyCode.DownArrow) && rows > 0)
+        if (Input.GetKeyDown(DOWN_KEY))
         {
-            selectionY = (selectionY + 1) % rows;
+            int newIndex = menuIndex + MENU_COLS;
+            menuIndex = newIndex < menuCount ? newIndex : menuIndex;
         }
-        else if (Input.GetKeyDown(KeyCode.UpArrow) && rows > 0)
+        else if (Input.GetKeyDown(UP_KEY))
         {
-            selectionY = (selectionY - 1 + rows) % rows;
+            int newIndex = menuIndex - MENU_COLS;
+            menuIndex = newIndex >= 0 ? newIndex : menuIndex;
         }
-        else if (Input.GetKeyDown(KeyCode.LeftArrow) && cols > 0)
+        else if (Input.GetKeyDown(RIGHT_KEY))
         {
-            selectionX = (selectionX - 1 + cols) % cols;
+            int newIndex = menuIndex + 1;
+            // Wrap within row only
+            menuIndex = col < MENU_COLS - 1 && newIndex < menuCount ? newIndex : menuIndex;
         }
-        else if (Input.GetKeyDown(KeyCode.RightArrow) && cols > 0)
+        else if (Input.GetKeyDown(LEFT_KEY))
         {
-            selectionX = (selectionX + 1) % cols;
+            int newIndex = menuIndex - 1;
+            // Wrap within row only
+            menuIndex = col > 0 ? newIndex : menuIndex;
         }
+    }
+
+    private void HandleGridNavigation()
+    {
+        if (Input.GetKeyDown(DOWN_KEY))
+            cursorRow = Mathf.Clamp(cursorRow + 1, 0, BATTLE_ROWS - 1);
+        else if (Input.GetKeyDown(UP_KEY))
+            cursorRow = Mathf.Clamp(cursorRow - 1, 0, BATTLE_ROWS - 1);
+        else if (Input.GetKeyDown(RIGHT_KEY))
+            cursorCol = Mathf.Clamp(cursorCol + 1, 0, BATTLE_COLS - 1);
+        else if (Input.GetKeyDown(LEFT_KEY))
+            cursorCol = Mathf.Clamp(cursorCol - 1, 0, BATTLE_COLS - 1);
+    }
+
+    private void SetMenuSize(int count)
+    {
+        menuCount = count + 1; // +1 for Back
+        menuIndex = 0;
     }
 
     #endregion
@@ -161,40 +203,40 @@ public class PlayerTurnController
         {
             // Can go back and undo movement
             TryPopState();
+            return;
         }
-        else if (Input.GetKeyDown(ACCEPT_KEY))
+        
+        if (Input.GetKeyDown(ACCEPT_KEY))
         {
-            int selection = GetLinearPosition();
-
-            switch (selection)
+            switch (ActionCategories[menuIndex])
             {
-                case 0: // Core Actions
+                case ActionCategoryMenuOptions.CoreActions:
                     TransitionToCoreActionSelect();
                     break;
-                case 1: // Empowered Actions
+                case ActionCategoryMenuOptions.EmpoweredActions:
                     TransitionToEmpoweredActionSelect();
                     break;
-                case 2: // Mastery Actions
+                case ActionCategoryMenuOptions.MasteryActions:
                     TransitionToMasteryActionSelect();
                     break;
-                case 3: // Movement
-                    if (hasMovedThisTurn)
-                    {
-                        battleUI.ShowMessage("Already moved this turn");
-                    }
-                    else
-                    {
-                        TransitionToMovementSelect();
-                    }
+                case ActionCategoryMenuOptions.Move:
+                    if (hasMovedThisTurn) battleUI.ShowMessage("Already moved this turn");
+                    else TransitionToMovementSelect();
                     break;
-                case 4: // Examine
+                case ActionCategoryMenuOptions.Examine:
                     TransitionToExamine();
+                    break;
+                case ActionCategoryMenuOptions.ClassAction:
+                    battleUI.ShowMessage("Class actions not implemented yet");
+                    break;
+                case ActionCategoryMenuOptions.Flee:
+                    battleUI.ShowMessage("Fleeing not implemented yet");
                     break;
             }
         }
         else
         {
-            battleUI.UpdateActionCategorySelection(GetLinearPosition());
+            battleUI.UpdateActionCategorySelection(menuIndex);
         }
     }
 
@@ -203,14 +245,14 @@ public class PlayerTurnController
         if (Input.GetKeyDown(BACK_KEY))
         {
             TryPopState();
+            return;
         }
-        else if (Input.GetKeyDown(ACCEPT_KEY))
-        {
-            int selection = GetLinearPosition();
 
-            if (selection < activeCreature.Actions.EquippedCoreActions.Count)
+        if (Input.GetKeyDown(ACCEPT_KEY))
+        {
+            if (menuIndex < activeCreature.Actions.EquippedCoreActions.Count)
             {
-                var action = activeCreature.Actions.EquippedCoreActions[selection]?.Action;
+                var action = activeCreature.Actions.EquippedCoreActions[menuIndex]?.Action;
                 if (action != null)
                 {
                     selectedAction = action;
@@ -229,14 +271,14 @@ public class PlayerTurnController
         if (Input.GetKeyDown(BACK_KEY))
         {
             TryPopState();
+            return;
         }
-        else if (Input.GetKeyDown(ACCEPT_KEY))
-        {
-            int selection = GetLinearPosition();
 
-            if (selection < activeCreature.Actions.EquippedEmpoweredActions.Count)
+        if (Input.GetKeyDown(ACCEPT_KEY))
+        {
+            if (menuIndex < activeCreature.Actions.EquippedEmpoweredActions.Count)
             {
-                var action = activeCreature.Actions.EquippedEmpoweredActions[selection]?.Action;
+                var action = activeCreature.Actions.EquippedEmpoweredActions[menuIndex]?.Action;
                 if (action != null)
                 {
                     if (action.EnergyValue <= activeCreature.Energy)
@@ -262,14 +304,14 @@ public class PlayerTurnController
         if (Input.GetKeyDown(BACK_KEY))
         {
             TryPopState();
+            return;
         }
-        else if (Input.GetKeyDown(ACCEPT_KEY))
+        
+        if (Input.GetKeyDown(ACCEPT_KEY))
         {
-            int selection = GetLinearPosition();
-
-            if (selection < activeCreature.Actions.EquippedMasteryActions.Count)
+            if (menuIndex < activeCreature.Actions.EquippedMasteryActions.Count)
             {
-                var action = activeCreature.Actions.EquippedMasteryActions[selection]?.Action;
+                var action = activeCreature.Actions.EquippedMasteryActions[menuIndex]?.Action;
                 if (action != null)
                 {
                     // TODO: Implement mastery action logic
@@ -358,93 +400,98 @@ public class PlayerTurnController
 
         if (Input.GetKeyDown(BACK_KEY) || (Input.GetKeyDown(ACCEPT_KEY) && IsBackButtonSelected()))
         {
-            battlefield.ClearAllHighlights();
-            ResetValidTargets();
-            TryPopState();
+            if (confirmingAOE)
+            {
+                // Step back to primary target selection
+                confirmingAOE = false;
+                battlefield.ClearAllHighlights();
+            }
+            else
+            {
+                battlefield.ClearAllHighlights();
+                ResetValidTargets();
+                TryPopState();
+            }
+            return;
         }
-        else if (IsBackButtonSelected())
+
+        if (IsBackButtonSelected())
         {
             battleUI.HighlightBackButton();
+            return;
+        }
+        
+        battleUI.ResetBackButton();
+
+        HighlightType highlightType = selectedAction.Role == ActionRole.Offensive
+            ? HighlightType.NegativeTarget
+            : HighlightType.PositiveTarget;
+        HighlightTiles(validTargets, highlightType);
+
+        if (confirmingAOE)
+        {
+            battleUI.ShowMessage("Confirm area of effect");
+
+            var grid = battlefield.GetGrid(activeCreature.TeamSide);
+            var aoeResult = AOETargetCalculator.GetTargets(
+                primaryTarget,
+                selectedAction.AreaOfEffect,
+                grid,
+                activeCreature.TeamSide);
+
+            battlefield.ClearAllHighlights();
+            HighlightTiles(aoeResult.AllTargets(), highlightType);
+
+            if (Input.GetKeyDown(ACCEPT_KEY))
+            {
+                ConfirmAction();
+            }
         }
         else
         {
-            battleUI.ResetBackButton();
+            battleUI.ShowMessage("Choose target");
 
             // Get valid targets for selected action
             validTargets = selectedAction.GetValidTargets(activeCreature, battlefield);
-            HighlightType highlightType = selectedAction.Role == ActionRole.Offensive
-                ? HighlightType.NegativeTarget
-                : HighlightType.PositiveTarget;
-            HighlightTiles(validTargets, highlightType);
-
             var cursorPos = GetCursorBattlePosition();
             var tile = battlefield.GetTile(cursorPos);
-
             bool isValid = validTargets.Contains(tile);
+
+            // Show AOE preview on hover, valid targets otherwise
+            if (tile != null && isValid && selectedAction.AreaOfEffect != AOE.Single)
+            {
+                var grid = battlefield.GetGrid(activeCreature.TeamSide);
+                var aoeResult = AOETargetCalculator.GetTargets(
+                    tile,
+                    selectedAction.AreaOfEffect,
+                    grid,
+                    activeCreature.TeamSide);
+
+                battlefield.ClearAllHighlights();
+                HighlightTiles(aoeResult.AllTargets(), highlightType);
+            }
+            else
+            {
+                HighlightTiles(validTargets, highlightType);
+            }
 
             if (Input.GetKeyDown(ACCEPT_KEY) && isValid)
             {
                 primaryTarget = tile;
 
                 if (selectedAction.AreaOfEffect != AOE.Single)
-                {
-                    TransitionToAOESelect();
-                }
+                    confirmingAOE = true;
                 else
-                {
                     ConfirmAction();
-                }
             }
             else
             {
                 HoverTile(tile, isValid);
 
-                // Update action details with target info
                 if (tile != null && tile.IsOccupied)
-                {
                     battleUI.UpdateActionDetails(selectedAction, activeCreature, tile.OccupyingCreature);
-                }
                 else
-                {
                     battleUI.UpdateActionDetails(selectedAction, activeCreature);
-                }
-            }
-        }
-    }
-
-    private void HandleAOESelectInput()
-    {
-        battlefield.ClearAllHighlights();
-
-        if (Input.GetKeyDown(BACK_KEY) || (Input.GetKeyDown(ACCEPT_KEY) && IsBackButtonSelected()))
-        {
-            primaryTarget = null;
-            TryPopState();
-        }
-        else if (IsBackButtonSelected())
-        {
-            battleUI.HighlightBackButton();
-        }
-        else
-        {
-            battleUI.ResetBackButton();
-
-            // Preview AOE at current Y choice
-            var aoeTargets = selectedAction.GetAOETargets(
-                primaryTarget,
-                battlefield,
-                selectionY
-            );
-
-            HighlightType highlightType = selectedAction.Role == ActionRole.Offensive
-                ? HighlightType.NegativeTarget
-                : HighlightType.PositiveTarget;
-            HighlightTiles(aoeTargets, highlightType);
-
-            if (Input.GetKeyDown(ACCEPT_KEY))
-            {
-                selectionYChoice = selectionY;
-                ConfirmAction();
             }
         }
     }
@@ -465,7 +512,7 @@ public class PlayerTurnController
     {
         PushState();
         currentState = PlayerTurnState.CoreActionSelect;
-        ResetSelection();
+        SetMenuSize(activeCreature.Actions.EquippedCoreActions.Count);
         battleUI.ShowCoreActionMenu(activeCreature.Actions.EquippedCoreActions);
     }
 
@@ -473,7 +520,7 @@ public class PlayerTurnController
     {
         PushState();
         currentState = PlayerTurnState.EmpoweredActionSelect;
-        ResetSelection();
+        SetMenuSize(activeCreature.Actions.EquippedEmpoweredActions.Count);
         battleUI.ShowEmpoweredActionMenu(activeCreature.Actions.EquippedEmpoweredActions);
     }
 
@@ -481,7 +528,7 @@ public class PlayerTurnController
     {
         PushState();
         currentState = PlayerTurnState.MasteryActionSelect;
-        ResetSelection();
+        SetMenuSize(activeCreature.Actions.EquippedMasteryActions.Count);
         battleUI.ShowMasteryActionMenu(activeCreature.Actions.EquippedMasteryActions);
     }
 
@@ -492,8 +539,8 @@ public class PlayerTurnController
 
         // Start cursor at active creature's position
         var creaturePos = battlefield.GetBattlePosition(activeCreature);
-        selectionY = creaturePos.Row;
-        selectionX = creaturePos.LocalCol;
+        cursorRow = creaturePos.Row;
+        cursorCol = creaturePos.LocalCol;
 
         battleUI.ShowMovementMenu();
     }
@@ -505,8 +552,8 @@ public class PlayerTurnController
 
         // Start cursor at active creature's position
         var creaturePos = battlefield.GetBattlePosition(activeCreature);
-        selectionY = creaturePos.Row;
-        selectionX = creaturePos.GlobalCol;
+        cursorRow = creaturePos.Row;
+        cursorCol = creaturePos.GlobalCol;
 
         battleUI.ShowExamineMenu();
     }
@@ -520,23 +567,11 @@ public class PlayerTurnController
         var firstTarget = GetFirstValidTarget();
         if (firstTarget.HasValue)
         {
-            selectionY = firstTarget.Value.Row;
-            selectionX = firstTarget.Value.GlobalCol;
+            cursorRow = firstTarget.Value.Row;
+            cursorCol = firstTarget.Value.GlobalCol;
         }
 
         battleUI.ShowTargetSelectMenu();
-    }
-
-    private void TransitionToAOESelect()
-    {
-        PushState();
-        currentState = PlayerTurnState.AOESelect;
-        ResetSelection();
-
-        // Update state choices for this specific AOE
-        UpdateAOEStateChoices(selectedAction.AreaOfEffect);
-
-        battleUI.ShowAOESelectMenu();
     }
 
     #endregion
@@ -562,44 +597,41 @@ public class PlayerTurnController
     private void ConfirmAction()
     {
         // Get final target list
-        selectedTargets = selectedAction.GetAOETargets(primaryTarget, battlefield, selectionYChoice);
+        var grid = battlefield.GetGrid(activeCreature.TeamSide);
+        var selectedTargets = AOETargetCalculator.GetTargets(
+        primaryTarget,
+        selectedAction.AreaOfEffect,
+        grid,
+        activeCreature.TeamSide);
 
         battlefield.ClearAllHighlights();
 
         // Tell battle manager to execute
-        battleManager.ExecutePlayerAction(selectedAction, selectedTargets, selectionYChoice);
+        battleManager.ExecutePlayerAction(selectedAction, selectedTargets);
     }
 
     #endregion
 
     #region State Stack Management
-
     private void PushState()
     {
-        stateStack.Push(currentState);
-        positionStack.Push((selectionY, selectionX));
+        stateStack.Push(new StateSnapshot(currentState, menuIndex, cursorRow, cursorCol));
     }
 
     private bool TryPopState()
     {
-        if (stateStack.Count > 0)
-        {
-            currentState = stateStack.Pop();
-            var (y, x) = positionStack.Pop();
-            selectionY = y;
-            selectionX = x;
-
-            RestoreStateUI();
-            return true;
-        }
-        return false;
+        if (stateStack.Count == 0) return false;
+        var snapshot = stateStack.Pop();
+        currentState = snapshot.State;
+        menuIndex = snapshot.MenuIndex;
+        cursorRow = snapshot.CursorRow;
+        cursorCol = snapshot.CursorCol;
+        confirmingAOE = false;
+        RestoreStateUI();
+        return true;
     }
 
-    private void ClearStateStack()
-    {
-        stateStack.Clear();
-        positionStack.Clear();
-    }
+    private void ClearStateStack() => stateStack.Clear();
 
     private void RestoreStateUI()
     {
@@ -637,17 +669,18 @@ public class PlayerTurnController
 
     #region Helper Methods
 
-    private int GetLinearPosition()
+    private int GetCurrentMenuSize() => currentState switch
     {
-        if (!stateChoices.ContainsKey(currentState)) return 0;
-        var (_, cols) = stateChoices[currentState];
-        return selectionY * cols + selectionX;
-    }
+        PlayerTurnState.ActionCategorySelect => ActionCategories.Length,
+        PlayerTurnState.CoreActionSelect => activeCreature.Actions.EquippedCoreActions.Count + 1,
+        PlayerTurnState.EmpoweredActionSelect => activeCreature.Actions.EquippedEmpoweredActions.Count + 1,
+        PlayerTurnState.MasteryActionSelect => activeCreature.Actions.EquippedMasteryActions.Count + 1,
+        _ => 0
+    };
 
-    private BattlePosition GetCursorBattlePosition()
-    {
-        return new BattlePosition(selectionY, selectionX);
-    }
+    private BattlePosition GetCursorBattlePosition() => new BattlePosition(cursorRow, cursorCol);
+
+    private bool IsBackButtonSelected() => menuIndex == GetCurrentMenuSize() - 1;
 
     private BattlePosition? GetFirstValidTarget()
     {
@@ -659,17 +692,10 @@ public class PlayerTurnController
         return null;
     }
 
-    private bool IsBackButtonSelected()
-    {
-        if (!stateChoices.ContainsKey(currentState)) return false;
-        var (rows, _) = stateChoices[currentState];
-        return selectionY == rows - 1;
-    }
-
     private void ResetSelection()
     {
-        selectionX = 0;
-        selectionY = 0;
+        menuIndex = 0;
+        menuCount = 0;
     }
 
     private void ResetValidTargets()
@@ -680,15 +706,14 @@ public class PlayerTurnController
 
     private void UpdateActionHighlight(IReadOnlyList<CreatureAction> actions)
     {
-        int selection = GetLinearPosition();
         ActionBase action = null;
 
-        if (selection >= 0 && selection < actions.Count)
+        if (menuIndex >= 0 && menuIndex < actions.Count)
         {
-            action = actions[selection]?.Action;
+            action = actions[menuIndex]?.Action;
         }
 
-        battleUI.UpdateActionSelection(selection, action, activeCreature);
+        battleUI.UpdateActionSelection(menuIndex, action, activeCreature);
     }
 
     private void HighlightTiles(List<BattleTile> tiles, HighlightType highlightType)
@@ -705,6 +730,11 @@ public class PlayerTurnController
         // Update UI to show hover state
         var tileUI = battlefield.GetTileUI(tile.BattlefieldPosition);
         tileUI?.SetHighlight(isValid ? HighlightType.ValidTarget : HighlightType.InvalidTarget);
+
+        if (tile.IsOccupied)
+            battleUI.BindExamineCreature(tile.OccupyingCreature);
+        else
+            battleUI.BindExamineCreature(null);
     }
 
     private void ClearHoveredTile()
@@ -715,19 +745,8 @@ public class PlayerTurnController
             tileUI?.ClearHighlight();
             hoveredTile = null;
         }
-    }
 
-    private void UpdateAOEStateChoices(AOE aoeType)
-    {
-        // Get AOE options from game constants
-        if (GameConstants.AOEOptions.TryGetValue(aoeType, out var options))
-        {
-            stateChoices[PlayerTurnState.AOESelect] = (options.y + 1, options.x);
-        }
-        else
-        {
-            stateChoices[PlayerTurnState.AOESelect] = (1, 1);
-        }
+        battleUI.BindExamineCreature(null);
     }
 
     #endregion
