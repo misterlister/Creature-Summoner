@@ -42,6 +42,11 @@ public class BattleManager : MonoBehaviour
         InitializeBattle();
     }
 
+    private void Update()
+    {
+        HandleUpdate();
+    }
+
     private void InitializeBattle()
     {
         if (defaultBiome == null)
@@ -210,6 +215,8 @@ public class BattleManager : MonoBehaviour
     private IEnumerator ExecuteTurn(Creature creature)
     {
         Context.CurrentActingCreature = creature;
+
+        battleUI.BindActiveCreature(creature);
 
         // Trigger turn start events
         var turnStartEvent = new TurnStartEventData(creature, Context)
