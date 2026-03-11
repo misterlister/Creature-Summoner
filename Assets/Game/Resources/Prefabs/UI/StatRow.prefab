@@ -479,9 +479,6 @@ MonoBehaviour:
   statNameText: {fileID: 7205816239369067207}
   baseValueText: {fileID: 5164225001103793082}
   modifiedValueText: {fileID: 4815609132259020639}
-  defaultColor: {r: 0, g: 0, b: 0, a: 1}
-  increasedColor: {r: 0, g: 1, b: 0, a: 1}
-  decreasedColor: {r: 1, g: 0, b: 0, a: 1}
   autoManageLayout: 1
 --- !u!1 &5180963433328249599
 GameObject:
