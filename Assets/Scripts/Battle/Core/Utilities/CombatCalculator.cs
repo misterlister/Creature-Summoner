@@ -1,5 +1,5 @@
 using UnityEngine;
-using static GameConstants;
+using static BattleSystemConstants;
 public static class CombatCalculator
 {
     public static int CalculateAccuracy(ActionBase action, Creature attacker, Creature defender)
