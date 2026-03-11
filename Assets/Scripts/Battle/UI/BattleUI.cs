@@ -42,6 +42,10 @@ public class BattleUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI actionCritText;
     [SerializeField] private TextMeshProUGUI actionDescriptionText;
 
+    [Header("StatPanels")]
+    [SerializeField] private CreatureInfoPanel playerInfoPanel;
+    [SerializeField] private CreatureInfoPanel examineInfoPanel;
+
     [Header("Battle End Screen")]
     [SerializeField] private GameObject battleEndPanel;
     [SerializeField] private TextMeshProUGUI battleResultText;
@@ -403,6 +407,10 @@ public class BattleUI : MonoBehaviour
             actionTexts[i].gameObject.SetActive(true);
         }
     }
+
+    public void BindActiveCreature(Creature creature) => playerInfoPanel.Bind(creature);
+    public void BindExamineCreature(Creature creature) => examineInfoPanel.Bind(creature);
+
 
     #endregion
 
