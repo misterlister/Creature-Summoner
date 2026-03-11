@@ -11,19 +11,6 @@ public static class GameConstants
     public const KeyCode ACCEPT_KEY = KeyCode.Z;
     public const KeyCode BACK_KEY = KeyCode.X;
 
-    // ACTION CONSTANTS
-
-    public const float ACCURACY_ADJUSTMENT_FACTOR = 0.5f;    // Value that controls how much accuracy changes based on stat ratio
-    public const float STATUS_RESIST_ADJUSTMENT_FACTOR = 1f;    // Value that controls how much accuracy changes based on stat ratio
-    public const float MAX_HIT = 100f;         // Ceiling for accuracy of actions
-    public const float MIN_HIT = 10f;          // Floor for accuracy of actions
-    public const int MIN_DAMAGE = 1;           // Minimum damage that can be dealt by actions
-    public const int BASE_VARIANCE = 85;       // Base floor for damage variance
-    public const int VARIANCE_ADJUSTMENT = 10; // Max distance that damage variance ranges can have from base
-    public const int MIN_VARIANCE = BASE_VARIANCE - VARIANCE_ADJUSTMENT;   // Minimum floor for damage variance
-    public const int MAX_VARIANCE = BASE_VARIANCE + VARIANCE_ADJUSTMENT;   // Maximum ceiling for damage variance
-    public const int ROLL_CEILING = 101;       // Maximum value that can be rolled for random die rolls
-
     // ACTION SLOTS CONSTANTS
     public const int CORE_SLOTS = 3;
     public const int EMPOWERED_SLOTS = 3;
@@ -40,7 +27,6 @@ public static class GameConstants
     public const int TIRED_THRESHOLD = 25;
 
     // BATTLEFIELD CONSTANTS
-
     public const int BATTLE_ROWS = 3; // Number of Rows on the battlefield
     public const int BATTLE_COLS = 6; // Number of Columns on the battlefield
     public const int GRID_COLS = BATTLE_COLS / 2; // Number of Columns in each team's grid
@@ -50,7 +36,6 @@ public static class GameConstants
     public const int BATTLE_MENU_COLS = 2; // Number of Columns in the battle selection menu
 
     // STAT CONSTANTS
-
     public const int MIN_STAT_VALUE = 1;
     public const int AVERAGE_BASE_STAT = 40;
 
@@ -61,7 +46,6 @@ public static class GameConstants
     public const float DEFAULT_STARTING_ENERGY = 0.25f;
 
     // ELEMENTAL EFFECTIVENESS CONSTANTS
-
     public const float V_EFF_SINGLE = 4f;
     public const float V_EFF_DUAL = 2.25f;
     public const float EFF_SINGLE = 2f;
@@ -92,23 +76,6 @@ public static class GameConstants
     public static readonly Color HP_COLOUR = new Color(0.5f, 1f, 0.5f);
     public static readonly Color ENERGY_COLOUR = new Color(1f, 0f, 1f);
     public static readonly Color XP_COLOUR = new Color(1f, 0.85f, 0f);
-
-    // Keeps track of how many options each AOE type has for targeting
-    public static readonly Dictionary<AOE, (int y, int x)> AOEOptions = new Dictionary<AOE, (int y, int x)>
-    {
-        { AOE.Single, (1,1)},
-        { AOE.SmallArc, (2,1)},
-        { AOE.WideArc, (1,1)},
-        { AOE.FullArc, (1,1)},
-        { AOE.SmallLine, (1,1)},
-        { AOE.LargeLine, (1,1)},
-        { AOE.FullLine, (1,1)},
-        { AOE.SmallCone, (2,1)},
-        { AOE.MediumCone, (1,1)},
-        { AOE.LargeCone, (1,1)},
-        { AOE.SmallBurst, (1,1)},
-        { AOE.LargeBurst, (1,1)}
-    };
 }
 
 public enum TeamSide
@@ -257,22 +224,6 @@ public enum ActionSlotType
     Core,
     Empowered,
     Mastery
-}
-
-public enum AOE
-{
-    Single,
-    SmallArc,
-    WideArc,
-    FullArc,
-    SmallLine,
-    LargeLine,
-    FullLine,
-    SmallCone,
-    MediumCone,
-    LargeCone,
-    SmallBurst,
-    LargeBurst
 }
 
 public enum ActionTag
