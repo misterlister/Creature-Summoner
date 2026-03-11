@@ -3,7 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static GameConstants;
+using static BattleSystemConstants;
+
+
 
 /// <summary>
 /// Main controller for battle flow and turn management.
@@ -274,14 +276,14 @@ public class BattleManager : MonoBehaviour
     }
 
     // Called by PlayerTurnController when player confirms action
-    public void ExecutePlayerAction(ActionBase action, List<BattleTile> targets, int yChoice)
+    public void ExecutePlayerAction(ActionBase action, TargetList targets)
     {
-        StartCoroutine(ExecutePlayerActionCoroutine(action, targets, yChoice));
+        StartCoroutine(ExecutePlayerActionCoroutine(action, targets));
     }
 
-    private IEnumerator ExecutePlayerActionCoroutine(ActionBase action, List<BattleTile> targets, int yChoice)
+    private IEnumerator ExecutePlayerActionCoroutine(ActionBase action, TargetList targets)
     {
-        yield return StartCoroutine(ExecuteAction(activeCreature, action, targets, yChoice));
+        yield return StartCoroutine(ExecuteAction(activeCreature, action, targets));
         isPlayerTurnComplete = true;
     }
 
@@ -301,35 +303,43 @@ public class BattleManager : MonoBehaviour
         yield return StartCoroutine(ExecuteAction(
             creature,
             aiDecision.action,
-            aiDecision.targets,
-            aiDecision.yChoice
+            aiDecision.targets
         ));
     }
 
     // Placeholder AI decision - replace with actual AIController
-    private (ActionBase action, List<BattleTile> targets, int yChoice) DecideAIAction(Creature creature)
+    private (ActionBase action, TargetList targets) DecideAIAction(Creature creature)
     {
         // Simple AI: pick first core action and first valid target
         var action = creature.Actions.EquippedCoreActions[0]?.Action;
         if (action == null)
         {
             Debug.LogError($"AI creature {creature.Nickname} has no actions!");
-            return (null, new List<BattleTile>(), 0);
+            return (null, new TargetList());
         }
 
         var validTargets = action.GetValidTargets(creature, battlefield);
-        var targets = validTargets.Count > 0 ? new List<BattleTile> { validTargets[0] } : new List<BattleTile>();
+        if (validTargets.Count == 0)
+            return (action, TargetList.Empty);
 
-        return (action, targets, 0);
+        var primaryTarget = validTargets[0];
+        var grid = battlefield.GetGrid(creature.TeamSide);
+        var targetResult = AOETargetCalculator.GetTargets(
+            primaryTarget,
+            action.AreaOfEffect,
+            grid,
+            creature.TeamSide);
+
+        return (action, targetResult);
     }
 
     #endregion
 
     #region Action Execution
 
-    private IEnumerator ExecuteAction(Creature attacker, ActionBase action, List<BattleTile> targets, int yChoice)
+    private IEnumerator ExecuteAction(Creature attacker, ActionBase action, TargetList targets)
     {
-        if (action == null || targets == null || targets.Count == 0)
+        if (action == null || targets.PrimaryTarget == null)
         {
             Debug.LogError("Cannot execute action: invalid parameters");
             yield break;
@@ -340,25 +350,20 @@ public class BattleManager : MonoBehaviour
         // Show action message
         yield return battleUI.TypeMessage($"{attacker.Nickname} used {action.ActionName}!");
 
-        // Get AOE targets
-        var primaryTarget = targets[0];
-        var allTargets = action.GetAOETargets(primaryTarget, battlefield, yChoice);
-
         // Highlight targets
-        battlefield.HighlightTiles(allTargets,
+        battlefield.HighlightTiles(targets.AllTargets(),
             action.Role == ActionRole.Offensive ? HighlightType.NegativeTarget : HighlightType.PositiveTarget);
 
         yield return new WaitForSeconds(0.3f);
 
         // Play attack animation
         var attackerPos = battlefield.GetBattlePosition(attacker);
-        var attackerUI = battlefield.GetTileUI(attackerPos);
-        attackerUI?.PlayAttackAnimation();
+        battlefield.GetTileUI(attackerPos)?.PlayAttackAnimation();
 
         yield return new WaitForSeconds(0.4f);
 
         // Execute action via ActionExecutor
-        ActionResult result = actionExecutor.Execute(action, attacker, allTargets);
+        ActionResult result = actionExecutor.Execute(action, attacker, targets);
 
         // Display messages
         foreach (var message in result.GetMessages())
@@ -473,28 +478,6 @@ public class BattleManager : MonoBehaviour
         return validPositions.ConvertAll(pos => grid.GetTile(pos));
     }
 
-    public void ShowValidTargets(Creature attacker, ActionBase action)
-    {
-        var validTargets = action.GetValidTargets(attacker, battlefield);
-
-        HighlightType highlightType = action.Role == ActionRole.Offensive
-            ? HighlightType.NegativeTarget
-            : HighlightType.PositiveTarget;
-
-        battlefield.HighlightTiles(validTargets, highlightType);
-    }
-
-    public void ShowAOEPreview(ActionBase action, BattleTile centerTile, int yChoice)
-    {
-        var aoeTargets = action.GetAOETargets(centerTile, battlefield, yChoice);
-
-        HighlightType highlightType = action.Role == ActionRole.Offensive
-            ? HighlightType.NegativeTarget
-            : HighlightType.PositiveTarget;
-
-        battlefield.HighlightTiles(aoeTargets, highlightType);
-    }
-
     public void ClearTargetHighlights()
     {
         battlefield.ClearAllHighlights();
@@ -525,27 +508,4 @@ public class BattleManager : MonoBehaviour
     }
 
     #endregion
-}
-
-public enum BattleState
-{
-    NotStarted,
-    Start,
-    NewRound,
-    PlayerTurn,
-    EnemyTurn,
-    Ended,
-    Busy
-}
-
-public enum PlayerTurnState
-{
-    ActionCategorySelect,
-    CoreActionSelect,
-    EmpoweredActionSelect,
-    MasteryActionSelect,
-    MovementSelect,
-    Examine,
-    TargetSelect,
-    AOESelect
 }
