@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public static class BattleUIConstants
@@ -19,4 +21,18 @@ public static class BattleUIConstants
     public static readonly Color PositiveColour = Color.green;
     public static readonly Color NegativeColour = Color.red;
     public static readonly Color NeutralColour = Color.black;
+
+    // Menu Navigation
+    public const int MENU_COLS = 3;
+    public enum ActionCategoryMenuOptions
+    {
+        CoreActions,
+        EmpoweredActions,
+        MasteryActions,
+        Move,
+        Examine,
+        ClassAction,
+        Flee
+    }
 }
+
