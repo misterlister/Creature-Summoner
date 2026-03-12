@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: SunderedStatus
   m_EditorClassIdentifier: 
-  Type: 26
-  DisplayName: Sundered
-  Icons:
+  type: 26
+  displayName: Sundered
+  icons:
   - {fileID: 634192822593094782, guid: 3348c5367d4acae4da19e96fad0795bd, type: 3}
+  description: Defense is reduced.

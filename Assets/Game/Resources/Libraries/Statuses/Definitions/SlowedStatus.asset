@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: SlowedStatus
   m_EditorClassIdentifier: 
-  Type: 25
-  DisplayName: Slowed
-  Icons:
+  type: 25
+  displayName: Slowed
+  icons:
   - {fileID: 465673543018768226, guid: 0f2b37b90abdcbe4bb3c556b4d529462, type: 3}
+  description: Speed is reduced.

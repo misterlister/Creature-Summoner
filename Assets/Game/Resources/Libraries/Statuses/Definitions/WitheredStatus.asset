@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: WitheredStatus
   m_EditorClassIdentifier: 
-  Type: 9
-  DisplayName: Withered
-  Icons:
+  type: 9
+  displayName: Withered
+  icons:
   - {fileID: 2663976487791555797, guid: f8da8c15d20ce6343b4c55513196049e, type: 3}
+  description: Gains less HP from healing.

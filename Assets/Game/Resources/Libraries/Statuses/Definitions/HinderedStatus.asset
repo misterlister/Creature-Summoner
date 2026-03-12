@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: HinderedStatus
   m_EditorClassIdentifier: 
-  Type: 24
-  DisplayName: Hindered
-  Icons:
+  type: 24
+  displayName: Hindered
+  icons:
   - {fileID: -6717699437674203590, guid: 83ecd02a6c60b0d47860357ca45ef475, type: 3}
+  description: Skill is reduced.

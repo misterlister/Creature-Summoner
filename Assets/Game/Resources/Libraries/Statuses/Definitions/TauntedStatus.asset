@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: TauntedStatus
   m_EditorClassIdentifier: 
-  Type: 13
-  DisplayName: Taunted
-  Icons:
+  type: 13
+  displayName: Taunted
+  icons:
   - {fileID: -5786500585259726250, guid: 1be44dea9a62e0049b79ef730fdc116a, type: 3}
+  description: Must target the source of the Taunt with attacks, and must move towards
+    it.

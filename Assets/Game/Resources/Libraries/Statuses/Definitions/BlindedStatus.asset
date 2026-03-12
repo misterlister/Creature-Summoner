@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: BlindedStatus
   m_EditorClassIdentifier: 
-  Type: 10
-  DisplayName: Blinded
-  Icons:
+  type: 10
+  displayName: Blinded
+  icons:
   - {fileID: 3533423175918923745, guid: 3635fa49ac788884e89db4887092f943, type: 3}
+  description: All attacks become Glancing Blows.

@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: StunnedStatus
   m_EditorClassIdentifier: 
-  Type: 14
-  DisplayName: Stunned
-  Icons:
+  type: 14
+  displayName: Stunned
+  icons:
   - {fileID: 5404633747034473702, guid: 8b20108ea6f002049b061297dd2e6a72, type: 3}
+  description: Actions are delayed and limited.

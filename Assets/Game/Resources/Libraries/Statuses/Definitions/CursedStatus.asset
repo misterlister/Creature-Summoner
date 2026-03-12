@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: CursedStatus
   m_EditorClassIdentifier: 
-  Type: 27
-  DisplayName: Cursed
-  Icons:
+  type: 27
+  displayName: Cursed
+  icons:
   - {fileID: 556095722704099240, guid: 703197e4f3fad6347b0e4724c52bdcc8, type: 3}
+  description: Resistance is reduced.

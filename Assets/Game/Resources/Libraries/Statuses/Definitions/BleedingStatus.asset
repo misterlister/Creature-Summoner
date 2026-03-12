@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: BleedingStatus
   m_EditorClassIdentifier: 
-  Type: 3
-  DisplayName: Bleeding
-  Icons:
+  type: 3
+  displayName: Bleeding
+  icons:
   - {fileID: -5390728049028830195, guid: 86fc8bc6bad657e4ca99922627297b4b, type: 3}
+  description: Takes damage each turn. If this creature is attacked, the next bleed
+    damage will be doubled.

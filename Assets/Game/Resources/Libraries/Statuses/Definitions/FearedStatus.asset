@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: FearedStatus
   m_EditorClassIdentifier: 
-  Type: 12
-  DisplayName: Feared
-  Icons:
+  type: 12
+  displayName: Feared
+  icons:
   - {fileID: 4822845048102182892, guid: 42eababc30518464785ff28da3f58afe, type: 3}
+  description: Cannot target the source of Fear, and must move away from it.

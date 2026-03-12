@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: HexedStatus
   m_EditorClassIdentifier: 
-  Type: 23
-  DisplayName: Hexed
-  Icons:
+  type: 23
+  displayName: Hexed
+  icons:
   - {fileID: -1639002908197396563, guid: ae95ecb05e390d143a998ff607d2106d, type: 3}
+  description: Magic is reduced.

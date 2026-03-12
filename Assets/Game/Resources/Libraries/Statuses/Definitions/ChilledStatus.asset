@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: ChilledStatus
   m_EditorClassIdentifier: 
-  Type: 0
-  DisplayName: Chilled
-  Icons:
+  type: 0
+  displayName: Chilled
+  icons:
   - {fileID: 2028795491470520300, guid: 3317ac1250a0b224cae97560af95eb04, type: 3}
+  description: Loses Energy each turn.

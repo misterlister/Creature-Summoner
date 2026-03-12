@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: ConfusedStatus
   m_EditorClassIdentifier: 
-  Type: 11
-  DisplayName: Confused
-  Icons:
+  type: 11
+  displayName: Confused
+  icons:
   - {fileID: -2623175727015597452, guid: 25cf8a26b2a1c3847a96e686d6a92daf, type: 3}
+  description: Moves and acts randomly.

@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: EnchantedStatus
   m_EditorClassIdentifier: 
-  Type: 17
-  DisplayName: Enchanted
-  Icons:
+  type: 17
+  displayName: Enchanted
+  icons:
   - {fileID: 5983696351812499714, guid: 61e80ab411861214fb1fff5fe370f128, type: 3}
+  description: Magic is increased.

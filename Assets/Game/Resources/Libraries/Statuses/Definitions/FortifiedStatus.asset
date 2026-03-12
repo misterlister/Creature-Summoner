@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: FortifiedStatus
   m_EditorClassIdentifier: 
-  Type: 20
-  DisplayName: Fortified
-  Icons:
+  type: 20
+  displayName: Fortified
+  icons:
   - {fileID: -7672445399865012404, guid: 2b0cd32f93571f74e8adf969fb4af066, type: 3}
+  description: Defense is increased.

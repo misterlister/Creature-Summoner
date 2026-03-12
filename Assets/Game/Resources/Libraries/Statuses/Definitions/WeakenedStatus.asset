@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: WeakenedStatus
   m_EditorClassIdentifier: 
-  Type: 22
-  DisplayName: Weakened
-  Icons:
+  type: 22
+  displayName: Weakened
+  icons:
   - {fileID: 5688892596001009767, guid: 0015b5e7c547f1c4990da7ad0b7ac939, type: 3}
+  description: Strength is reduced.

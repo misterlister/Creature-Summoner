@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: ExhaustedStatus
   m_EditorClassIdentifier: 
-  Type: 8
-  DisplayName: Exhausted
-  Icons:
+  type: 8
+  displayName: Exhausted
+  icons:
   - {fileID: 1297957779653792167, guid: d1fd1b7d1d4ac9a4bbb3abf1617c53c3, type: 3}
+  description: Gains less Energy from all sources.

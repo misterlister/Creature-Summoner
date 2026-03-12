@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: HonedStatus
   m_EditorClassIdentifier: 
-  Type: 18
-  DisplayName: Honed
-  Icons:
+  type: 18
+  displayName: Honed
+  icons:
   - {fileID: -6960708631629299177, guid: 893bfedd588999f4dbd6b412afe6fa74, type: 3}
+  description: Skill is increased.

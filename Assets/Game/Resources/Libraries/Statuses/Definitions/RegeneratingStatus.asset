@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: RegeneratingStatus
   m_EditorClassIdentifier: 
-  Type: 5
-  DisplayName: Regenerating
-  Icons:
+  type: 5
+  displayName: Regenerating
+  icons:
   - {fileID: -1601750181562292214, guid: a6ddf9897dac355468ac8451c1d4a34e, type: 3}
+  description: Recovers HP each turn.

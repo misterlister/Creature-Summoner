@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: BurningStatus
   m_EditorClassIdentifier: 
-  Type: 2
-  DisplayName: Burning
-  Icons:
+  type: 2
+  displayName: Burning
+  icons:
   - {fileID: -632122146342402490, guid: 0525cc272724a514ca6765eac74dfa8d, type: 3}
+  description: Takes damage each turn. If this creature doesn't move, the next burn
+    damage will be doubled.

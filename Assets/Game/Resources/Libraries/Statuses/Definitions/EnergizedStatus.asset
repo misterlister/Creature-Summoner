@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: EnergizedStatus
   m_EditorClassIdentifier: 
-  Type: 4
-  DisplayName: Energized
-  Icons:
+  type: 4
+  displayName: Energized
+  icons:
   - {fileID: 3246216558989328463, guid: 1385e5f92e6e2f3428d1a8fa4ea564d1, type: 3}
+  description: Gains Energy each turn.

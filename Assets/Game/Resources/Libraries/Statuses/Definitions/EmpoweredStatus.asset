@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: EmpoweredStatus
   m_EditorClassIdentifier: 
-  Type: 16
-  DisplayName: Empowered
-  Icons:
+  type: 16
+  displayName: Empowered
+  icons:
   - {fileID: -734936668341893429, guid: 26c3d98388dc4364fa124c2786c59c42, type: 3}
+  description: Strength is increased.

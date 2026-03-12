@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: RootedStatus
   m_EditorClassIdentifier: 
-  Type: 6
-  DisplayName: Rooted
-  Icons:
+  type: 6
+  displayName: Rooted
+  icons:
   - {fileID: 7377162815206254673, guid: 5731900b51eadfe4f8d9203302555080, type: 3}
+  description: Cannot move.

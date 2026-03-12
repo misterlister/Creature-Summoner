@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: ExposedStatus
   m_EditorClassIdentifier: 
-  Type: 15
-  DisplayName: Exposed
-  Icons:
+  type: 15
+  displayName: Exposed
+  icons:
   - {fileID: -762000082711572784, guid: 152d727a2b991eb419e2e5220adcd661, type: 3}
+  description: The next strike against an Exposed creature deals more damage.

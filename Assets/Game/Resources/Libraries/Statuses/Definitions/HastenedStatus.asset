@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: HastenedStatus
   m_EditorClassIdentifier: 
-  Type: 19
-  DisplayName: Hastened
-  Icons:
+  type: 19
+  displayName: Hastened
+  icons:
   - {fileID: -5514090788404125703, guid: 067f7bbd79a06c74bbb5a0f876c19257, type: 3}
+  description: Speed is increased.

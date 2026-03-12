@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d5a05b920681741a2d07fe003c2856, type: 3}
   m_Name: PoisonedStatus
   m_EditorClassIdentifier: 
-  Type: 1
-  DisplayName: Poisoned
-  Icons:
+  type: 1
+  displayName: Poisoned
+  icons:
   - {fileID: 1969918237916786025, guid: 60d9205798877f04ab6bfcce28213ff8, type: 3}
+  description: Takes damage each turn.
