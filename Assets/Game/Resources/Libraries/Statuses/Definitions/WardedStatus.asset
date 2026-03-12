@@ -14,4 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Type: 21
   DisplayName: Warded
-  Icons: []
+  Icons:
+  - {fileID: -4451840820396577141, guid: ad032a6adf81a0e4ab51f3e22696769d, type: 3}

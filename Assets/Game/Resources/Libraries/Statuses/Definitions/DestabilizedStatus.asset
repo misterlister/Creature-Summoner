@@ -14,4 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Type: 7
   DisplayName: Destabilized
-  Icons: []
+  Icons:
+  - {fileID: -8290339116851846912, guid: ad421e724a6e4174099f152fb6f9b225, type: 3}

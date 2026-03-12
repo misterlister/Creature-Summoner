@@ -14,4 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Type: 27
   DisplayName: Cursed
-  Icons: []
+  Icons:
+  - {fileID: 556095722704099240, guid: 703197e4f3fad6347b0e4724c52bdcc8, type: 3}

@@ -14,4 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Type: 13
   DisplayName: Taunted
-  Icons: []
+  Icons:
+  - {fileID: -5786500585259726250, guid: 1be44dea9a62e0049b79ef730fdc116a, type: 3}

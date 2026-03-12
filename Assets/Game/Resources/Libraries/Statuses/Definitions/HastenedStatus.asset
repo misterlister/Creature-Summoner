@@ -14,4 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Type: 19
   DisplayName: Hastened
-  Icons: []
+  Icons:
+  - {fileID: -5514090788404125703, guid: 067f7bbd79a06c74bbb5a0f876c19257, type: 3}

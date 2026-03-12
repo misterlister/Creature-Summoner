@@ -14,4 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Type: 25
   DisplayName: Slowed
-  Icons: []
+  Icons:
+  - {fileID: 465673543018768226, guid: 0f2b37b90abdcbe4bb3c556b4d529462, type: 3}

@@ -14,4 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Type: 14
   DisplayName: Stunned
-  Icons: []
+  Icons:
+  - {fileID: 5404633747034473702, guid: 8b20108ea6f002049b061297dd2e6a72, type: 3}

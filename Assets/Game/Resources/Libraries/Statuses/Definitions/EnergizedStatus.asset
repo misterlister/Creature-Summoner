@@ -14,4 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Type: 4
   DisplayName: Energized
-  Icons: []
+  Icons:
+  - {fileID: 3246216558989328463, guid: 1385e5f92e6e2f3428d1a8fa4ea564d1, type: 3}

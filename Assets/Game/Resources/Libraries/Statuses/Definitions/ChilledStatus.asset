@@ -14,4 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Type: 0
   DisplayName: Chilled
-  Icons: []
+  Icons:
+  - {fileID: 2028795491470520300, guid: 3317ac1250a0b224cae97560af95eb04, type: 3}

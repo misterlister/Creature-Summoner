@@ -14,4 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Type: 24
   DisplayName: Hindered
-  Icons: []
+  Icons:
+  - {fileID: -6717699437674203590, guid: 83ecd02a6c60b0d47860357ca45ef475, type: 3}

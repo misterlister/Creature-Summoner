@@ -14,4 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Type: 2
   DisplayName: Burning
-  Icons: []
+  Icons:
+  - {fileID: -632122146342402490, guid: 0525cc272724a514ca6765eac74dfa8d, type: 3}

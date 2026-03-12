@@ -14,4 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Type: 20
   DisplayName: Fortified
-  Icons: []
+  Icons:
+  - {fileID: -7672445399865012404, guid: 2b0cd32f93571f74e8adf969fb4af066, type: 3}

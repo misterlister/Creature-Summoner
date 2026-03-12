@@ -14,4 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Type: 15
   DisplayName: Exposed
-  Icons: []
+  Icons:
+  - {fileID: -762000082711572784, guid: 152d727a2b991eb419e2e5220adcd661, type: 3}
