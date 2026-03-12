@@ -24,15 +24,5 @@ public static class BattleUIConstants
 
     // Menu Navigation
     public const int MENU_COLS = 3;
-    public enum ActionCategoryMenuOptions
-    {
-        CoreActions,
-        EmpoweredActions,
-        MasteryActions,
-        Move,
-        Examine,
-        ClassAction,
-        Flee
-    }
 }
 
