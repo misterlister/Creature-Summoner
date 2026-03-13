@@ -35,7 +35,8 @@ public static class BattleSystemConstants
         MasteryActionSelect,
         MovementSelect,
         Examine,
-        TargetSelect
+        TargetSelect,
+        AOEConfirm
     }
 
     // AOE Constants
