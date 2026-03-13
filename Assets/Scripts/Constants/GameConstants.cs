@@ -30,10 +30,7 @@ public static class GameConstants
     public const int BATTLE_ROWS = 3; // Number of Rows on the battlefield
     public const int BATTLE_COLS = 6; // Number of Columns on the battlefield
     public const int GRID_COLS = BATTLE_COLS / 2; // Number of Columns in each team's grid
-
-    public const int ENEMY_COL = BATTLE_COLS / 2;
-
-    public const int BATTLE_MENU_COLS = 2; // Number of Columns in the battle selection menu
+    public const int ENEMY_COL = BATTLE_COLS / 2; // First column of the enemy grid (adjacent to player frontline)
 
     // STAT CONSTANTS
     public const int MIN_STAT_VALUE = 1;
