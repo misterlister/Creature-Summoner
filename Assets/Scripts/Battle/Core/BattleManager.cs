@@ -44,11 +44,6 @@ public class BattleManager : MonoBehaviour
         InitializeBattle();
     }
 
-    private void Update()
-    {
-        HandleUpdate();
-    }
-
     private void InitializeBattle()
     {
         if (defaultBiome == null)
