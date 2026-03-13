@@ -1,11 +1,13 @@
+using Game.Statuses;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
+using System.Linq;
 using TMPro;
+using UnityEngine;
 
 /// <summary>
 /// Manages all battle UI elements including menus, dialogs, and action displays.
-/// Handles visual presentation only - no game logic.
 /// </summary>
 public class BattleUI : MonoBehaviour
 {
@@ -13,21 +15,11 @@ public class BattleUI : MonoBehaviour
     [SerializeField] private int lettersPerSecond = 30;
     [SerializeField] private float textDelayAfterTyping = 0.8f;
 
-    [Header("Colors")]
-    [SerializeField] private Color normalTextColor = Color.black;
-    [SerializeField] private Color highlightColor = Color.yellow;
-    [SerializeField] private Color disabledTextColor = Color.gray;
+    [Header("Menu")]
+    [SerializeField] private MenuPanel menuPanel;
 
     [Header("Dialog System")]
     [SerializeField] private TextMeshProUGUI battleLogText;
-
-    [Header("Action Category Menu")]
-    [SerializeField] private GameObject actionCategoryPanel;
-    [SerializeField] private List<TextMeshProUGUI> actionCategoryTexts;
-
-    [Header("Action Selection Menu")]
-    [SerializeField] private GameObject actionSelectPanel;
-    [SerializeField] private List<TextMeshProUGUI> actionTexts;
 
     [Header("Action Details Panel")]
     [SerializeField] private GameObject actionDetailsPanel;
@@ -50,15 +42,15 @@ public class BattleUI : MonoBehaviour
     [SerializeField] private GameObject battleEndPanel;
     [SerializeField] private TextMeshProUGUI battleResultText;
 
+    // Holds references to text descriptions to justify disabled menu options
+    private Dictionary<int, string> disabledReasons = new();
+
     // Constants
     private const string BACK_TEXT = "Return to the previous menu";
     private const string NULL_ACTION_TEXT = "No available action";
 
     // State
     private Coroutine typingCoroutine;
-
-    public List<TextMeshProUGUI> ActionTexts => actionTexts;
-    public List<TextMeshProUGUI> ActionCategoryTexts => actionCategoryTexts;
 
     private void Awake()
     {
@@ -134,18 +126,60 @@ public class BattleUI : MonoBehaviour
 
     #region Action Category Menu
 
-    public void ShowActionCategoryMenu()
+    public void ShowActionCategoryMenu(Creature creature, bool hasMovedThisTurn)
     {
         HideAllMenus();
-        actionCategoryPanel.SetActive(true);
         EnableDialogText(true);
+
+        disabledReasons.Clear();
+        var disabled = new HashSet<int>();
+
+        CheckCategoryDisabled(creature, hasMovedThisTurn, disabled);
+
+        var labels = Enum.GetValues(typeof(ActionCategoryMenuOptions))
+            .Cast<ActionCategoryMenuOptions>()
+            .Select(o => o.ToDisplayName())
+            .ToList();
+
+        menuPanel.Build(labels, disabled);
     }
 
-    public void UpdateActionCategorySelection(int selectedIndex)
+    private void CheckCategoryDisabled(Creature creature, bool hasMovedThisTurn, HashSet<int> disabled)
     {
-        for (int i = 0; i < actionCategoryTexts.Count; i++)
+        int moveIndex = (int)ActionCategoryMenuOptions.Move;
+        if (hasMovedThisTurn)
         {
-            actionCategoryTexts[i].color = (i == selectedIndex) ? highlightColor : normalTextColor;
+            disabled.Add(moveIndex);
+            disabledReasons[moveIndex] = "Already moved this turn";
+        }
+        else if (creature.HasStatusEffect(StatusType.Rooted))
+        {
+            disabled.Add(moveIndex);
+            disabledReasons[moveIndex] = "This creature is rooted";
+        }
+
+        int empoweredIndex = (int)ActionCategoryMenuOptions.EmpoweredActions;
+        if (creature.HasStatusEffect(StatusType.Stunned)) //////////////// IMPLEMENT BETTER LATER ////////////////
+        {
+            disabled.Add(empoweredIndex);
+            disabledReasons[empoweredIndex] = "This creature is stunned";
+        }
+        else if (!creature.HasEmpoweredActions)
+        {
+            disabled.Add(empoweredIndex);
+            disabledReasons[empoweredIndex] = "No empowered actions known";
+        }
+
+        int masteryIndex = (int)ActionCategoryMenuOptions.MasteryActions;
+        if (creature.HasStatusEffect(StatusType.Stunned)) //////////////// IMPLEMENT BETTER LATER ////////////////
+        {
+            disabled.Add(masteryIndex);
+            disabledReasons[masteryIndex] = "This creature is stunned";
+        }
+        else if (!creature.HasMasteryActions)
+        {
+            disabled.Add(masteryIndex);
+            disabledReasons[masteryIndex] = "No mastery actions known";
         }
     }
 
@@ -153,79 +187,23 @@ public class BattleUI : MonoBehaviour
 
     #region Action Selection Menus
 
-    public void ShowCoreActionMenu(IReadOnlyList<CreatureAction> actions)
-    {
-        ShowActionMenu(actions);
-    }
-
-    public void ShowEmpoweredActionMenu(IReadOnlyList<CreatureAction> actions)
-    {
-        ShowActionMenu(actions);
-    }
-
-    public void ShowMasteryActionMenu(IReadOnlyList<CreatureAction> actions)
-    {
-        ShowActionMenu(actions);
-    }
-
-    private void ShowActionMenu(IReadOnlyList<CreatureAction> actions)
+    public void ShowActionMenu(IReadOnlyList<CreatureAction> actions)
     {
         HideAllMenus();
-        actionSelectPanel.SetActive(true);
-        EnableActionOptions();
-        SetActionNames(actions);
-    }
 
-    private void SetActionNames(IReadOnlyList<CreatureAction> actions)
-    {
-        // Set action names, leaving last slot for "Back"
-        for (int i = 0; i < actionTexts.Count - 1; i++)
+        var labels = actions
+            .Select(a => a?.Action?.ActionName ?? "-")
+            .Append("Back")
+            .ToList();
+
+        var disabled = new HashSet<int>();
+        for (int i = 0; i < actions.Count; i++)
         {
-            if (i >= actions.Count || actions[i] == null || actions[i].Action == null)
-            {
-                actionTexts[i].text = "-";
-                actionTexts[i].color = disabledTextColor;
-            }
-            else
-            {
-                actionTexts[i].text = actions[i].Action.ActionName;
-                actionTexts[i].color = normalTextColor;
-            }
+            if (actions[i]?.Action == null)
+                disabled.Add(i);
         }
 
-        // Last slot is always "Back"
-        actionTexts[actionTexts.Count - 1].text = "Back";
-        actionTexts[actionTexts.Count - 1].color = normalTextColor;
-    }
-
-    public void UpdateActionSelection(int selectedIndex, ActionBase action, Creature attacker)
-    {
-        // Highlight selected action
-        for (int i = 0; i < actionTexts.Count; i++)
-        {
-            if (i == selectedIndex)
-            {
-                actionTexts[i].color = highlightColor;
-            }
-            else if (actionTexts[i].text == "-")
-            {
-                actionTexts[i].color = disabledTextColor;
-            }
-            else
-            {
-                actionTexts[i].color = normalTextColor;
-            }
-        }
-
-        // Show back message or action details
-        if (selectedIndex == actionTexts.Count - 1)
-        {
-            HighlightBackOption();
-        }
-        else
-        {
-            UpdateActionDetails(action, attacker);
-        }
+        menuPanel.Build(labels, disabled);
     }
 
     public void UpdateActionDetails(ActionBase action, Creature attacker = null, Creature defender = null)
@@ -322,90 +300,22 @@ public class BattleUI : MonoBehaviour
     public void ShowMovementMenu()
     {
         HideAllMenus();
-        actionSelectPanel.SetActive(true);
-        DisableActionOptions(0, actionTexts.Count - 1); // Show only "Back" button
+        menuPanel.Build(new List<string> { "Back" });
         ShowMessage("Select a space to move to");
     }
 
     public void ShowExamineMenu()
     {
         HideAllMenus();
-        actionSelectPanel.SetActive(true);
-        DisableActionOptions(0, actionTexts.Count - 1); // Show only "Back" button
+        menuPanel.Build(new List<string> { "Back" });
         ShowMessage("Select a creature to examine");
     }
 
     public void ShowTargetSelectMenu()
     {
         HideAllMenus();
-        actionSelectPanel.SetActive(true);
-        DisableActionOptions(0, actionTexts.Count - 1); // Show only "Back" button
+        menuPanel.Build(new List<string> { "Back" });
         actionDetailsPanel.SetActive(true);
-    }
-
-    public void ShowAOESelectMenu()
-    {
-        HideAllMenus();
-        actionSelectPanel.SetActive(true);
-        DisableActionOptions(0, actionTexts.Count - 1); // Show only "Back" button
-        ShowMessage("Choose AOE positioning");
-    }
-
-    public void HighlightBackButton()
-    {
-        if (actionTexts.Count > 0)
-        {
-            actionTexts[actionTexts.Count - 1].color = highlightColor;
-        }
-    }
-
-    public void ResetBackButton()
-    {
-        if (actionTexts.Count > 0)
-        {
-            actionTexts[actionTexts.Count - 1].color = normalTextColor;
-        }
-    }
-
-    private void HighlightBackOption()
-    {
-        HighlightBackButton();
-        ShowMessage(BACK_TEXT);
-        actionDetailsPanel.SetActive(false);
-    }
-
-    public void ResetActionSelection()
-    {
-        for (int i = 0; i < actionTexts.Count; i++)
-        {
-            if (actionTexts[i].text != "-")
-            {
-                actionTexts[i].color = normalTextColor;
-            }
-            else
-            {
-                actionTexts[i].color = disabledTextColor;
-            }
-        }
-    }
-
-    public void DisableActionOptions(int start, int count)
-    {
-        if (start < 0 || start >= actionTexts.Count) return;
-
-        int end = Mathf.Min(start + count, actionTexts.Count);
-        for (int i = start; i < end; i++)
-        {
-            actionTexts[i].gameObject.SetActive(false);
-        }
-    }
-
-    public void EnableActionOptions()
-    {
-        for (int i = 0; i < actionTexts.Count; i++)
-        {
-            actionTexts[i].gameObject.SetActive(true);
-        }
     }
 
     public void BindActiveCreature(Creature creature) => playerInfoPanel.Bind(creature);
@@ -437,10 +347,22 @@ public class BattleUI : MonoBehaviour
 
     #region Helper Methods
 
+    public int MenuPanelActiveCount => menuPanel.ActiveCount;
+    public bool IsMenuDisabled(int index) => menuPanel.IsDisabled(index);
+
+    public void UpdateMenuSelection(int index)
+    {
+        menuPanel.SetSelection(index);
+    }
+
+    public string GetDisabledReason(int index)
+    {
+        return disabledReasons.TryGetValue(index, out var reason) ? reason : "Not available";
+    }
+
     private void HideAllMenus()
     {
-        if (actionCategoryPanel != null) actionCategoryPanel.SetActive(false);
-        if (actionSelectPanel != null) actionSelectPanel.SetActive(false);
+        menuPanel.Clear();
         if (actionDetailsPanel != null) actionDetailsPanel.SetActive(false);
         if (battleEndPanel != null) battleEndPanel.SetActive(false);
     }
