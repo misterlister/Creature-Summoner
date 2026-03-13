@@ -590,4 +590,13 @@ public class Creature
     {
         PreferredPositionRole = role;
     }
+
+    public bool HasStatusEffect(StatusType type)
+    {
+        return Statuses.HasStatus(type);
+    }
+
+    public bool HasEmpoweredActions => Actions.HasEmpoweredActions;
+    public bool HasMasteryActions => Actions.HasMasteryActions;
+
 }
