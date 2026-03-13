@@ -17,7 +17,7 @@ public struct GridPosition : IEquatable<GridPosition>
         Col = col;
     }
 
-    public bool IsValid() => Row >= 0 && Row < BATTLE_ROWS && Col >= 0 && Col < BATTLE_COLS;
+    public bool IsValid() => Row >= 0 && Row < BATTLE_ROWS && Col >= 0 && Col < GRID_COLS;
 
     public static GridPosition? TryCreate(int row, int col)
     {
