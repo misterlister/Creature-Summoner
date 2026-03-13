@@ -21,17 +21,13 @@ public class PlayerTurnController
     // Selection state
     private ActionBase selectedAction;
     private BattleTile primaryTarget;
-    private int selectionYChoice = 0;
-    private bool confirmingAOE = false;
-
 
     // Current menu position
     private int menuIndex = 0;
-    private int menuCount = 0;
     private int cursorRow = 0;
     private int cursorCol = 0;
-
-    private int MenuRows => Mathf.CeilToInt((float)menuCount / MENU_COLS);
+    private int cursorColMin = 0;
+    private int cursorColMax = BATTLE_COLS * 2 - 1;
 
     // Movement tracking
     private bool hasMovedThisTurn = false;
@@ -80,10 +76,8 @@ public class PlayerTurnController
         // Reset state
         selectedAction = null;
         primaryTarget = null;
-        selectionYChoice = 0;
         hasMovedThisTurn = false;
         previousMovePosition = null;
-        confirmingAOE = false;
         ClearStateStack();
 
         // Start at action category selection
@@ -125,6 +119,9 @@ public class PlayerTurnController
             case PlayerTurnState.TargetSelect:
                 HandleTargetSelectInput();
                 break;
+            case PlayerTurnState.AOEConfirm:
+                HandleAOEConfirmInput();
+                break;
         }
     }
 
@@ -143,18 +140,20 @@ public class PlayerTurnController
             case PlayerTurnState.Examine:
                 HandleGridNavigation();
                 break;
+            case PlayerTurnState.AOEConfirm:
+                // no navigation — this step involves confirmation only
+                break;
         }
     }
 
     private void HandleListNavigation()
     {
-        int row = menuIndex / MENU_COLS;
         int col = menuIndex % MENU_COLS;
 
         if (Input.GetKeyDown(DOWN_KEY))
         {
             int newIndex = menuIndex + MENU_COLS;
-            menuIndex = newIndex < menuCount ? newIndex : menuIndex;
+            menuIndex = newIndex < battleUI.MenuPanelActiveCount ? newIndex : menuIndex;
         }
         else if (Input.GetKeyDown(UP_KEY))
         {
@@ -164,33 +163,48 @@ public class PlayerTurnController
         else if (Input.GetKeyDown(RIGHT_KEY))
         {
             int newIndex = menuIndex + 1;
-            // Wrap within row only
-            menuIndex = col < MENU_COLS - 1 && newIndex < menuCount ? newIndex : menuIndex;
+            menuIndex = col < MENU_COLS - 1 && newIndex < battleUI.MenuPanelActiveCount ? newIndex : menuIndex;
         }
         else if (Input.GetKeyDown(LEFT_KEY))
         {
             int newIndex = menuIndex - 1;
-            // Wrap within row only
             menuIndex = col > 0 ? newIndex : menuIndex;
         }
     }
 
     private void HandleGridNavigation()
     {
+        /*
+        string direction = "";
+        int beforeRow = cursorRow;
+        int beforeCol = cursorCol;
+        */
         if (Input.GetKeyDown(DOWN_KEY))
+        {
+            //direction = "Down";
             cursorRow = Mathf.Clamp(cursorRow + 1, 0, BATTLE_ROWS - 1);
+        }
         else if (Input.GetKeyDown(UP_KEY))
+        {
+            //direction = "Up";
             cursorRow = Mathf.Clamp(cursorRow - 1, 0, BATTLE_ROWS - 1);
+        }
         else if (Input.GetKeyDown(RIGHT_KEY))
-            cursorCol = Mathf.Clamp(cursorCol + 1, 0, BATTLE_COLS - 1);
+        { 
+            //direction = "Right";
+            cursorCol = Mathf.Clamp(cursorCol + 1, cursorColMin, cursorColMax); 
+        }
         else if (Input.GetKeyDown(LEFT_KEY))
-            cursorCol = Mathf.Clamp(cursorCol - 1, 0, BATTLE_COLS - 1);
-    }
-
-    private void SetMenuSize(int count)
-    {
-        menuCount = count + 1; // +1 for Back
-        menuIndex = 0;
+        {
+            //direction = "Left";
+            cursorCol = Mathf.Clamp(cursorCol - 1, cursorColMin, cursorColMax); 
+        }
+        /*
+        if (direction != "")
+        {
+            Debug.Log($"Before: Row {beforeRow}, Col {beforeCol}, Moved {direction}. After: Row {cursorRow}, Col {cursorCol}");
+        }
+        */
     }
 
     #endregion
@@ -205,9 +219,21 @@ public class PlayerTurnController
             TryPopState();
             return;
         }
-        
+
         if (Input.GetKeyDown(ACCEPT_KEY))
         {
+            if (IsBackButtonSelected())
+            {
+                TryPopState();
+                return;
+            }
+
+            if (battleUI.IsMenuDisabled(menuIndex))
+            {
+                battleUI.ShowMessage(battleUI.GetDisabledReason(menuIndex));
+                return;
+            }
+
             switch (ActionCategories[menuIndex])
             {
                 case ActionCategoryMenuOptions.CoreActions:
@@ -220,8 +246,7 @@ public class PlayerTurnController
                     TransitionToMasteryActionSelect();
                     break;
                 case ActionCategoryMenuOptions.Move:
-                    if (hasMovedThisTurn) battleUI.ShowMessage("Already moved this turn");
-                    else TransitionToMovementSelect();
+                    TransitionToMovementSelect();
                     break;
                 case ActionCategoryMenuOptions.Examine:
                     TransitionToExamine();
@@ -236,7 +261,7 @@ public class PlayerTurnController
         }
         else
         {
-            battleUI.UpdateActionCategorySelection(menuIndex);
+            battleUI.UpdateMenuSelection(menuIndex);
         }
     }
 
@@ -262,7 +287,11 @@ public class PlayerTurnController
         }
         else
         {
-            UpdateActionHighlight(activeCreature.Actions.EquippedCoreActions);
+            battleUI.UpdateMenuSelection(menuIndex);
+            if (!IsBackButtonSelected() && menuIndex < activeCreature.Actions.EquippedCoreActions.Count)
+            {
+                battleUI.UpdateActionDetails(activeCreature.Actions.EquippedCoreActions[menuIndex]?.Action, activeCreature);
+            }
         }
     }
 
@@ -295,7 +324,11 @@ public class PlayerTurnController
         }
         else
         {
-            UpdateActionHighlight(activeCreature.Actions.EquippedEmpoweredActions);
+            battleUI.UpdateMenuSelection(menuIndex);
+            if (!IsBackButtonSelected() && menuIndex < activeCreature.Actions.EquippedEmpoweredActions.Count)
+            {
+                battleUI.UpdateActionDetails(activeCreature.Actions.EquippedEmpoweredActions[menuIndex]?.Action, activeCreature);
+            }
         }
     }
 
@@ -321,7 +354,11 @@ public class PlayerTurnController
         }
         else
         {
-            UpdateActionHighlight(activeCreature.Actions.EquippedMasteryActions);
+            battleUI.UpdateMenuSelection(menuIndex);
+            if (!IsBackButtonSelected() && menuIndex < activeCreature.Actions.EquippedMasteryActions.Count)
+            {
+                battleUI.UpdateActionDetails(activeCreature.Actions.EquippedMasteryActions[menuIndex]?.Action, activeCreature);
+            }
         }
     }
 
@@ -329,38 +366,25 @@ public class PlayerTurnController
     {
         ClearHoveredTile();
 
-        if (Input.GetKeyDown(BACK_KEY) || (Input.GetKeyDown(ACCEPT_KEY) && IsBackButtonSelected()))
+        if (Input.GetKeyDown(BACK_KEY))
         {
             ResetValidTargets();
             TryPopState();
+            return;
         }
-        else if (IsBackButtonSelected())
+
+        // Get tile at cursor
+        var cursorPos = GetCursorBattlePosition();
+        var tile = battlefield.GetTile(cursorPos);
+        bool isValid = validTargets.Contains(tile);
+
+        if (Input.GetKeyDown(ACCEPT_KEY) && isValid)
         {
-            battleUI.HighlightBackButton();
+            ExecuteMovement(tile);
         }
         else
         {
-            battleUI.ResetBackButton();
-
-            // Get move targets
-            var moveTargets = battleManager.GetMoveTargets(activeCreature);
-            validTargets = moveTargets;
-            HighlightTiles(validTargets, HighlightType.MoveTarget);
-
-            // Get tile at cursor
-            var cursorPos = GetCursorBattlePosition();
-            var tile = battlefield.GetTile(cursorPos);
-
-            bool isValid = validTargets.Contains(tile);
-
-            if (Input.GetKeyDown(ACCEPT_KEY) && isValid)
-            {
-                ExecuteMovement(tile);
-            }
-            else
-            {
-                HoverTile(tile, isValid);
-            }
+            HoverTile(tile, isValid);
         }
     }
 
@@ -368,131 +392,92 @@ public class PlayerTurnController
     {
         ClearHoveredTile();
 
-        if (Input.GetKeyDown(BACK_KEY) || (Input.GetKeyDown(ACCEPT_KEY) && IsBackButtonSelected()))
+        if (Input.GetKeyDown(BACK_KEY))
         {
             TryPopState();
+            return;
         }
-        else if (IsBackButtonSelected())
+
+        var cursorPos = GetCursorBattlePosition();
+        var tile = battlefield.GetTile(cursorPos);
+
+        if (tile != null && tile.IsOccupied)
         {
-            battleUI.HighlightBackButton();
+            HoverTile(tile, true, showStatus: true);
         }
         else
         {
-            battleUI.ResetBackButton();
-
-            var cursorPos = GetCursorBattlePosition();
-            var tile = battlefield.GetTile(cursorPos);
-
-            if (tile != null && tile.IsOccupied)
-            {
-                HoverTile(tile, true, showStatus: true);
-            }
-            else
-            {
-                HoverTile(tile, false);
-            }
+            HoverTile(tile, false);
         }
+       
     }
 
     private void HandleTargetSelectInput()
     {
         ClearHoveredTile();
 
-        if (Input.GetKeyDown(BACK_KEY) || (Input.GetKeyDown(ACCEPT_KEY) && IsBackButtonSelected()))
-        {
-            if (confirmingAOE)
-            {
-                // Step back to primary target selection
-                confirmingAOE = false;
-                battlefield.ClearAllHighlights();
-            }
-            else
-            {
-                battlefield.ClearAllHighlights();
-                ResetValidTargets();
-                TryPopState();
-            }
-            return;
-        }
-
-        if (IsBackButtonSelected())
-        {
-            battleUI.HighlightBackButton();
-            return;
-        }
-        
-        battleUI.ResetBackButton();
-
         HighlightType highlightType = selectedAction.Role == ActionRole.Offensive
             ? HighlightType.NegativeTarget
             : HighlightType.PositiveTarget;
         HighlightTiles(validTargets, highlightType);
 
-        if (confirmingAOE)
+        if (Input.GetKeyDown(BACK_KEY))
         {
-            battleUI.ShowMessage("Confirm area of effect");
-
-            var grid = battlefield.GetGrid(activeCreature.TeamSide);
-            var aoeResult = AOETargetCalculator.GetTargets(
-                primaryTarget,
-                selectedAction.AreaOfEffect,
-                grid,
-                activeCreature.TeamSide);
-
             battlefield.ClearAllHighlights();
-            HighlightTiles(aoeResult.AllTargets(), highlightType);
+            ResetValidTargets();
+            TryPopState();
+            return;
+        }
 
-            if (Input.GetKeyDown(ACCEPT_KEY))
-            {
-                ConfirmAction();
-            }
+        battleUI.ShowMessage("Choose target");
+
+        // Get valid targets for selected action
+        validTargets = selectedAction.GetValidTargets(activeCreature, battlefield);
+        var cursorPos = GetCursorBattlePosition();
+        var tile = battlefield.GetTile(cursorPos);
+        bool isValid = validTargets.Contains(tile);
+
+        if (tile != null && isValid && selectedAction.AreaOfEffect != AOE.Single)
+        {
+            var grid = battlefield.GetGrid(activeCreature.TeamSide);
+            var aoeResult = AOETargetCalculator.GetTargets(tile, selectedAction.AreaOfEffect, grid, activeCreature.TeamSide);
+            HighlightTiles(aoeResult.AllTargets(), highlightType);
         }
         else
         {
-            battleUI.ShowMessage("Choose target");
+            HighlightTiles(validTargets, highlightType);
+        }
 
-            // Get valid targets for selected action
-            validTargets = selectedAction.GetValidTargets(activeCreature, battlefield);
-            var cursorPos = GetCursorBattlePosition();
-            var tile = battlefield.GetTile(cursorPos);
-            bool isValid = validTargets.Contains(tile);
-
-            // Show AOE preview on hover, valid targets otherwise
-            if (tile != null && isValid && selectedAction.AreaOfEffect != AOE.Single)
-            {
-                var grid = battlefield.GetGrid(activeCreature.TeamSide);
-                var aoeResult = AOETargetCalculator.GetTargets(
-                    tile,
-                    selectedAction.AreaOfEffect,
-                    grid,
-                    activeCreature.TeamSide);
-
-                battlefield.ClearAllHighlights();
-                HighlightTiles(aoeResult.AllTargets(), highlightType);
-            }
+        if (Input.GetKeyDown(ACCEPT_KEY) && isValid)
+        {
+            primaryTarget = tile;
+            if (selectedAction.AreaOfEffect != AOE.Single)
+                TransitionToAOEConfirm();
             else
-            {
-                HighlightTiles(validTargets, highlightType);
-            }
+                ConfirmAction();
+        }
+        else
+        {
+            HoverTile(tile, isValid);
+            battleUI.UpdateActionDetails(
+                selectedAction,
+                activeCreature,
+                tile != null && tile.IsOccupied ? tile.OccupyingCreature : null);
+        }
+    }
 
-            if (Input.GetKeyDown(ACCEPT_KEY) && isValid)
-            {
-                primaryTarget = tile;
+    private void HandleAOEConfirmInput()
+    {
+        if (Input.GetKeyDown(BACK_KEY))
+        {
+            battlefield.ClearAllHighlights();
+            TryPopState();
+            return;
+        }
 
-                if (selectedAction.AreaOfEffect != AOE.Single)
-                    confirmingAOE = true;
-                else
-                    ConfirmAction();
-            }
-            else
-            {
-                HoverTile(tile, isValid);
-
-                if (tile != null && tile.IsOccupied)
-                    battleUI.UpdateActionDetails(selectedAction, activeCreature, tile.OccupyingCreature);
-                else
-                    battleUI.UpdateActionDetails(selectedAction, activeCreature);
-            }
+        if (Input.GetKeyDown(ACCEPT_KEY))
+        {
+            ConfirmAction();
         }
     }
 
@@ -504,7 +489,7 @@ public class PlayerTurnController
     {
         currentState = PlayerTurnState.ActionCategorySelect;
         ResetSelection();
-        battleUI.ShowActionCategoryMenu();
+        battleUI.ShowActionCategoryMenu(activeCreature, hasMovedThisTurn);
         battleUI.ShowMessage("Choose which kind of action to take");
     }
 
@@ -512,24 +497,21 @@ public class PlayerTurnController
     {
         PushState();
         currentState = PlayerTurnState.CoreActionSelect;
-        SetMenuSize(activeCreature.Actions.EquippedCoreActions.Count);
-        battleUI.ShowCoreActionMenu(activeCreature.Actions.EquippedCoreActions);
+        battleUI.ShowActionMenu(activeCreature.Actions.EquippedCoreActions);
     }
 
     private void TransitionToEmpoweredActionSelect()
     {
         PushState();
         currentState = PlayerTurnState.EmpoweredActionSelect;
-        SetMenuSize(activeCreature.Actions.EquippedEmpoweredActions.Count);
-        battleUI.ShowEmpoweredActionMenu(activeCreature.Actions.EquippedEmpoweredActions);
+        battleUI.ShowActionMenu(activeCreature.Actions.EquippedEmpoweredActions);
     }
 
     private void TransitionToMasteryActionSelect()
     {
         PushState();
         currentState = PlayerTurnState.MasteryActionSelect;
-        SetMenuSize(activeCreature.Actions.EquippedMasteryActions.Count);
-        battleUI.ShowMasteryActionMenu(activeCreature.Actions.EquippedMasteryActions);
+        battleUI.ShowActionMenu(activeCreature.Actions.EquippedMasteryActions);
     }
 
     private void TransitionToMovementSelect()
@@ -537,11 +519,16 @@ public class PlayerTurnController
         PushState();
         currentState = PlayerTurnState.MovementSelect;
 
-        // Start cursor at active creature's position
         var creaturePos = battlefield.GetBattlePosition(activeCreature);
         cursorRow = creaturePos.Row;
-        cursorCol = creaturePos.LocalCol;
+        cursorCol = creaturePos.GlobalCol;
 
+        // Player grid only (cols 0-2)
+        cursorColMin = 0;
+        cursorColMax = GRID_COLS - 1;
+
+        validTargets = battleManager.GetMoveTargets(activeCreature);
+        HighlightTiles(validTargets, HighlightType.MoveTarget);
         battleUI.ShowMovementMenu();
     }
 
@@ -550,10 +537,13 @@ public class PlayerTurnController
         PushState();
         currentState = PlayerTurnState.Examine;
 
-        // Start cursor at active creature's position
         var creaturePos = battlefield.GetBattlePosition(activeCreature);
         cursorRow = creaturePos.Row;
         cursorCol = creaturePos.GlobalCol;
+
+        // Both grids (cols 0-5)
+        cursorColMin = 0;
+        cursorColMax = BATTLE_COLS - 1;
 
         battleUI.ShowExamineMenu();
     }
@@ -563,7 +553,17 @@ public class PlayerTurnController
         PushState();
         currentState = PlayerTurnState.TargetSelect;
 
-        // Start cursor at first valid target
+        if (selectedAction.Role == ActionRole.Offensive)
+        {
+            cursorColMin = ENEMY_COL;           // enemy grid (cols 3-5)
+            cursorColMax = BATTLE_COLS - 1;
+        }
+        else
+        {
+            cursorColMin = 0;                   // player grid (cols 0-2)
+            cursorColMax = GRID_COLS - 1;
+        }
+
         var firstTarget = GetFirstValidTarget();
         if (firstTarget.HasValue)
         {
@@ -572,6 +572,23 @@ public class PlayerTurnController
         }
 
         battleUI.ShowTargetSelectMenu();
+    }
+
+    private void TransitionToAOEConfirm()
+    {
+        PushState();
+        currentState = PlayerTurnState.AOEConfirm;
+
+        HighlightType highlightType = selectedAction.Role == ActionRole.Offensive
+            ? HighlightType.NegativeTarget
+            : HighlightType.PositiveTarget;
+
+        var grid = battlefield.GetGrid(activeCreature.TeamSide);
+        var aoeResult = AOETargetCalculator.GetTargets(primaryTarget, selectedAction.AreaOfEffect, grid, activeCreature.TeamSide);
+        battlefield.ClearAllHighlights();
+        HighlightTiles(aoeResult.AllTargets(), highlightType);
+
+        battleUI.ShowMessage("Confirm area of effect");
     }
 
     #endregion
@@ -626,7 +643,6 @@ public class PlayerTurnController
         menuIndex = snapshot.MenuIndex;
         cursorRow = snapshot.CursorRow;
         cursorCol = snapshot.CursorCol;
-        confirmingAOE = false;
         RestoreStateUI();
         return true;
     }
@@ -642,22 +658,20 @@ public class PlayerTurnController
                 TransitionToActionCategorySelect();
                 break;
             case PlayerTurnState.CoreActionSelect:
-                battleUI.ShowCoreActionMenu(activeCreature.Actions.EquippedCoreActions);
+                battleUI.ShowActionMenu(activeCreature.Actions.EquippedCoreActions);
                 break;
             case PlayerTurnState.EmpoweredActionSelect:
-                battleUI.ShowEmpoweredActionMenu(activeCreature.Actions.EquippedEmpoweredActions);
+                battleUI.ShowActionMenu(activeCreature.Actions.EquippedEmpoweredActions);
                 break;
             case PlayerTurnState.MasteryActionSelect:
-                battleUI.ShowMasteryActionMenu(activeCreature.Actions.EquippedMasteryActions);
+                battleUI.ShowActionMenu(activeCreature.Actions.EquippedMasteryActions);
                 break;
             case PlayerTurnState.TargetSelect:
                 battleUI.ShowTargetSelectMenu();
                 break;
             case PlayerTurnState.MovementSelect:
-                // Undo movement
                 if (hasMovedThisTurn && previousMovePosition != null)
                 {
-                    // TODO: Implement movement undo
                     hasMovedThisTurn = false;
                 }
                 battleUI.ShowMovementMenu();
@@ -669,14 +683,7 @@ public class PlayerTurnController
 
     #region Helper Methods
 
-    private int GetCurrentMenuSize() => currentState switch
-    {
-        PlayerTurnState.ActionCategorySelect => ActionCategories.Length,
-        PlayerTurnState.CoreActionSelect => activeCreature.Actions.EquippedCoreActions.Count + 1,
-        PlayerTurnState.EmpoweredActionSelect => activeCreature.Actions.EquippedEmpoweredActions.Count + 1,
-        PlayerTurnState.MasteryActionSelect => activeCreature.Actions.EquippedMasteryActions.Count + 1,
-        _ => 0
-    };
+    private int GetCurrentMenuSize() => battleUI.MenuPanelActiveCount;
 
     private BattlePosition GetCursorBattlePosition() => new BattlePosition(cursorRow, cursorCol);
 
@@ -695,25 +702,12 @@ public class PlayerTurnController
     private void ResetSelection()
     {
         menuIndex = 0;
-        menuCount = 0;
     }
 
     private void ResetValidTargets()
     {
         validTargets.Clear();
         battlefield.ClearAllHighlights();
-    }
-
-    private void UpdateActionHighlight(IReadOnlyList<CreatureAction> actions)
-    {
-        ActionBase action = null;
-
-        if (menuIndex >= 0 && menuIndex < actions.Count)
-        {
-            action = actions[menuIndex]?.Action;
-        }
-
-        battleUI.UpdateActionSelection(menuIndex, action, activeCreature);
     }
 
     private void HighlightTiles(List<BattleTile> tiles, HighlightType highlightType)
