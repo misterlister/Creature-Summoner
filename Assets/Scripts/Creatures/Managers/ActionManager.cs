@@ -73,6 +73,10 @@ namespace Game.Creatures.Managers
         public IReadOnlyList<CreatureAction> EquippedEmpoweredActions => GetEquippedActions(ActionSlotType.Empowered);
         public IReadOnlyList<CreatureAction> EquippedMasteryActions => GetEquippedActions(ActionSlotType.Mastery);
 
+        public bool HasKnownActions => knownActions.Count > 0;
+        public bool HasEmpoweredActions => GetKnownActions(ActionSlotType.Empowered).Any();
+        public bool HasMasteryActions => GetKnownActions(ActionSlotType.Mastery).Any();
+
         public void InitializeKnownActions()
         {
             knownActions.Clear();
