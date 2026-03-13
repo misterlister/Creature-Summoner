@@ -142,7 +142,7 @@ public class BattleManager : MonoBehaviour
     private BattleTile FindPlacementTile(BattleGrid grid, Creature creature)
     {
         // Try preferred column first, then fallback order
-        var colPriority = GetColumnPriority(creature.PreferredPositionRole);
+        var colPriority = GetColumnPriority(creature.PreferredPositionRole, creature.TeamSide);
 
         foreach (int col in colPriority)
         {
@@ -155,15 +155,28 @@ public class BattleManager : MonoBehaviour
         return null;
     }
 
-    private int[] GetColumnPriority(PositionRole role)
+    private int[] GetColumnPriority(PositionRole role, TeamSide team)
     {
-        return role switch
+        if (team == TeamSide.Player)
         {
-            PositionRole.Frontline => new[] { 0, 1, 2 },
-            PositionRole.Midline => new[] { 1, 0, 2 },
-            PositionRole.Backline => new[] { 2, 1, 0 },
-            _ => new[] { 0, 1, 2 }
-        };
+            return role switch
+            {
+                PositionRole.Frontline => new[] { 2, 1, 0 },
+                PositionRole.Midline => new[] { 1, 2, 0 },
+                PositionRole.Backline => new[] { 0, 1, 2 },
+                _ => new[] { 2, 1, 0 }
+            };
+        }
+        else
+        {
+            return role switch
+            {
+                PositionRole.Frontline => new[] { 0, 1, 2 },
+                PositionRole.Midline => new[] { 1, 0, 2 },
+                PositionRole.Backline => new[] { 2, 1, 0 },
+                _ => new[] { 0, 1, 2 }
+            };
+        }
     }
 
     #endregion
@@ -482,7 +495,7 @@ public class BattleManager : MonoBehaviour
 
     #region Unity Lifecycle
 
-    // Called every frame by GameController or similar
+    // Called every frame by GameController
     public void HandleUpdate()
     {
         if (currentState == BattleState.PlayerTurn)
