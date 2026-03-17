@@ -70,8 +70,9 @@ public static class GameConstants
         { CreatureElement.None,     new Color(0.949f,0.949f, 0.949f) }      // Off-white
     };
 
-    public static readonly Color HP_COLOUR = new Color(0.5f, 1f, 0.5f);
-    public static readonly Color ENERGY_COLOUR = new Color(1f, 0f, 1f);
+    public static readonly Color HP_COLOUR = new Color(0f, 0.667f, 0f);
+    public static readonly Color ENERGY_COLOUR = new Color(0.937f, 0.773f, 0.114f);
+    public static readonly Color SHIELD_COLOUR = new Color(0.192f, 0.604f, 0.871f);
     public static readonly Color XP_COLOUR = new Color(1f, 0.85f, 0f);
 }
 
