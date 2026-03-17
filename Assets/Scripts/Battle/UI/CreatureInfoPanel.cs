@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using static BattleUIConstants;
+using static GameConstants;
 
 public class CreatureInfoPanel : MonoBehaviour
 {
@@ -215,9 +216,9 @@ public class CreatureInfoPanel : MonoBehaviour
     {
         if (boundCreature == null || showingModifiers) return;
 
-        hpRow.UpdateStats(boundCreature.MaxHP, boundCreature.HP);
-        shieldRow.UpdateResource(boundCreature.Shielding, boundCreature.MaxHP);
-        energyRow.UpdateStats(boundCreature.MaxEnergy, boundCreature.Energy);
+        hpRow.UpdateResource(boundCreature.HP, boundCreature.MaxHP, HP_COLOUR);
+        shieldRow.UpdateResource(boundCreature.Shielding, boundCreature.MaxHP, SHIELD_COLOUR);
+        energyRow.UpdateResource(boundCreature.Energy, boundCreature.MaxEnergy, ENERGY_COLOUR);
 
         strengthRow.UpdateStats(boundCreature.Stats.GetBaseStat(StatType.Strength), boundCreature.Strength);
         magicRow.UpdateStats(boundCreature.Stats.GetBaseStat(StatType.Magic), boundCreature.Magic);
@@ -347,6 +348,11 @@ public class CreatureInfoPanel : MonoBehaviour
         spawnedStatusIcons.Clear();
 
         foreach (var row in modifierRows.Values) row.gameObject.SetActive(false);
+    }
+    public void SetActive(bool active)
+    {
+        gameObject.SetActive(active);
+        if (!active) Clear();
     }
 
     private string FormatModifierName(CombatModifierType type)
