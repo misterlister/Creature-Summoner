@@ -2,9 +2,9 @@ using UnityEngine;
 
 public enum CreatureSize
 {
-    VerySmall,
+    Tiny,
     Small,
     Medium,
     Large,
-    ExtraLarge
+    Huge
 }
