@@ -185,6 +185,7 @@ public class StatRow : MonoBehaviour
         if (currentMode == DisplayMode.Uninitialized)
         {
             Debug.LogWarning($"StatRow: {methodName} called before SetupRow. Call SetupRow first.");
+            SetupRow("", expectedMode == DisplayMode.Single);
         }
         else if (currentMode != expectedMode)
         {
