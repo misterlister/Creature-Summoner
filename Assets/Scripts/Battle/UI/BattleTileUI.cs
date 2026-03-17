@@ -13,7 +13,6 @@ public class BattleTileUI : MonoBehaviour
     [Header("Creature Display")]
     [SerializeField] private Image creatureSprite;
     [SerializeField] private GameObject spriteHolder;
-    [SerializeField] private GameObject creatureContainer;
 
     [Header("Status Bars")]
     [SerializeField] private GameObject barsContainer;
@@ -108,10 +107,9 @@ public class BattleTileUI : MonoBehaviour
 
     private void SetupLayout()
     {
-        // Flip player sprites to face right (toward enemy), enemies already face left
-        if (isPlayerSide)
-        {
-            creatureSprite.transform.localScale = new Vector3(-1, 1, 1);
+        var layoutGroup = GetComponent<HorizontalLayoutGroup>();
+        layoutGroup.reverseArrangement = !isPlayerSide;
+        originalSpritePos = spriteHolder.transform.localPosition;
         }
         else
         {
@@ -264,36 +262,34 @@ public class BattleTileUI : MonoBehaviour
 
     private void UpdateScale(CreatureSize size)
     {
-        float dimension = BASE_SPRITE_SIZE;
-
-        switch (size)
+        float baseSprite = size switch
         {
-            case CreatureSize.VerySmall:
-                dimension -= 2 * SIZE_INCREMENT;
-                break;
-            case CreatureSize.Small:
-                dimension -= SIZE_INCREMENT;
-                break;
-            case CreatureSize.Large:
-                dimension += SIZE_INCREMENT;
-                break;
-            case CreatureSize.ExtraLarge:
-                dimension += 2 * SIZE_INCREMENT;
-                break;
-            default:
-                break;
-        }
+            CreatureSize.Tiny => TINY_SPRITE_SIZE,
+            CreatureSize.Small => SMALL_SPRITE_SIZE,
+            CreatureSize.Medium => MEDIUM_SPRITE_SIZE,
+            CreatureSize.Large => LARGE_SPRITE_SIZE,
+            CreatureSize.Huge => HUGE_SPRITE_SIZE,
+            _ => MEDIUM_SPRITE_SIZE
+        };
 
-        float scaleFactor = dimension / MAX_SPRITE_SIZE;
+        float rowScale = DataTile.BattlefieldPosition.Row switch
+        {
+            0 => 1.0f,
+            1 => TILE_SCALE_ROW1,
+            2 => TILE_SCALE_ROW2,
+            _ => 1.0f
+        };
 
-        creatureContainer.transform.localScale = new Vector3(scaleFactor, scaleFactor, 1f);
+        float scale = (baseSprite / TILE_HEIGHT_ROW0) * rowScale;
+        float flipX = isPlayerSide ? -1f : 1f;
+        spriteHolder.transform.localScale = new Vector3(scale * flipX, scale, 1f);
     }
 
     private void Clear()
     {
         // Kill any leftover tweens on this tile's components
         creatureSprite.DOKill();
-        creatureContainer.transform.DOKill();
+        spriteHolder.transform.DOKill();
         isAnimating = false;
 
         UnbindCreatureEvents();
@@ -383,7 +379,7 @@ public class BattleTileUI : MonoBehaviour
         sequence.Append(creatureSprite.DOColor(originalSpriteColor, HIT_DURATION));
 
         // Shake for impact
-        creatureContainer.transform.DOShakePosition(
+        spriteHolder.transform.DOShakePosition(
             HIT_DURATION * 2, strength: 15f, vibrato: 10, randomness: 90, snapping: false, fadeOut: true);
 
         sequence.OnComplete(() => isAnimating = false);

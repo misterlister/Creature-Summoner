@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 public static class BattleUIConstants
@@ -14,9 +12,18 @@ public static class BattleUIConstants
     public const float SLIDER_DURATION = 0.5f;
 
     // Sprite sizing
-    public const float MAX_SPRITE_SIZE = 135f;
-    public const float BASE_SPRITE_SIZE = 105f;
-    public const float SIZE_INCREMENT = 15f;
+    public const float HUGE_SPRITE_SIZE = 170f;
+    public const float LARGE_SPRITE_SIZE = 150f;
+    public const float MEDIUM_SPRITE_SIZE = 130f;
+    public const float SMALL_SPRITE_SIZE = 115f;
+    public const float TINY_SPRITE_SIZE = 100f;
+
+    // Row tile scaling
+    public const float TILE_WIDTH_ROW0 = 220f;
+    public const float TILE_HEIGHT_ROW0 = 175f;
+
+    public const float TILE_SCALE_ROW1 = 1.1f;
+    public const float TILE_SCALE_ROW2 = 1.2f;
 
     public static readonly Color PositiveColour = Color.green;
     public static readonly Color NegativeColour = Color.red;
