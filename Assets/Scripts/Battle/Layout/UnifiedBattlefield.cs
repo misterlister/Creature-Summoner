@@ -13,7 +13,6 @@ public class UnifiedBattlefield : MonoBehaviour
     [Header("Grid Setup")]
     [SerializeField] private Transform playerGridParent;
     [SerializeField] private Transform enemyGridParent;
-    [SerializeField] private GameObject tilePrefab;
 
     [Header("Visual Settings")]
     [SerializeField] private Biome currentBiome;
@@ -63,15 +62,20 @@ public class UnifiedBattlefield : MonoBehaviour
 
     private void SetupGridUI(BattleGrid grid, Transform parent, TeamSide team)
     {
-        foreach (var tile in grid.GetAllTiles())
+        var tiles = grid.GetAllTiles();
+
+        if (parent.childCount != tiles.Count)
         {
-            GameObject tileObj = Instantiate(tilePrefab, parent);
+            Debug.LogError($"{team} grid parent has {parent.childCount} children but expected {tiles.Count}");
+            return;
+        }
+
+        for (int i = 0; i < tiles.Count; i++)
+        {
+            var tileObj = parent.GetChild(i);
             BattleTileUI tileUI = tileObj.GetComponent<BattleTileUI>();
-
-            bool isPlayerSide = team == TeamSide.Player;
-            tileUI.Initialize(tile, isPlayerSide);
-
-            allTileUIs[tile.BattlefieldPosition] = tileUI;
+            tileUI.Initialize(tiles[i], team == TeamSide.Player);
+            allTileUIs[tiles[i].BattlefieldPosition] = tileUI;
         }
     }
 
@@ -317,27 +321,25 @@ public class UnifiedBattlefield : MonoBehaviour
         return creatures;
     }
 
-    public void SwapCreatures(Creature creature1, Creature creature2)
+    public void SwapCreatures(BattleTile tile1, BattleTile tile2)
     {
-        var tile1 = FindCreatureTile(creature1);
-        var tile2 = FindCreatureTile(creature2);
-
         if (tile1 == null || tile2 == null)
         {
-            Debug.LogError("Cannot swap: one or both creatures not found");
+            Debug.LogError($"Cannot swap: null tile(s)");
             return;
         }
 
-        // Remove both
+        var creature1 = tile1.OccupyingCreature;
+        var creature2 = tile2.OccupyingCreature;
+
         tile1.RemoveCreature();
         tile2.RemoveCreature();
 
-        // Place in swapped positions
-        tile1.PlaceCreature(creature2);
-        tile2.PlaceCreature(creature1);
+        if (creature2 != null) tile1.PlaceCreature(creature2);
+        if (creature1 != null) tile2.PlaceCreature(creature1);
 
-        creature1.SetBattlePosition(tile2);
-        creature2.SetBattlePosition(tile1);
+        creature1?.SetBattlePosition(tile2);
+        creature2?.SetBattlePosition(tile1);
     }
 
     #endregion
@@ -363,9 +365,8 @@ public class UnifiedBattlefield : MonoBehaviour
     {
         foreach (var tile in tiles)
         {
-            var battlePos = tile.BattlefieldPosition;
-            var tileUI = GetTileUI(battlePos);
-            tileUI?.SetHighlight(highlightType);
+            var tileUI = GetTileUI(tile.BattlefieldPosition);
+            tileUI?.SetPersistentHighlight(highlightType);
         }
     }
 
@@ -373,7 +374,7 @@ public class UnifiedBattlefield : MonoBehaviour
     {
         foreach (var tileUI in allTileUIs.Values)
         {
-            tileUI.ClearHighlight();
+            tileUI.ClearPersistentHighlight();
         }
     }
 
