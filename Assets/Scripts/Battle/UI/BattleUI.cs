@@ -36,7 +36,7 @@ public class BattleUI : MonoBehaviour
 
     [Header("StatPanels")]
     [SerializeField] private CreatureInfoPanel playerInfoPanel;
-    [SerializeField] private CreatureInfoPanel examineInfoPanel;
+    [SerializeField] private CreatureInfoPanel enemyInfoPanel;
 
     [Header("Battle End Screen")]
     [SerializeField] private GameObject battleEndPanel;
@@ -311,16 +311,42 @@ public class BattleUI : MonoBehaviour
         ShowMessage("Select a creature to examine");
     }
 
+    public void HideExaminePanels()
+    {
+        playerInfoPanel.SetActive(false);
+        enemyInfoPanel.SetActive(false);
+    }
+
     public void ShowTargetSelectMenu()
     {
         HideAllMenus();
         menuPanel.Build(new List<string> { "Back" });
         actionDetailsPanel.SetActive(true);
+        ShowMessage("Choose target");
     }
 
-    public void BindActiveCreature(Creature creature) => playerInfoPanel.Bind(creature);
-    public void BindExamineCreature(Creature creature) => examineInfoPanel.Bind(creature);
+    public void BindExamineCreature(Creature creature)
+    {
+        if (creature == null)
+        {
+            playerInfoPanel.SetActive(false);
+            enemyInfoPanel.SetActive(false);
+            return;
+        }
 
+        if (creature.TeamSide == TeamSide.Player)
+        {
+            enemyInfoPanel.SetActive(false);
+            playerInfoPanel.SetActive(true);
+            playerInfoPanel.Bind(creature);
+        }
+        else
+        {
+            playerInfoPanel.SetActive(false);
+            enemyInfoPanel.SetActive(true);
+            enemyInfoPanel.Bind(creature);
+        }
+    }
 
     #endregion
 
