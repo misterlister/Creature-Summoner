@@ -53,6 +53,10 @@ public class BattleTileUI : MonoBehaviour
     private Color originalSpriteColor;
     private bool isAnimating;
 
+    // Highlight state
+    private HighlightType? persistentHighlight = null;
+    private HighlightType? pinnedHighlight = null;
+
     public void Initialize(BattleTile tile, bool playerSide)
     {
         // Unsubscribe previous tile if any
@@ -110,13 +114,6 @@ public class BattleTileUI : MonoBehaviour
         var layoutGroup = GetComponent<HorizontalLayoutGroup>();
         layoutGroup.reverseArrangement = !isPlayerSide;
         originalSpritePos = spriteHolder.transform.localPosition;
-        }
-        else
-        {
-            creatureSprite.transform.localScale = new Vector3(1, 1, 1);
-        }
-
-        originalSpritePos = creatureSprite.transform.localPosition;
     }
 
     #region Event Handlers from BattleTile
@@ -246,8 +243,6 @@ public class BattleTileUI : MonoBehaviour
         namePanel.SetActive(true);
         levelPanel.SetActive(true);
         barsContainer.SetActive(true);
-
-        creatureContainer.SetActive(true);
 
         nameField.text = creature.Nickname;
         levelField.text = creature.Level.ToString();
@@ -423,6 +418,45 @@ public class BattleTileUI : MonoBehaviour
     #endregion
 
     #region Highlight Management
+
+    public void SetPersistentHighlight(HighlightType type)
+    {
+        persistentHighlight = type;
+        SetHighlight(type);
+    }
+    public void ClearPersistentHighlight()
+    {
+        persistentHighlight = null;
+        if (pinnedHighlight.HasValue)
+            SetHighlight(pinnedHighlight.Value);
+        else
+            ClearHighlight();
+    }
+
+    public void SetPinnedHighlight(HighlightType type)
+    {
+        pinnedHighlight = type;
+        SetHighlight(type);
+    }
+    public void ClearPinnedHighlight()
+    {
+        pinnedHighlight = null;
+        ClearHighlight();
+    }
+
+    public void SetHoverHighlight(HighlightType type)
+    {
+        SetHighlight(type); // visually override
+    }
+    public void ClearHoverHighlight()
+    {
+        if (persistentHighlight.HasValue)
+            SetHighlight(persistentHighlight.Value);
+        else if (pinnedHighlight.HasValue)
+            SetHighlight(pinnedHighlight.Value);
+        else
+            ClearHighlight();
+    }
 
     public void SetHighlight(HighlightType type)
     {
