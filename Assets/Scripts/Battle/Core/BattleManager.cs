@@ -206,10 +206,13 @@ public class BattleManager : MonoBehaviour
                 break;
 
             // Highlight active creature
-            battlefield.SetActiveCreatureHighlight(activeCreature);
+            SetActiveCreatureHighlight();
 
             // Execute turn
             yield return StartCoroutine(ExecuteTurn(activeCreature));
+
+            // Clear highlight
+            ClearActiveCreatureHighlight();
 
             // Check battle end
             if (CheckBattleEnd())
@@ -225,8 +228,6 @@ public class BattleManager : MonoBehaviour
     private IEnumerator ExecuteTurn(Creature creature)
     {
         Context.CurrentActingCreature = creature;
-
-        battleUI.BindActiveCreature(creature);
 
         // Trigger turn start events
         var turnStartEvent = new TurnStartEventData(creature, Context)
@@ -264,6 +265,24 @@ public class BattleManager : MonoBehaviour
         battlefield.EnemyGrid.TickAllSurfaces();
 
         Context.TurnNumber++;
+    }
+
+    public void SetActiveCreatureHighlight()
+    {
+        if (activeCreature != null)
+        {
+            var pos = battlefield.GetBattlePosition(activeCreature);
+            battlefield.GetTileUI(pos)?.SetPinnedHighlight(HighlightType.ActiveCreature);
+        }
+    }
+
+    public void ClearActiveCreatureHighlight()
+    {
+        if (activeCreature != null)
+        {
+            var pos = battlefield.GetBattlePosition(activeCreature);
+            battlefield.GetTileUI(pos)?.ClearPinnedHighlight();
+        }
     }
 
     #endregion
