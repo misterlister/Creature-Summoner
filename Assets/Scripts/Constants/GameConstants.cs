@@ -8,8 +8,8 @@ public static class GameConstants
     public const KeyCode DOWN_KEY = KeyCode.S;
     public const KeyCode LEFT_KEY = KeyCode.A;
     public const KeyCode RIGHT_KEY = KeyCode.D;
-    public const KeyCode ACCEPT_KEY = KeyCode.Z;
-    public const KeyCode BACK_KEY = KeyCode.X;
+    public const KeyCode ACCEPT_KEY = KeyCode.Space;
+    public const KeyCode BACK_KEY = KeyCode.Escape;
 
     // ACTION SLOTS CONSTANTS
     public const int CORE_SLOTS = 3;
