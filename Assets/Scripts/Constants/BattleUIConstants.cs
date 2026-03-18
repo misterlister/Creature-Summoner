@@ -25,6 +25,10 @@ public static class BattleUIConstants
     public const float TILE_SCALE_ROW1 = 1.1f;
     public const float TILE_SCALE_ROW2 = 1.2f;
 
+    public const float BASE_SCALABLE_SIZE = HUGE_SPRITE_SIZE;
+
+    public const float NAME_PANEL_HEIGHT = 30f;
+
     public static readonly Color PositiveColour = Color.green;
     public static readonly Color NegativeColour = Color.red;
     public static readonly Color NeutralColour = Color.black;
