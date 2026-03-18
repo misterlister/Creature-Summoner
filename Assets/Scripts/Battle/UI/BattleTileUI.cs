@@ -10,6 +10,10 @@ using static BattleUIConstants;
 /// </summary>
 public class BattleTileUI : MonoBehaviour
 {
+    [Header("Layout")]
+    [SerializeField] private RectTransform scalableSection;
+    [SerializeField] private RectTransform displayColumn;
+
     [Header("Creature Display")]
     [SerializeField] private Image creatureSprite;
     [SerializeField] private GameObject spriteHolder;
@@ -47,9 +51,10 @@ public class BattleTileUI : MonoBehaviour
     public BattleTile DataTile { get; private set; }
     private bool isPlayerSide;
     private Creature boundCreature;
+    public float TileScale { get; private set; }
 
     // Animation state
-    private Vector3 originalSpritePos;
+    private Vector2 originalSpriteAnchoredPos;
     private Color originalSpriteColor;
     private bool isAnimating;
 
@@ -111,9 +116,41 @@ public class BattleTileUI : MonoBehaviour
 
     private void SetupLayout()
     {
-        var layoutGroup = GetComponent<HorizontalLayoutGroup>();
-        layoutGroup.reverseArrangement = !isPlayerSide;
-        originalSpritePos = spriteHolder.transform.localPosition;
+        var hlg = GetComponent<HorizontalLayoutGroup>();
+        hlg.reverseArrangement = !isPlayerSide;
+        hlg.childAlignment = isPlayerSide ? TextAnchor.LowerRight : TextAnchor.LowerLeft;
+
+        RectTransform scalableRect = scalableSection.GetComponent<RectTransform>();
+        if (isPlayerSide)
+        {
+            scalableRect.anchorMin = new Vector2(0, 0);
+            scalableRect.anchorMax = new Vector2(0, 0);
+            scalableRect.pivot = new Vector2(0, 0);
+        }
+        else
+        {
+            scalableRect.anchorMin = new Vector2(1, 0);
+            scalableRect.anchorMax = new Vector2(1, 0);
+            scalableRect.pivot = new Vector2(1, 0);
+        }
+        scalableRect.anchoredPosition = Vector2.zero;
+
+        originalSpriteAnchoredPos = spriteHolder.GetComponent<RectTransform>().anchoredPosition;
+    }
+    public void SetTileSize(int row)
+    {
+        TileScale = row switch
+        {
+            1 => TILE_SCALE_ROW1,
+            2 => TILE_SCALE_ROW2,
+            _ => 1f
+        };
+
+        float scalableSize = BASE_SCALABLE_SIZE * TileScale;
+
+        GetComponent<RectTransform>().sizeDelta = new Vector2(TILE_WIDTH_ROW0 * TileScale, TILE_HEIGHT_ROW0 * TileScale);
+        scalableSection.sizeDelta = Vector2.one * scalableSize;
+        displayColumn.sizeDelta = new Vector2(scalableSize, scalableSize + NAME_PANEL_HEIGHT);
     }
 
     #region Event Handlers from BattleTile
@@ -267,15 +304,7 @@ public class BattleTileUI : MonoBehaviour
             _ => MEDIUM_SPRITE_SIZE
         };
 
-        float rowScale = DataTile.BattlefieldPosition.Row switch
-        {
-            0 => 1.0f,
-            1 => TILE_SCALE_ROW1,
-            2 => TILE_SCALE_ROW2,
-            _ => 1.0f
-        };
-
-        float scale = (baseSprite / TILE_HEIGHT_ROW0) * rowScale;
+        float scale = (baseSprite / BASE_SCALABLE_SIZE) * TileScale;
         float flipX = isPlayerSide ? -1f : 1f;
         spriteHolder.transform.localScale = new Vector3(scale * flipX, scale, 1f);
     }
@@ -284,7 +313,7 @@ public class BattleTileUI : MonoBehaviour
     {
         // Kill any leftover tweens on this tile's components
         creatureSprite.DOKill();
-        spriteHolder.transform.DOKill();
+        spriteHolder.GetComponent<RectTransform>().DOKill();
         isAnimating = false;
 
         UnbindCreatureEvents();
@@ -351,14 +380,14 @@ public class BattleTileUI : MonoBehaviour
     public void PlayAttackAnimation()
     {
         if (isAnimating) return;
-
         isAnimating = true;
+        RectTransform spriteRect = spriteHolder.GetComponent<RectTransform>();
         float direction = isPlayerSide ? 1f : -1f;
-        Vector3 attackPos = originalSpritePos + Vector3.right * (ATTACK_DISTANCE * direction);
+        Vector2 attackPos = originalSpriteAnchoredPos + Vector2.right * (ATTACK_DISTANCE * direction);
 
         var sequence = DOTween.Sequence();
-        sequence.Append(creatureSprite.transform.DOLocalMove(attackPos, ATTACK_SPEED));
-        sequence.Append(creatureSprite.transform.DOLocalMove(originalSpritePos, ATTACK_SPEED));
+        sequence.Append(spriteRect.DOAnchorPos(attackPos, ATTACK_SPEED));
+        sequence.Append(spriteRect.DOAnchorPos(originalSpriteAnchoredPos, ATTACK_SPEED));
         sequence.OnComplete(() => isAnimating = false);
     }
 
