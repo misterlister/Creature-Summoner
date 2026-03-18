@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using static GameConstants;
+using static BattleUIConstants;
 
 /// <summary>
 /// Manages both player and enemy grids as a unified 3×6 battlefield.
@@ -13,6 +15,7 @@ public class UnifiedBattlefield : MonoBehaviour
     [Header("Grid Setup")]
     [SerializeField] private Transform playerGridParent;
     [SerializeField] private Transform enemyGridParent;
+    [SerializeField] private BattleTileUI tilePrefab;
 
     [Header("Visual Settings")]
     [SerializeField] private Biome currentBiome;
@@ -62,21 +65,67 @@ public class UnifiedBattlefield : MonoBehaviour
 
     private void SetupGridUI(BattleGrid grid, Transform parent, TeamSide team)
     {
-        var tiles = grid.GetAllTiles();
+        bool isPlayer = team == TeamSide.Player;
 
-        if (parent.childCount != tiles.Count)
+        for (int row = 0; row < BATTLE_ROWS; row++)
         {
-            Debug.LogError($"{team} grid parent has {parent.childCount} children but expected {tiles.Count}");
-            return;
+            Vector2 tileSize = GetTileSize(row);
+
+            for (int col = 0; col < GRID_COLS; col++)
+            {
+                BattleTile dataTile = grid.GetTile(row, col);
+
+                BattleTileUI tileUI = Instantiate(tilePrefab, parent);
+                RectTransform rt = tileUI.GetComponent<RectTransform>();
+
+                rt.anchorMin = Vector2.zero;
+                rt.anchorMax = Vector2.zero;
+                rt.pivot = isPlayer ? new Vector2(1, 0) : Vector2.zero;
+
+                Debug.Log($"Placing tile at row {row}, col {col} for {(isPlayer ? "Player" : "Enemy")} grid. Calculated position: {GetTilePosition(row, col, tileSize, isPlayer)}");
+
+                rt.anchoredPosition = GetTilePosition(row, col, tileSize, isPlayer);
+
+                tileUI.SetTileSize(row);
+                tileUI.Initialize(dataTile, isPlayer);
+
+                allTileUIs[dataTile.BattlefieldPosition] = tileUI;
+            }
+        }
+    }
+
+    private Vector2 GetTileSize(int row)
+    {
+        float scale = row switch
+        {
+            1 => TILE_SCALE_ROW1,
+            2 => TILE_SCALE_ROW2,
+            _ => 1f
+        };
+        return new Vector2(TILE_WIDTH_ROW0 * scale, TILE_HEIGHT_ROW0 * scale);
+    }
+
+    private Vector2 GetTilePosition(int row, int col, Vector2 tileSize, bool isPlayer)
+    {
+        float y = 660f;
+        for (int r = 0; r < row; r++)
+            y -= GetTileSize(r).y;
+        y -= tileSize.y;
+
+        float x;
+        if (isPlayer)
+        {
+            // Col 2 (frontline) flush against right edge, col 0 (backline) furthest left
+            float rowWidth = GRID_COLS * tileSize.x;
+            x = 800f - (GRID_COLS - 1 - col) * tileSize.x;
+        }
+        else
+        {
+            // Count rightward from left edge — col 0 (frontline) at x=0, col 2 (backline) most positive
+            x = col * tileSize.x;
         }
 
-        for (int i = 0; i < tiles.Count; i++)
-        {
-            var tileObj = parent.GetChild(i);
-            BattleTileUI tileUI = tileObj.GetComponent<BattleTileUI>();
-            tileUI.Initialize(tiles[i], team == TeamSide.Player);
-            allTileUIs[tiles[i].BattlefieldPosition] = tileUI;
-        }
+        return new Vector2(x, y);
     }
 
     private void SetBattleBackground()
