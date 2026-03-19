@@ -28,15 +28,6 @@ public class BattleTileUI : MonoBehaviour
     [SerializeField] private Image highlightAura;
     [SerializeField] private Image selectionArrow;
 
-    [Header("Highlight Sprites")]
-    [SerializeField] private Sprite activeCreatureAura;
-    [SerializeField] private Sprite negativeTargetAura;
-    [SerializeField] private Sprite positiveTargetAura;
-    [SerializeField] private Sprite moveTargetAura;
-    [SerializeField] private Sprite validArrowSprite;
-    [SerializeField] private Sprite invalidArrowSprite;
-    [SerializeField] private Sprite selectedArrowSprite;
-
     [Header("Info Display")]
     [SerializeField] private GameObject namePanel;
     [SerializeField] private TextMeshProUGUI nameField;
@@ -46,6 +37,39 @@ public class BattleTileUI : MonoBehaviour
     [Header("Terrain Display")]
     [SerializeField] private Image terrainBackgroundImage;
     [SerializeField] private Image terrainForegroundImage;
+
+    [Header("Highlight Colours")]
+    [SerializeField] private Color activeColour = new Color(0.42f, 0.65f, 0.96f, 1f);
+    [SerializeField] private Color moveColour = new Color(0.98f, 0.78f, 0.46f, 1f);
+    [SerializeField] private Color supportColour = new Color(0.59f, 0.75f, 0.35f, 1f);
+    [SerializeField] private Color offensiveColour = new Color(0.88f, 0.29f, 0.29f, 1f);
+
+    [Header("Arrow Colours")]
+    [SerializeField] private Color arrowValidColour = new Color(0.96f, 0.92f, 0.80f);
+    [SerializeField] private Color arrowInvalidColour = new Color(0.55f, 0.55f, 0.60f);
+
+    private Color Hovered(Color c)
+    {
+        Color.RGBToHSV(c, out float h, out float s, out float v);
+        return Color.HSVToRGB(h, s * 0.9f, v);
+    }
+
+    private Color Secondary(Color c)
+    {
+        Color.RGBToHSV(c, out float h, out float s, out float v);
+        return Color.HSVToRGB(h, s * 0.8f, v);
+    }
+
+    private Color Tertiary(Color c)
+    {
+        Color.RGBToHSV(c, out float h, out float s, out float v);
+        return Color.HSVToRGB(h, s * 0.7f, v);
+    }
+    private Color Valid(Color c)
+    {
+        Color.RGBToHSV(c, out float h, out float s, out float v);
+        return Color.HSVToRGB(h, s * 0.5f, v);
+    }
 
     // References
     public BattleTile DataTile { get; private set; }
@@ -83,6 +107,8 @@ public class BattleTileUI : MonoBehaviour
         {
             Clear();
         }
+        selectionArrow.gameObject.SetActive(true);
+        SetArrow(SelectionArrowState.Hidden);
     }
 
     private void SubscribeToTile(BattleTile tile)
@@ -337,7 +363,7 @@ public class BattleTileUI : MonoBehaviour
         if (levelPanel != null) levelPanel.SetActive(false);
 
         UpdateScale(CreatureSize.Medium);
-        ClearHighlight();
+        ClearAllHighlights();
     }
 
     #endregion
@@ -459,10 +485,7 @@ public class BattleTileUI : MonoBehaviour
     public void ClearPersistentHighlight()
     {
         persistentHighlight = null;
-        if (pinnedHighlight.HasValue)
-            SetHighlight(pinnedHighlight.Value);
-        else
-            ClearHighlight();
+        SetHighlight(HighlightType.None);
     }
 
     public void SetPinnedHighlight(HighlightType type)
@@ -473,76 +496,65 @@ public class BattleTileUI : MonoBehaviour
     public void ClearPinnedHighlight()
     {
         pinnedHighlight = null;
-        ClearHighlight();
-    }
-
-    public void SetHoverHighlight(HighlightType type)
-    {
-        SetHighlight(type); // visually override
-    }
-    public void ClearHoverHighlight()
-    {
-        if (persistentHighlight.HasValue)
-            SetHighlight(persistentHighlight.Value);
-        else if (pinnedHighlight.HasValue)
-            SetHighlight(pinnedHighlight.Value);
-        else
-            ClearHighlight();
+        SetHighlight(HighlightType.None);
     }
 
     public void SetHighlight(HighlightType type)
     {
-        switch (type)
+        if (type == HighlightType.None)
         {
-            case HighlightType.ActiveCreature:
-                highlightAura.sprite = activeCreatureAura;
-                highlightAura.gameObject.SetActive(true);
-                selectionArrow.gameObject.SetActive(false);
-                break;
-
-            case HighlightType.NegativeTarget:
-                highlightAura.sprite = negativeTargetAura;
-                highlightAura.gameObject.SetActive(true);
-                selectionArrow.sprite = validArrowSprite;
-                selectionArrow.gameObject.SetActive(true);
-                break;
-
-            case HighlightType.PositiveTarget:
-                highlightAura.sprite = positiveTargetAura;
-                highlightAura.gameObject.SetActive(true);
-                selectionArrow.sprite = validArrowSprite;
-                selectionArrow.gameObject.SetActive(true);
-                break;
-
-            case HighlightType.MoveTarget:
-                highlightAura.sprite = moveTargetAura;
-                highlightAura.gameObject.SetActive(true);
-                selectionArrow.sprite = validArrowSprite;
-                selectionArrow.gameObject.SetActive(true);
-                break;
-
-            case HighlightType.InvalidTarget:
-                highlightAura.gameObject.SetActive(false);
-                selectionArrow.sprite = invalidArrowSprite;
-                selectionArrow.gameObject.SetActive(true);
-                break;
-
-            case HighlightType.ValidTarget:
-                highlightAura.gameObject.SetActive(false);
-                selectionArrow.sprite = validArrowSprite;
-                selectionArrow.gameObject.SetActive(true);
-                break;
-
-            default:
-                ClearHighlight();
-                break;
+            if (persistentHighlight.HasValue)
+            {
+                SetHighlight(persistentHighlight.Value);
+                return;
+            }
+            if (pinnedHighlight.HasValue)
+            {
+                SetHighlight(pinnedHighlight.Value);
+                return;
+            }
+            highlightAura.gameObject.SetActive(false);
+            return;
         }
+
+        highlightAura.color = type switch
+        {
+            HighlightType.ActiveCreature => Hovered(activeColour),
+            HighlightType.ValidMove => Valid(moveColour),
+            HighlightType.HoveredMove => Hovered(moveColour),
+            HighlightType.SupportTarget => Valid(supportColour),
+            HighlightType.HoveredSupportTarget => Hovered(supportColour),
+            HighlightType.SelectedSupportTarget => supportColour,
+            HighlightType.SupportSplashSecondary => Secondary(supportColour),
+            HighlightType.SupportSplashTertiary => Tertiary(supportColour),
+            HighlightType.OffensiveTarget => Valid(offensiveColour),
+            HighlightType.HoveredOffensiveTarget => Hovered(offensiveColour),
+            HighlightType.SelectedOffensiveTarget => offensiveColour,
+            HighlightType.OffensiveSplashSecondary => Secondary(offensiveColour),
+            HighlightType.OffensiveSplashTertiary => Tertiary(offensiveColour),
+            _ => Color.clear
+        };
+        highlightAura.gameObject.SetActive(true);
+        Debug.Log($"highlightAura Set to {type}");
     }
 
-    public void ClearHighlight()
+    public void SetArrow(SelectionArrowState state)
     {
+        selectionArrow.color = state switch
+        {
+            SelectionArrowState.HoveredValid => arrowValidColour,
+            SelectionArrowState.HoveredInvalid => arrowInvalidColour,
+            SelectionArrowState.Hidden => Color.clear,
+            _ => Color.clear
+        };
+    }
+
+    public void ClearAllHighlights()
+    {
+        pinnedHighlight = null;
+        persistentHighlight = null;
         highlightAura.gameObject.SetActive(false);
-        selectionArrow.gameObject.SetActive(false);
+        SetArrow(SelectionArrowState.Hidden);
     }
 
     #endregion
