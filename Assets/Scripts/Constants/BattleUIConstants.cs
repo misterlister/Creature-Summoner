@@ -35,5 +35,35 @@ public static class BattleUIConstants
 
     // Menu Navigation
     public const int MENU_COLS = 3;
+
+    public enum HighlightType
+    {
+        None,
+        ActiveCreature,
+        // Move
+        ValidMove,
+        HoveredMove,
+        // Support
+        SupportTarget,
+        HoveredSupportTarget,
+        SelectedSupportTarget,
+        SupportSplashSecondary,
+        SupportSplashTertiary,
+        // Offensive
+        OffensiveTarget,
+        HoveredOffensiveTarget,
+        SelectedOffensiveTarget,
+        OffensiveSplashSecondary,
+        OffensiveSplashTertiary,
+        // Fallback
+        InvalidTarget,
+    }
+
+    public enum SelectionArrowState
+    {
+        Hidden,
+        HoveredValid,
+        HoveredInvalid,
+    }
 }
 
