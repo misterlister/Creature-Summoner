@@ -77,6 +77,8 @@ public class UnifiedBattlefield : MonoBehaviour
                 BattleTileUI tileUI = Instantiate(tilePrefab, parent);
                 RectTransform rt = tileUI.GetComponent<RectTransform>();
 
+                dataTile.OnCreatureDefeated += (creature) => OnCreatureDefeated?.Invoke(creature);
+
                 rt.anchorMin = Vector2.zero;
                 rt.anchorMax = Vector2.zero;
                 rt.pivot = isPlayer ? new Vector2(1, 0) : Vector2.zero;
