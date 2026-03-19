@@ -162,7 +162,7 @@ public class BattleTileUI : MonoBehaviour
             scalableRect.anchorMax = new Vector2(1, 0);
             scalableRect.pivot = new Vector2(1, 0);
         }
-        scalableRect.anchoredPosition = Vector2.zero;
+        scalableRect.anchoredPosition = new Vector2(0, NAME_PANEL_HEIGHT);
 
         originalSpriteAnchoredPos = spriteHolder.GetComponent<RectTransform>().anchoredPosition;
     }
@@ -298,6 +298,7 @@ public class BattleTileUI : MonoBehaviour
         nameField.text = creature.Nickname;
         levelField.text = creature.Level.ToString();
 
+        UpdateSpriteAnchor(creature);
         UpdateScale(creature.Species.Size);
 
         hpBar.SetVisibility(true);
@@ -308,6 +309,7 @@ public class BattleTileUI : MonoBehaviour
 
     private void UpdateScale(CreatureSize size)
     {
+        
         float baseSprite = size switch
         {
             CreatureSize.Tiny => TINY_SPRITE_SIZE,
@@ -321,6 +323,23 @@ public class BattleTileUI : MonoBehaviour
         float scale = (baseSprite / BASE_SCALABLE_SIZE) * TileScale;
         float flipX = isPlayerSide ? -1f : 1f;
         spriteHolder.transform.localScale = new Vector3(scale * flipX, scale, 1f);
+        
+    }
+    private void UpdateSpriteAnchor(Creature creature = null)
+    {
+        
+        RectTransform spriteRect = spriteHolder.GetComponent<RectTransform>();
+        Debug.Log($"Updating sprite anchor for {(creature != null ? creature.Nickname : "null creature")}: AnchorMin={spriteRect.anchorMin}, AnchorMax={spriteRect.anchorMax}, Pivot={spriteRect.pivot}");
+        bool isAir = creature != null && creature.IsElement(CreatureElement.Air);
+
+        spriteRect.anchorMin = new Vector2(0.5f, isAir ? 1f : 0f);
+        spriteRect.anchorMax = new Vector2(0.5f, isAir ? 1f : 0f);
+        spriteRect.pivot = new Vector2(0.5f, isAir ? 1f : 0f);
+        spriteRect.anchoredPosition = Vector2.zero;
+
+        originalSpriteAnchoredPos = spriteRect.anchoredPosition;
+        Debug.Log($"Updated sprite anchor for {(creature != null ? creature.Nickname : "null creature")}: AnchorMin={spriteRect.anchorMin}, AnchorMax={spriteRect.anchorMax}, Pivot={spriteRect.pivot}");
+        
     }
 
     private void Clear()
@@ -346,6 +365,7 @@ public class BattleTileUI : MonoBehaviour
         if (namePanel != null) namePanel.SetActive(false);
         if (levelPanel != null) levelPanel.SetActive(false);
 
+        UpdateSpriteAnchor();
         UpdateScale(CreatureSize.Medium);
         ClearAllHighlights();
     }
