@@ -423,14 +423,6 @@ public class UnifiedBattlefield : MonoBehaviour
         }
     }
 
-    public void SetActiveCreatureHighlight(Creature creature)
-    {
-        ClearAllHighlights();
-
-        var tileUI = GetTileUI(creature.CurrentTile.BattlefieldPosition);
-        tileUI?.SetHighlight(HighlightType.ActiveCreature);
-    }
-
     #endregion
 
     #region Utility
@@ -453,13 +445,3 @@ public class UnifiedBattlefield : MonoBehaviour
     #endregion
 }
 
-public enum HighlightType
-{
-    None,
-    ActiveCreature,
-    ValidTarget,
-    InvalidTarget,
-    MoveTarget,
-    PositiveTarget,
-    NegativeTarget
-}
