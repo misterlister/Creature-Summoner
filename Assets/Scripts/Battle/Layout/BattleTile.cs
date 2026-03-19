@@ -35,8 +35,11 @@ public class BattleTile
 
     // Forwarded creature events (tile forwards these)
     public event Action<int, int> OnCreatureHPChanged;
+    public event Action<int, int> OnCreatureShieldChanged;
+    public event Action<int, int> OnCreatureEnergyChanged;
     public event Action<int> OnCreatureDamaged;
     public event Action<int> OnCreatureHealed;
+    public event Action<Creature> OnCreatureDefeated;
 
     public BattleTile(GridPosition position, TeamSide owner, BattleGrid parentGrid)
     {
@@ -134,6 +137,9 @@ public class BattleTile
             OccupyingCreature.OnHPChanged += HandleOccupantHPChanged;
             OccupyingCreature.OnTakeDamage += HandleOccupantDamaged;
             OccupyingCreature.OnHealed += HandleOccupantHealed;
+            OccupyingCreature.OnDefeated += HandleOccupantDefeated;
+            OccupyingCreature.OnShieldChanged += HandleOccupantShieldChanged;
+            OccupyingCreature.OnEnergyChanged += HandleOccupantEnergyChanged;
         }
 
         OnCreaturePlaced?.Invoke(creature);
@@ -151,10 +157,16 @@ public class BattleTile
             OccupyingCreature.OnHPChanged -= HandleOccupantHPChanged;
             OccupyingCreature.OnTakeDamage -= HandleOccupantDamaged;
             OccupyingCreature.OnHealed -= HandleOccupantHealed;
+            OccupyingCreature.OnDefeated -= HandleOccupantDefeated;
         }
 
         OccupyingCreature = null;
         OnCreatureRemoved?.Invoke(creature);
+    }
+
+    private void HandleOccupantDefeated()
+    {
+        OnCreatureDefeated?.Invoke(OccupyingCreature);
     }
 
     // Surface management
@@ -207,6 +219,15 @@ public class BattleTile
     private void HandleOccupantHealed(int amt)
     {
         OnCreatureHealed?.Invoke(amt);
+    }
+
+    private void HandleOccupantShieldChanged(int current, int max)
+    { 
+        OnCreatureShieldChanged?.Invoke(current, max); 
+    }
+    private void HandleOccupantEnergyChanged(int current, int max) 
+    { 
+        OnCreatureEnergyChanged?.Invoke(current, max); 
     }
 
     // Trigger surface effect on creature
