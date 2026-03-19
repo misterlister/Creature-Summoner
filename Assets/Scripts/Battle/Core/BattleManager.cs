@@ -85,9 +85,8 @@ public class BattleManager : MonoBehaviour
             defaultBiome = biome;
             Context.CurrentBiome = biome;
         }
-        battlefield.SetBiome(defaultBiome);
 
-        battlefield.ApplyTerrainLayout(terrainLayout);
+        battlefield.ApplyTerrainLayout(terrainLayout, biome);
 
         // Initialize creatures with event manager
         foreach (var creature in playerTeam.Creatures)
