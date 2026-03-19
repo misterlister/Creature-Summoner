@@ -1,6 +1,7 @@
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
+using System;
 using UnityEngine.UI;
 using static BattleUIConstants;
 
@@ -119,6 +120,7 @@ public class BattleTileUI : MonoBehaviour
         tile.OnTileTerrainChanged += OnTileTerrainChanged;
         tile.OnSurfaceApplied += OnSurfaceApplied;
         tile.OnSurfaceRemoved += OnSurfaceRemoved;
+        tile.OnCreatureDefeated += OnCreatureDefeated;
 
         // Forwarded creature events
         tile.OnCreatureHPChanged += OnBoundCreatureHPChanged;
@@ -134,6 +136,7 @@ public class BattleTileUI : MonoBehaviour
         tile.OnTileTerrainChanged -= OnTileTerrainChanged;
         tile.OnSurfaceApplied -= OnSurfaceApplied;
         tile.OnSurfaceRemoved -= OnSurfaceRemoved;
+        tile.OnCreatureDefeated -= OnCreatureDefeated;
 
         tile.OnCreatureHPChanged -= OnBoundCreatureHPChanged;
         tile.OnCreatureDamaged -= OnBoundCreatureDamaged;
@@ -190,38 +193,15 @@ public class BattleTileUI : MonoBehaviour
             return;
         }
 
-        // Unsubscribe from any previously-bound creature
-        if (boundCreature != null)
-        {
-            UnbindCreatureEvents();
-        }
-
         boundCreature = creature;
         SetupCreatureVisuals(creature);
         UpdateBars(creature, instant: true);
         PlaySummonAnimation();
-
-        // Subscribe to creature events
-        boundCreature.OnHPChanged += OnBoundCreatureHPChanged;
-        boundCreature.OnTakeDamage += OnBoundCreatureDamaged;
-        boundCreature.OnHealed += OnBoundCreatureHealed;
-        boundCreature.OnShieldChanged += OnBoundCreatureShieldingChanged;
-        boundCreature.OnEnergyChanged += OnBoundCreatureEnergyChanged;
     }
 
     public void OnCreatureRemoved(Creature creature)
     {
         Clear();
-    }
-
-    private void UnbindCreatureEvents()
-    {
-        if (boundCreature == null) return;
-        boundCreature.OnHPChanged -= OnBoundCreatureHPChanged;
-        boundCreature.OnTakeDamage -= OnBoundCreatureDamaged;
-        boundCreature.OnHealed -= OnBoundCreatureHealed;
-        boundCreature.OnShieldChanged -= OnBoundCreatureShieldingChanged;
-        boundCreature.OnEnergyChanged -= OnBoundCreatureEnergyChanged;
     }
 
     private void OnBoundCreatureHPChanged(int currentHP, int maxHP)
@@ -296,6 +276,11 @@ public class BattleTileUI : MonoBehaviour
         // TODO: Remove surface visual feedback
     }
 
+    private void OnCreatureDefeated(Creature creature)
+    {
+        PlayDefeatAnimation(onComplete: () => DataTile.RemoveCreature());
+    }
+
     #endregion
 
     #region Creature Visuals
@@ -345,7 +330,6 @@ public class BattleTileUI : MonoBehaviour
         spriteHolder.GetComponent<RectTransform>().DOKill();
         isAnimating = false;
 
-        UnbindCreatureEvents();
         boundCreature = null;
         
         creatureSprite.sprite = null;
@@ -453,7 +437,7 @@ public class BattleTileUI : MonoBehaviour
         sequence.OnComplete(() => isAnimating = false);
     }
 
-    public void PlayDefeatAnimation()
+    public void PlayDefeatAnimation(Action onComplete = null)
     {
         if (isAnimating) return;
         isAnimating = true;
@@ -469,7 +453,7 @@ public class BattleTileUI : MonoBehaviour
         sequence.SetEase(Ease.InOutQuad).OnComplete(() =>
         {
             isAnimating = false;
-            Clear();
+            onComplete?.Invoke();
         });
     }
 
