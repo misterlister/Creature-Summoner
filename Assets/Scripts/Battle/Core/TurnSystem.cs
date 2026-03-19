@@ -87,7 +87,7 @@ public class TurnSystem
             {
                 currentTurnIndex--;
             }
-            OnCreatureRemovedFromTurn.Invoke(creature);
+            OnCreatureRemovedFromTurn?.Invoke(creature);
         }
     }
 
