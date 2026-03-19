@@ -435,14 +435,9 @@ public class Creature
         if (amount < 0) amount = -amount;
 
         int previousHP = HP;
-        currentHP = Mathf.Max(0, HP - amount);
+        HP = Mathf.Max(0, HP - amount);
 
         OnTakeDamage?.Invoke(amount);
-
-        if (HP <= 0 && !IsDefeated)
-        {
-            Defeated();
-        }
     }
 
     public void Heal(int amount)
