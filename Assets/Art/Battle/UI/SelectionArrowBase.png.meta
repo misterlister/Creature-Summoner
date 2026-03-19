@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 958a2db064c22c84a9c740452790b378
+guid: e7b1c9d09571c7e4288f26c0e21de97d
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -2847230995564641742
-    second: SelectionArrowGrey_0
+      213: -8538643877673787529
+    second: SelectionArrowBase_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: SelectionArrowGrey_0
+      name: SelectionArrowBase_0
       rect:
         serializedVersion: 2
-        x: 124
-        y: 83
-        width: 371
-        height: 634
+        x: 113
+        y: 53
+        width: 414
+        height: 678
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 23243ebae7a9c78d0800000000000000
-      internalID: -2847230995564641742
+      spriteID: 77f90b702a4a08980800000000000000
+      internalID: -8538643877673787529
       vertices: []
       indices: 
       edges: []
@@ -147,8 +147,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      SelectionArrowGrey_0: -2847230995564641742
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

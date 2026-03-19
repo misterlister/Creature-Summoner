@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: ce48490ce19e2284fb58841c1292c643
+guid: 6589265742f134746b7e9b3401535d53
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 6253473545598928279
-    second: SelectionAura_0
+      213: -3582786672139332212
+    second: SelectionAuraBase_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: SelectionAura_0
+      name: SelectionAuraBase_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 400
-        height: 400
+        x: 8
+        y: 11
+        width: 282
+        height: 279
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 7950ab1be0dc8c650800000000000000
-      internalID: 6253473545598928279
+      spriteID: c85912d0182674ec0800000000000000
+      internalID: -3582786672139332212
       vertices: []
       indices: 
       edges: []
@@ -147,8 +147,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      SelectionAura_0: 6253473545598928279
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

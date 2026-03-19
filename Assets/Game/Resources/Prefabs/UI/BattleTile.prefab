@@ -755,19 +755,18 @@ MonoBehaviour:
   energyBar: {fileID: 6462562402899881268}
   highlightAura: {fileID: 1111365954609360719}
   selectionArrow: {fileID: 364440348627466207}
-  activeCreatureAura: {fileID: 6253473545598928279, guid: ce48490ce19e2284fb58841c1292c643, type: 3}
-  negativeTargetAura: {fileID: -5467190615838413835, guid: d3ae12ca43f291648a91cebfb45e357a, type: 3}
-  positiveTargetAura: {fileID: -141642110096712302, guid: fb6e4debce19d2f44a4ba30f7e4c901e, type: 3}
-  moveTargetAura: {fileID: 9109927337597909178, guid: 8d8dba5876795bc45b8d02cd3703f531, type: 3}
-  validArrowSprite: {fileID: 533643236929093961, guid: c7c6aa39c2d400f4baa559bd9e91fb2f, type: 3}
-  invalidArrowSprite: {fileID: -2847230995564641742, guid: 958a2db064c22c84a9c740452790b378, type: 3}
-  selectedArrowSprite: {fileID: -1140000987646207636, guid: abc3403573498f54bb71e76007633ed5, type: 3}
   namePanel: {fileID: 400462912270903504}
   nameField: {fileID: 6210948173849512645}
   levelPanel: {fileID: 2713118394925269710}
   levelField: {fileID: 898954872481101853}
   terrainBackgroundImage: {fileID: 5981285165967907155}
   terrainForegroundImage: {fileID: 787900590304022234}
+  activeColour: {r: 0, g: 0.5206733, b: 1, a: 1}
+  moveColour: {r: 0.9245283, g: 0.7553014, b: 0, a: 0}
+  supportColour: {r: 0.15704958, g: 0.6509434, b: 0, a: 0}
+  offensiveColour: {r: 1, g: 0, b: 0, a: 0}
+  arrowValidColour: {r: 0.96, g: 0.92, b: 0.8, a: 1}
+  arrowInvalidColour: {r: 0.55, g: 0.55, b: 0.6, a: 1}
 --- !u!114 &2189487025689143896
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -995,7 +994,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: -8538643877673787529, guid: e7b1c9d09571c7e4288f26c0e21de97d, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1070,7 +1069,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 6253473545598928279, guid: ce48490ce19e2284fb58841c1292c643, type: 3}
+  m_Sprite: {fileID: -3582786672139332212, guid: 6589265742f134746b7e9b3401535d53, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
