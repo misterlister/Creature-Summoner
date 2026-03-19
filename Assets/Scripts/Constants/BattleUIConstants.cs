@@ -20,7 +20,7 @@ public static class BattleUIConstants
 
     // Row tile scaling
     public const float TILE_WIDTH_ROW0 = 220f;
-    public const float TILE_HEIGHT_ROW0 = 175f;
+    public const float TILE_HEIGHT_ROW0 = 200f;
 
     public const float TILE_SCALE_ROW1 = 1.1f;
     public const float TILE_SCALE_ROW2 = 1.2f;
