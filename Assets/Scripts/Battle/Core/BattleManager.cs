@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using static BattleSystemConstants;
+using static BattleUIConstants;
 
 
 
@@ -378,7 +379,7 @@ public class BattleManager : MonoBehaviour
 
         // Highlight targets
         battlefield.HighlightTiles(targets.AllTargets(),
-            action.Role == ActionRole.Offensive ? HighlightType.NegativeTarget : HighlightType.PositiveTarget);
+            action.Role == ActionRole.Offensive ? HighlightType.OffensiveTarget : HighlightType.SupportTarget);
 
         yield return new WaitForSeconds(0.3f);
 
