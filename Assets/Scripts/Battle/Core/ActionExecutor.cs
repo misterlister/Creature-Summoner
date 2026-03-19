@@ -131,6 +131,8 @@ public class ActionExecutor
         {
             int finalDamage = Mathf.RoundToInt(damageEvent.DamageAmount * damageEvent.DamageMultiplier);
             defender.TakeDamage(finalDamage);
+            Debug.Log($"{attacker.Nickname} dealt {finalDamage} damage to {defender.Nickname} with {action.ActionName} (HitType: {hitType}, Effectiveness: {effectRating})");
+            Debug.Log($"{defender.Nickname} has {defender.HP}/{defender.MaxHP} HP remaining.");
             targetResult.DamageDealt = finalDamage;
             targetResult.IsDefeated = defender.IsDefeated;
             context.EventManager.TriggerAfterDamage(damageEvent);
