@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 /// <summary>
@@ -38,6 +39,19 @@ public class Biome : ScriptableObject
     public List<System.Type> GetValidTerrainTypes()
     {
         return AvailableTerrains?.GetAllTerrainTypes() ?? new List<System.Type>();
+    }
+
+    private void OnValidate()
+    {
+        if (AvailableTerrains == null) return;
+
+        foreach (var visuals in AvailableTerrains.GetAllVisuals())
+        {
+            if (visuals != null && visuals.TintColor == new Color(0, 0, 0, 0))
+            {
+                visuals.TintColor = Color.white;
+            }
+        }
     }
 }
 
@@ -85,6 +99,17 @@ public class BiomeTerrainSet
         if (terrainType == typeof(HeavyRoughTerrain)) return HeavyRoughVariants;
         if (terrainType == typeof(ChasmTerrain)) return ChasmVariants;
         return null;
+    }
+
+    public IEnumerable<TerrainVisuals> GetAllVisuals()
+    {
+        return RegularVariants
+            .Concat(LightCoverVariants)
+            .Concat(HeavyCoverVariants)
+            .Concat(LightRoughVariants)
+            .Concat(HeavyRoughVariants)
+            .Concat(ChasmVariants)
+            .Where(v => v != null);
     }
 }
 
