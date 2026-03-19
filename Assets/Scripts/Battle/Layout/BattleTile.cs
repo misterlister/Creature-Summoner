@@ -31,7 +31,7 @@ public class BattleTile
     public event Action<Creature> OnCreatureRemoved;
     public event Action<SurfaceEffect> OnSurfaceApplied;
     public event Action OnSurfaceRemoved;
-    public event Action<TerrainType, TerrainType, TerrainVisuals> OnTerrainChanged;
+    public event Action<TerrainType, TerrainType, TerrainVisuals> OnTileTerrainChanged;
 
     // Forwarded creature events (tile forwards these)
     public event Action<int, int> OnCreatureHPChanged;
@@ -52,7 +52,7 @@ public class BattleTile
         var oldTerrain = Terrain;
         Terrain = terrain;
         CurrentVisuals = visuals;
-        OnTerrainChanged?.Invoke(oldTerrain, terrain, visuals);
+        OnTileTerrainChanged?.Invoke(oldTerrain, terrain, visuals);
     }
 
 
