@@ -90,7 +90,7 @@ public class BattleTileUI : MonoBehaviour
         if (tile == null) return;
         tile.OnCreaturePlaced += OnCreaturePlaced;
         tile.OnCreatureRemoved += OnCreatureRemoved;
-        tile.OnTerrainChanged += OnTerrainChanged;
+        tile.OnTileTerrainChanged += OnTileTerrainChanged;
         tile.OnSurfaceApplied += OnSurfaceApplied;
         tile.OnSurfaceRemoved += OnSurfaceRemoved;
 
@@ -105,7 +105,7 @@ public class BattleTileUI : MonoBehaviour
         if (tile == null) return;
         tile.OnCreaturePlaced -= OnCreaturePlaced;
         tile.OnCreatureRemoved -= OnCreatureRemoved;
-        tile.OnTerrainChanged -= OnTerrainChanged;
+        tile.OnTileTerrainChanged -= OnTileTerrainChanged;
         tile.OnSurfaceApplied -= OnSurfaceApplied;
         tile.OnSurfaceRemoved -= OnSurfaceRemoved;
 
@@ -226,12 +226,14 @@ public class BattleTileUI : MonoBehaviour
         PlayHealAnimation();
     }
 
-    public void OnTerrainChanged(TerrainType oldTerrain, TerrainType newTerrain, TerrainVisuals visuals)
+    public void OnTileTerrainChanged(TerrainType oldTerrain, TerrainType newTerrain, TerrainVisuals visuals)
     {
         if (terrainBackgroundImage == null) { 
             Debug.LogWarning("BattleTileUI: terrainBackgroundImage is not assigned!");
             return;
         }
+
+        Debug.Log($"BattleTileUI: Row {DataTile.BattlefieldPosition.Row}, Col {DataTile.BattlefieldPosition.GlobalCol} visuals: {(visuals != null ? visuals.VariantName : "null")}");
 
         // If no visuals or no sprite, hide terrain background
         if (visuals == null || visuals.Sprite == null)
@@ -245,7 +247,7 @@ public class BattleTileUI : MonoBehaviour
             terrainBackgroundImage.gameObject.SetActive(true);
         }
 
-        // If no visuals or no sprite, hide terrain
+        // If no visuals or no sprite, hide terrain foreground
         if (visuals == null || visuals.ForegroundSprite == null)
         {
             terrainForegroundImage.gameObject.SetActive(false);
@@ -255,14 +257,15 @@ public class BattleTileUI : MonoBehaviour
         terrainForegroundImage.sprite = visuals.ForegroundSprite;
         terrainForegroundImage.color = visuals.TintColor;
         terrainForegroundImage.gameObject.SetActive(true);
+
     }
 
-    public void OnSurfaceApplied(SurfaceEffect surface)
+    private void OnSurfaceApplied(SurfaceEffect surface)
     {
         // TODO: Add surface visual feedback (particle effects, etc.)
     }
 
-    public void OnSurfaceRemoved()
+    private void OnSurfaceRemoved()
     {
         // TODO: Remove surface visual feedback
     }
