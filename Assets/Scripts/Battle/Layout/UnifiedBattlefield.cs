@@ -18,7 +18,7 @@ public class UnifiedBattlefield : MonoBehaviour
     [SerializeField] private BattleTileUI tilePrefab;
 
     [Header("Visual Settings")]
-    [SerializeField] private Biome currentBiome;
+    private Biome currentBiome;
     [SerializeField] private Image battleBackground;
 
     // Data layer - the source of truth
@@ -41,7 +41,6 @@ public class UnifiedBattlefield : MonoBehaviour
         InitializeGrids();
         SetupTileUI();
         TargetingSystem = new TargetingSystem(this);
-        SetBattleBackground();
     }
 
     private void InitializeGrids()
@@ -82,7 +81,7 @@ public class UnifiedBattlefield : MonoBehaviour
                 rt.anchorMax = Vector2.zero;
                 rt.pivot = isPlayer ? new Vector2(1, 0) : Vector2.zero;
 
-                Debug.Log($"Placing tile at row {row}, col {col} for {(isPlayer ? "Player" : "Enemy")} grid. Calculated position: {GetTilePosition(row, col, tileSize, isPlayer)}");
+                //Debug.Log($"Placing tile at row {row}, col {col} for {(isPlayer ? "Player" : "Enemy")} grid. Calculated position: {GetTilePosition(row, col, tileSize, isPlayer)}");
 
                 rt.anchoredPosition = GetTilePosition(row, col, tileSize, isPlayer);
 
@@ -395,15 +394,12 @@ public class UnifiedBattlefield : MonoBehaviour
 
     #region Terrain Management
 
-    public void ApplyTerrainLayout(TerrainLayout layout)
-    {
-        PlayerGrid.ApplyTerrainLayout(layout, currentBiome);
-        EnemyGrid.ApplyTerrainLayout(layout, currentBiome);
-    }
-
-    public void SetBiome(Biome biome)
+    public void ApplyTerrainLayout(TerrainLayout layout, Biome biome)
     {
         currentBiome = biome;
+        SetBattleBackground();
+        PlayerGrid.ApplyTerrainLayout(layout, currentBiome);
+        EnemyGrid.ApplyTerrainLayout(layout, currentBiome);
     }
 
     #endregion
