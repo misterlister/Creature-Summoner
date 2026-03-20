@@ -228,6 +228,7 @@ public class BattleManager : MonoBehaviour
     private IEnumerator ExecuteTurn(Creature creature)
     {
         Context.CurrentActingCreature = creature;
+        battleUI.HideAllMenus();
 
         // Trigger turn start events
         var turnStartEvent = new TurnStartEventData(creature, Context)
