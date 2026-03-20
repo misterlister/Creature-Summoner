@@ -314,6 +314,11 @@ public class BattleManager : MonoBehaviour
         isPlayerTurnComplete = true;
     }
 
+    public void EndPlayerTurn()
+    {
+        isPlayerTurnComplete = true;
+    }
+
     #endregion
 
     #region Enemy Turn
