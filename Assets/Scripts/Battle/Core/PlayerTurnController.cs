@@ -23,7 +23,6 @@ public class PlayerTurnController
     private BattleTile primaryTarget;
 
     // Current menu position
-    private int menuIndex = 0;
     private int cursorRow = 0;
     private int cursorCol = 0;
     private int cursorColMin = 0;
@@ -83,6 +82,7 @@ public class PlayerTurnController
 
         // Start at action category selection
         TransitionToActionCategorySelect();
+        ResetSelection();
     }
 
     #region Input Handling
@@ -149,54 +149,46 @@ public class PlayerTurnController
 
     private void HandleListNavigation()
     {
-        int previousIndex = menuIndex;
-        int col = menuIndex % MENU_COLS;
+        Direction? direction =
+            Input.GetKeyDown(DOWN_KEY) ? Direction.Down :
+            Input.GetKeyDown(UP_KEY) ? Direction.Up :
+            Input.GetKeyDown(RIGHT_KEY) ? Direction.Right :
+            Input.GetKeyDown(LEFT_KEY) ? Direction.Left :
+            null;
 
-        if (Input.GetKeyDown(DOWN_KEY))
-        {
-            int newIndex = menuIndex + MENU_COLS;
-            menuIndex = newIndex < battleUI.MenuPanelActiveCount ? newIndex : menuIndex;
-        }
-        else if (Input.GetKeyDown(UP_KEY))
-        {
-            int newIndex = menuIndex - MENU_COLS;
-            menuIndex = newIndex >= 0 ? newIndex : menuIndex;
-        }
-        else if (Input.GetKeyDown(RIGHT_KEY))
-        {
-            int newIndex = menuIndex + 1;
-            menuIndex = col < MENU_COLS - 1 && newIndex < battleUI.MenuPanelActiveCount ? newIndex : menuIndex;
-        }
-        else if (Input.GetKeyDown(LEFT_KEY))
-        {
-            int newIndex = menuIndex - 1;
-            menuIndex = col > 0 ? newIndex : menuIndex;
-        }
+        if (direction == null) return;
 
-        if (menuIndex != previousIndex)
-        { 
-            battleUI.UpdateMenuSelection(menuIndex);
-            OnMenuIndexChanged();
+        battleUI.NavigateMenuSelection(direction.Value);
+
+        if (currentState is PlayerTurnState.CoreActionSelect
+                  or PlayerTurnState.EmpoweredActionSelect
+                  or PlayerTurnState.MasteryActionSelect)
+        {
+            UpdateActionDetails();
         }
     }
 
-    private void OnMenuIndexChanged()
+    private void UpdateActionDetails()
     {
-        switch (currentState)
+        IReadOnlyList<CreatureAction> actions = currentState switch
         {
-            case PlayerTurnState.CoreActionSelect:
-                if (!IsBackButtonSelected() && menuIndex < activeCreature.Actions.EquippedCoreActions.Count)
-                    battleUI.UpdateActionDetails(activeCreature.Actions.EquippedCoreActions[menuIndex]?.Action, activeCreature);
-                break;
-            case PlayerTurnState.EmpoweredActionSelect:
-                if (!IsBackButtonSelected() && menuIndex < activeCreature.Actions.EquippedEmpoweredActions.Count)
-                    battleUI.UpdateActionDetails(activeCreature.Actions.EquippedEmpoweredActions[menuIndex]?.Action, activeCreature);
-                break;
-            case PlayerTurnState.MasteryActionSelect:
-                if (!IsBackButtonSelected() && menuIndex < activeCreature.Actions.EquippedMasteryActions.Count)
-                    battleUI.UpdateActionDetails(activeCreature.Actions.EquippedMasteryActions[menuIndex]?.Action, activeCreature);
-                break;
+            PlayerTurnState.CoreActionSelect => activeCreature.Actions.EquippedCoreActions,
+            PlayerTurnState.EmpoweredActionSelect => activeCreature.Actions.EquippedEmpoweredActions,
+            PlayerTurnState.MasteryActionSelect => activeCreature.Actions.EquippedMasteryActions,
+            _ => null
+        };
+
+        if (actions == null) return;
+
+        if (battleUI.IsBackButtonSelected())
+        {
+            battleUI.UpdateActionDetails(null);
+            return;
         }
+
+        int index = battleUI.CurrentMenuIndex;
+        if (index < actions.Count)
+            battleUI.UpdateActionDetails(actions[index]?.Action, activeCreature);
     }
 
     private void HandleGridNavigation()
@@ -238,46 +230,57 @@ public class PlayerTurnController
 
     private void HandleActionCategoryInput()
     {
-        if (Input.GetKeyDown(BACK_KEY) && hasMovedThisTurn)
-        {
-            // Can go back and undo movement
+        if (Input.GetKeyDown(BACK_KEY) || (IsBackButtonSelected() && Input.GetKeyDown(ACCEPT_KEY)))
+        { 
+            // Can only go back to undo movement from here
             TryPopState();
             return;
         }
 
         if (Input.GetKeyDown(ACCEPT_KEY))
         {
-            if (IsBackButtonSelected())
+            int index = battleUI.CurrentMenuIndex;
+
+            if (index >= ActionCategories.Length) return;
+
+            if (battleUI.IsMenuDisabled(index))
             {
-                TryPopState();
+                battleUI.ShowMessage(battleUI.GetDisabledReason(index));
                 return;
             }
 
-            if (battleUI.IsMenuDisabled(menuIndex))
-            {
-                battleUI.ShowMessage(battleUI.GetDisabledReason(menuIndex));
-                return;
-            }
-
-            switch (ActionCategories[menuIndex])
+            switch (ActionCategories[index])
             {
                 case ActionCategoryMenuOptions.CoreActions:
+                    PushState();
+                    ResetSelection();
                     TransitionToCoreActionSelect();
                     break;
                 case ActionCategoryMenuOptions.EmpoweredActions:
+                    PushState();
+                    ResetSelection();
                     TransitionToEmpoweredActionSelect();
                     break;
                 case ActionCategoryMenuOptions.MasteryActions:
+                    PushState();
+                    ResetSelection();
                     TransitionToMasteryActionSelect();
                     break;
                 case ActionCategoryMenuOptions.Move:
+                    PushState();
+                    ResetSelection();
                     TransitionToMovementSelect();
                     break;
                 case ActionCategoryMenuOptions.Examine:
+                    PushState();
+                    ResetSelection();
                     TransitionToExamine();
                     break;
                 case ActionCategoryMenuOptions.ClassAction:
                     battleUI.ShowMessage("Class actions not implemented yet");
+                    break;
+                case ActionCategoryMenuOptions.EndTurn:
+                    battleManager.EndPlayerTurn();
                     break;
                 case ActionCategoryMenuOptions.Flee:
                     battleUI.ShowMessage("Fleeing not implemented yet");
@@ -288,7 +291,7 @@ public class PlayerTurnController
 
     private void HandleCoreActionInput()
     {
-        if (Input.GetKeyDown(BACK_KEY))
+        if (Input.GetKeyDown(BACK_KEY) || (IsBackButtonSelected() && Input.GetKeyDown(ACCEPT_KEY)))
         {
             TryPopState();
             return;
@@ -296,12 +299,15 @@ public class PlayerTurnController
 
         if (Input.GetKeyDown(ACCEPT_KEY))
         {
-            if (menuIndex < activeCreature.Actions.EquippedCoreActions.Count)
+            int index = battleUI.CurrentMenuIndex;
+            if (index < activeCreature.Actions.EquippedCoreActions.Count)
             {
-                var action = activeCreature.Actions.EquippedCoreActions[menuIndex]?.Action;
+                var action = activeCreature.Actions.EquippedCoreActions[index]?.Action;
                 if (action != null)
                 {
                     selectedAction = action;
+                    PushState();
+                    ResetSelection();
                     TransitionToTargetSelect();
                 }
             }
@@ -310,7 +316,7 @@ public class PlayerTurnController
 
     private void HandleEmpoweredActionInput()
     {
-        if (Input.GetKeyDown(BACK_KEY))
+        if (Input.GetKeyDown(BACK_KEY) || (IsBackButtonSelected() && Input.GetKeyDown(ACCEPT_KEY)))
         {
             TryPopState();
             return;
@@ -318,14 +324,17 @@ public class PlayerTurnController
 
         if (Input.GetKeyDown(ACCEPT_KEY))
         {
-            if (menuIndex < activeCreature.Actions.EquippedEmpoweredActions.Count)
+            int index = battleUI.CurrentMenuIndex;
+            if (index < activeCreature.Actions.EquippedEmpoweredActions.Count)
             {
-                var action = activeCreature.Actions.EquippedEmpoweredActions[menuIndex]?.Action;
+                var action = activeCreature.Actions.EquippedEmpoweredActions[index]?.Action;
                 if (action != null)
                 {
                     if (action.EnergyValue <= activeCreature.Energy)
                     {
                         selectedAction = action;
+                        PushState();
+                        ResetSelection();
                         TransitionToTargetSelect();
                     }
                     else
@@ -339,7 +348,7 @@ public class PlayerTurnController
 
     private void HandleMasteryActionInput()
     {
-        if (Input.GetKeyDown(BACK_KEY))
+         if (Input.GetKeyDown(BACK_KEY) ||  (IsBackButtonSelected() && Input.GetKeyDown(ACCEPT_KEY)))
         {
             TryPopState();
             return;
@@ -347,9 +356,10 @@ public class PlayerTurnController
         
         if (Input.GetKeyDown(ACCEPT_KEY))
         {
-            if (menuIndex < activeCreature.Actions.EquippedMasteryActions.Count)
+            int index = battleUI.CurrentMenuIndex;
+            if (index < activeCreature.Actions.EquippedMasteryActions.Count)
             {
-                var action = activeCreature.Actions.EquippedMasteryActions[menuIndex]?.Action;
+                var action = activeCreature.Actions.EquippedMasteryActions[index]?.Action;
                 if (action != null)
                 {
                     // TODO: Implement mastery action logic
@@ -450,36 +460,31 @@ public class PlayerTurnController
         currentState = PlayerTurnState.ActionCategorySelect;
         battleUI.ShowActionCategoryMenu(activeCreature, hasMovedThisTurn);
         battleUI.ShowMessage("Choose which kind of action to take");
-        ResetSelection();
     }
 
     private void TransitionToCoreActionSelect()
     {
-        PushState();
         currentState = PlayerTurnState.CoreActionSelect;
         battleUI.ShowActionMenu(activeCreature.Actions.EquippedCoreActions);
-        ResetSelection();
+        UpdateActionDetails();
     }
 
     private void TransitionToEmpoweredActionSelect()
     {
-        PushState();
         currentState = PlayerTurnState.EmpoweredActionSelect;
         battleUI.ShowActionMenu(activeCreature.Actions.EquippedEmpoweredActions);
-        ResetSelection();
+        UpdateActionDetails();
     }
 
     private void TransitionToMasteryActionSelect()
     {
-        PushState();
         currentState = PlayerTurnState.MasteryActionSelect;
         battleUI.ShowActionMenu(activeCreature.Actions.EquippedMasteryActions);
-        ResetSelection();
+        UpdateActionDetails();
     }
 
     private void TransitionToMovementSelect()
     {
-        PushState();
         currentState = PlayerTurnState.MovementSelect;
 
         var creaturePos = battlefield.GetBattlePosition(activeCreature);
@@ -499,7 +504,6 @@ public class PlayerTurnController
 
     private void TransitionToExamine()
     {
-        PushState();
         currentState = PlayerTurnState.Examine;
 
         activeHighlightType = HighlightType.None;
@@ -517,7 +521,6 @@ public class PlayerTurnController
 
     private void TransitionToTargetSelect()
     {
-        PushState();
         currentState = PlayerTurnState.TargetSelect;
 
         if (selectedAction.Role == ActionRole.Offensive)
@@ -548,7 +551,6 @@ public class PlayerTurnController
 
     private void TransitionToAOEConfirm()
     {
-        PushState();
         currentState = PlayerTurnState.AOEConfirm;
 
         var grid = battlefield.GetGrid(activeCreature.TeamSide);
@@ -566,17 +568,13 @@ public class PlayerTurnController
     private void ExecuteMovement(BattleTile targetTile)
     {
         battleManager.ClearActiveCreatureHighlight();
-
         previousMovePosition = battlefield.GetBattlePosition(activeCreature);
-
-        // Move creature
         battlefield.SwapCreatures(activeCreature.CurrentTile, targetTile);
-
         hasMovedThisTurn = true;
-        battlefield.ClearAllHighlights();
-
         battleManager.SetActiveCreatureHighlight();
 
+        PushState();
+        ResetSelection();
         TransitionToActionCategorySelect();
     }
 
@@ -601,7 +599,8 @@ public class PlayerTurnController
     #region State Stack Management
     private void PushState()
     {
-        stateStack.Push(new StateSnapshot(currentState, menuIndex, cursorRow, cursorCol));
+        int index = battleUI.CurrentMenuIndex;
+        stateStack.Push(new StateSnapshot(currentState, index, cursorRow, cursorCol));
     }
 
     private bool TryPopState()
@@ -616,7 +615,7 @@ public class PlayerTurnController
 
         var snapshot = stateStack.Pop();
         currentState = snapshot.State;
-        menuIndex = snapshot.MenuIndex;
+        battleUI.SetMenuSelection(snapshot.MenuIndex);
         cursorRow = snapshot.CursorRow;
         cursorCol = snapshot.CursorCol;
         RestoreStateUI();
@@ -642,22 +641,44 @@ public class PlayerTurnController
                 TransitionToActionCategorySelect();
                 break;
             case PlayerTurnState.CoreActionSelect:
-                battleUI.ShowActionMenu(activeCreature.Actions.EquippedCoreActions);
+                TransitionToCoreActionSelect();
                 break;
             case PlayerTurnState.EmpoweredActionSelect:
-                battleUI.ShowActionMenu(activeCreature.Actions.EquippedEmpoweredActions);
+                TransitionToEmpoweredActionSelect();
                 break;
             case PlayerTurnState.MasteryActionSelect:
-                battleUI.ShowActionMenu(activeCreature.Actions.EquippedMasteryActions);
+                TransitionToMasteryActionSelect();
                 break;
             case PlayerTurnState.TargetSelect:
+                if (selectedAction.Role == ActionRole.Offensive)
+                {
+                    cursorColMin = ENEMY_COL;
+                    cursorColMax = BATTLE_COLS - 1;
+                    activeHighlightType = HighlightType.OffensiveTarget;
+                }
+                else
+                {
+                    cursorColMin = 0;
+                    cursorColMax = GRID_COLS - 1;
+                    activeHighlightType = HighlightType.SupportTarget;
+                }
+                validTargets = selectedAction.GetValidTargets(activeCreature, battlefield);
+                HighlightTiles(validTargets, activeHighlightType);
                 battleUI.ShowTargetSelectMenu();
                 break;
             case PlayerTurnState.MovementSelect:
                 if (hasMovedThisTurn && previousMovePosition != null)
                 {
+                    battleManager.ClearActiveCreatureHighlight();
+                    battlefield.SwapCreatures(activeCreature.CurrentTile, battlefield.GetTile(previousMovePosition.Value));
                     hasMovedThisTurn = false;
+                    previousMovePosition = null;
+                    battleManager.SetActiveCreatureHighlight();
                 }
+                currentState = PlayerTurnState.MovementSelect;
+                cursorColMin = 0;
+                cursorColMax = GRID_COLS - 1;
+                activeHighlightType = HighlightType.ValidMove;
                 validTargets = battleManager.GetMoveTargets(activeCreature);
                 HighlightTiles(validTargets, HighlightType.ValidMove);
                 battleUI.ShowMovementMenu();
@@ -669,11 +690,9 @@ public class PlayerTurnController
 
     #region Helper Methods
 
-    private int GetCurrentMenuSize() => battleUI.MenuPanelActiveCount;
-
     private BattlePosition GetCursorBattlePosition() => new BattlePosition(cursorRow, cursorCol);
 
-    private bool IsBackButtonSelected() => menuIndex == GetCurrentMenuSize() - 1;
+    private bool IsBackButtonSelected() => battleUI.IsBackButtonSelected();
 
     private BattlePosition? GetFirstValidTarget()
     {
@@ -684,8 +703,7 @@ public class PlayerTurnController
 
     private void ResetSelection()
     {
-        menuIndex = 0;
-        battleUI.UpdateMenuSelection(menuIndex);
+        battleUI.ResetMenuSelection();
     }
 
     private void ResetValidTargets()

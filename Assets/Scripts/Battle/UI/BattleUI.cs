@@ -12,8 +12,8 @@ using UnityEngine;
 public class BattleUI : MonoBehaviour
 {
     [Header("Text Speed")]
-    [SerializeField] private int lettersPerSecond = 30;
-    [SerializeField] private float textDelayAfterTyping = 0.8f;
+    [SerializeField] private int lettersPerSecond = 50;
+    [SerializeField] private float textDelayAfterTyping = 0.5f;
 
     [Header("Menu")]
     [SerializeField] private MenuPanel menuPanel;
@@ -141,7 +141,12 @@ public class BattleUI : MonoBehaviour
             .Select(o => o.ToDisplayName())
             .ToList();
 
-        menuPanel.Build(labels, disabled);
+        int backIndex = -1;
+        if (hasMovedThisTurn)
+            labels.Add("Undo Move");
+        backIndex = labels.Count -1;
+
+        menuPanel.Build(labels, disabled, backIndex);
     }
 
     private void CheckCategoryDisabled(Creature creature, bool hasMovedThisTurn, HashSet<int> disabled)
@@ -203,7 +208,7 @@ public class BattleUI : MonoBehaviour
                 disabled.Add(i);
         }
 
-        menuPanel.Build(labels, disabled);
+        menuPanel.Build(labels, disabled, labels.Count -1);
     }
 
     public void UpdateActionDetails(ActionBase action, Creature attacker = null, Creature defender = null)
@@ -300,14 +305,14 @@ public class BattleUI : MonoBehaviour
     public void ShowMovementMenu()
     {
         HideAllMenus();
-        menuPanel.Build(new List<string> { "Back" });
+        menuPanel.Build(new List<string> { "Back" }, backIndex: 0);
         ShowMessage("Select a space to move to");
     }
 
     public void ShowExamineMenu()
     {
         HideAllMenus();
-        menuPanel.Build(new List<string> { "Back" });
+        menuPanel.Build(new List<string> { "Back" }, backIndex: 0);
         ShowMessage("Select a creature to examine");
     }
 
@@ -320,7 +325,7 @@ public class BattleUI : MonoBehaviour
     public void ShowTargetSelectMenu()
     {
         HideAllMenus();
-        menuPanel.Build(new List<string> { "Back" });
+        menuPanel.Build(new List<string> { "Back" }, backIndex: 0);
         actionDetailsPanel.SetActive(true);
         ShowMessage("Choose target");
     }
@@ -375,10 +380,23 @@ public class BattleUI : MonoBehaviour
 
     public int MenuPanelActiveCount => menuPanel.ActiveCount;
     public bool IsMenuDisabled(int index) => menuPanel.IsDisabled(index);
+    public int CurrentMenuIndex => menuPanel.CurrentIndex;
 
-    public void UpdateMenuSelection(int index)
+    public bool IsBackButtonSelected() => menuPanel.IsBackButtonSelected();
+
+    public void ResetMenuSelection()
+    {
+        menuPanel.SetSelection(0);
+    }
+
+    public void SetMenuSelection(int index)
     {
         menuPanel.SetSelection(index);
+    }
+
+    public void NavigateMenuSelection(Direction direction)
+    {
+        menuPanel.MoveSelection(direction);
     }
 
     public string GetDisabledReason(int index)
@@ -386,7 +404,7 @@ public class BattleUI : MonoBehaviour
         return disabledReasons.TryGetValue(index, out var reason) ? reason : "Not available";
     }
 
-    private void HideAllMenus()
+    public void HideAllMenus()
     {
         menuPanel.Clear();
         if (actionDetailsPanel != null) actionDetailsPanel.SetActive(false);
