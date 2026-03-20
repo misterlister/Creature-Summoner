@@ -7,6 +7,7 @@ public enum ActionCategoryMenuOptions
     Move,
     Examine,
     ClassAction,
+    EndTurn,
     Flee
 }
 
@@ -20,6 +21,7 @@ public static class ActionCategoryMenuOptionsExtensions
         ActionCategoryMenuOptions.Move => "Move",
         ActionCategoryMenuOptions.Examine => "Examine",
         ActionCategoryMenuOptions.ClassAction => "Class Action",
+        ActionCategoryMenuOptions.EndTurn => "End Turn",
         ActionCategoryMenuOptions.Flee => "Flee",
         _ => option.ToString()
     };
