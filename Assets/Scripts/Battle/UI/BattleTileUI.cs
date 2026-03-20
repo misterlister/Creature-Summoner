@@ -296,7 +296,7 @@ public class BattleTileUI : MonoBehaviour
         barsContainer.SetActive(true);
 
         nameField.text = creature.Nickname;
-        levelField.text = creature.Level.ToString();
+        levelField.text = $"Lv. {creature.Level.ToString()}";
 
         UpdateSpriteAnchor(creature);
         UpdateScale(creature.Species.Size);
