@@ -178,6 +178,9 @@ public enum CombatModifierType
     HealingGivenMod,
     HealingReceivedMod,
     StartingEnergyMod,
+    EnergyRegeneration,
+    HealthRegeneration,
+    MovementEnergyCostMod,
 
     // Elemental Resistances
     FireResist,
