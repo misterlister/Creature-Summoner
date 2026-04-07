@@ -256,7 +256,7 @@ public class BattleGrid
     }
 
     // Get valid movement positions for a creature
-    public List<GridPosition> GetValidMovePositions(Creature creature, int maxEnergyCost)
+    public List<GridPosition> GetValidMovePositions(Creature creature)
     {
         var validPositions = new List<GridPosition>();
 
@@ -265,7 +265,7 @@ public class BattleGrid
             if (tile.CanBeEnteredBy(creature))
             {
                 int cost = tile.GetMovementCost(creature);
-                if (cost <= maxEnergyCost)
+                if (cost <= creature.Energy)
                 {
                     validPositions.Add(tile.LocalPosition);
                 }

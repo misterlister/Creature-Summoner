@@ -506,7 +506,7 @@ public class BattleManager : MonoBehaviour
     public List<BattleTile> GetMoveTargets(Creature creature)
     {
         var grid = battlefield.GetGrid(creature.TeamSide);
-        var validPositions = grid.GetValidMovePositions(creature, creature.Energy);
+        var validPositions = grid.GetValidMovePositions(creature);
 
         return validPositions.ConvertAll(pos => grid.GetTile(pos));
     }
