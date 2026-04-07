@@ -16,11 +16,14 @@ namespace Game.Traits
         [Header("Passive Combat Modifiers (Always Active)")]
         [SerializeField] private List<PassiveCombatModifier> passiveCombatModifiers = new();
 
-        [Header("Conditional Stat Modifiers")]
-        [SerializeField] List<ConditionalStatModifier> statModifiers = new();
-
         [Header("Conditional Combat Modifiers")]
         [SerializeField] List<ConditionalCombatModifier> combatModifiers = new();
+
+        [Header("Battle Rule Modifiers")]
+        [SerializeField] private List<PassiveBattleRuleModifier> battleRuleModifiers = new();
+
+        [Header("Conditional Stat Modifiers")]
+        [SerializeField] List<ConditionalStatModifier> statModifiers = new();
 
         [Header("Triggered Effects (Event-Driven)")]
         [SerializeReference]
@@ -44,6 +47,28 @@ namespace Game.Traits
             }
         }
 
+        public void CollectCombatModifiers(
+            Creature creature,
+            BattleContext context,
+            List<CombatModifier> mods)
+        {
+            foreach (var conditionalMod in combatModifiers)
+            {
+                if (conditionalMod.TryGetModifier(creature, context, traitName, this, out var modifier))
+                {
+                    mods.Add(modifier);
+                }
+            }
+        }
+
+        public void CollectBattleRuleModifiers(List<BattleRuleModifier> mods)
+        {
+            foreach (var rule in battleRuleModifiers)
+            {
+                mods.Add(new BattleRuleModifier(rule.Type, traitName, this));
+            }
+        }
+
         public void CollectStatModifiers(
             Creature creature,
             BattleContext context,
@@ -58,19 +83,6 @@ namespace Game.Traits
             }
         }
 
-        public void CollectCombatModifiers(
-            Creature creature,
-            BattleContext context,
-            List<CombatModifier> mods)
-        {
-            foreach (var conditionalMod in combatModifiers)
-            {
-                if (conditionalMod.TryGetModifier(creature, context, traitName, this, out var modifier))
-                {
-                    mods.Add(modifier);
-                }
-            }
-        }
 
         public IReadOnlyList<TriggeredTraitEffect> TriggeredEffects => triggeredEffects;
     }
